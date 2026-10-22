@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": ["Bash(npm run *)"],
+    "ask": ["Bash(git push)", "Bash(npm install *)"],
+    "deny": ["Read(.env)", "Read(.env.*)", "Edit(.env)", "Edit(.env.*)"]
+  },
+  "enabledMcpjsonServers": ["chrome-devtools"],
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path // .tool_response.filePath // empty' | { read -r f; case \"$f\" in *.js|*.jsx|*.ts|*.tsx|*.mjs|*.cjs) ./node_modules/.bin/eslint --fix \"$f\" 2>/dev/null || true;; esac; }",
+            "timeout": 30,
+            "statusMessage": "ESLint --fix"
+          }
+        ]
+      }
+    ]
+  }
+}
