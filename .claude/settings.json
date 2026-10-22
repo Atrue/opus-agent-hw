@@ -1,11 +1,41 @@
 {
   "permissions": {
-    "allow": ["Bash(npm run *)", "Bash(npm test *)"],
-    "ask": ["Bash(git push)", "Bash(npm install *)"],
-    "deny": ["Read(.env)", "Read(.env.*)", "Edit(.env)", "Edit(.env.*)"]
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(npm test *)",
+      "Bash(npx playwright test*)",
+      "Bash(npx eslint *)",
+      "Bash(git add *)",
+      "Bash(git commit*)"
+    ],
+    "ask": [
+      "Bash(git push)",
+      "Bash(npm install *)",
+      "Bash(npx playwright install*)"
+    ],
+    "deny": [
+      "Read(.env)",
+      "Read(.env.*)",
+      "Edit(.env)",
+      "Edit(.env.*)",
+      "Bash(rm -rf *)"
+    ]
   },
   "enabledMcpjsonServers": ["chrome-devtools"],
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/protect-paths.sh",
+            "timeout": 10,
+            "statusMessage": "Проверка защищённых путей"
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Write|Edit",

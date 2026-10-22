@@ -11,7 +11,8 @@ function LoginPage() {
       setError('Заполните email и пароль');
       return;
     }
-    // Заглушка: реальная авторизация будет добавлена позже
+    // Заглушка: реальная авторизация будет добавлена позже.
+    // Поведение формы покрыто тестами: src/App.test.jsx (юниты) и e2e/login.spec.js (browser).
     setError('');
     console.log('login', { email });
   };
