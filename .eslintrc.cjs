@@ -21,6 +21,13 @@ module.exports = {
         'import/no-extraneous-dependencies': 'off',
       },
     },
+    {
+      // тесты и сетап импортируют devDependencies (vitest, testing-library)
+      files: ['**/*.test.js?(x)', 'src/setupTests.js'],
+      rules: {
+        'import/no-extraneous-dependencies': ['error', { devDependencies: true }],
+      },
+    },
   ],
   rules: {
     // React 17+ JSX transform: import React не нужен

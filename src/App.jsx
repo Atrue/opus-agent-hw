@@ -1,7 +1,7 @@
+import LoginPage from './pages/LoginPage';
+
 function App() {
-  return (
-    <h1>opus-hw</h1>
-  );
+  return <LoginPage />;
 }
 
 export default App;
