@@ -54,6 +54,9 @@
 | GSD установлен из git-стеша, а не из npm | установка уже была выполнена и застешена; восстановление быстрее и идентично | ✓ Good |
 | Режим permissions по умолчанию `default` | стенд для проверки агента: наблюдаемость важнее скорости | ✓ Good |
 | Юнит-тесты colocated с исходниками | конвенция проекта, Vitest include ограничен `src/` | ✓ Good |
+| jsx-a11y: вложение input в label вместо отключения правила (Phase 1) | правило остаётся активным и защищает разметку; контракт `role="alert"` и тесты сохранены | ✓ Good |
+| Явный `--ext .js,.jsx` в lint-скрипте (Phase 1) | читаемость и страховка от регресса конфига; критерий TOOL-01 требует видимости покрытия | ✓ Good |
+| Работы Phase 1 закрыты ретроактивным PLAN/SUMMARY | фаза выполнена в hw-2 до создания GSD-контекста; ретроактивная запись честнее перепланирования уже сделанного | ✓ Good |
 
 ## Evolution
 
@@ -73,4 +76,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-10-23 after initialization*
+*Last updated: 2026-10-23 after Phase 1*
