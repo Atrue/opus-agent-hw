@@ -57,18 +57,18 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TOOL-01 | TBD | Pending |
-| AUTH-01 | TBD | Pending |
-| AUTH-02 | TBD | Pending |
-| AUTH-03 | TBD | Pending |
-| TEST-01 | TBD | Pending |
-| TEST-02 | TBD | Pending |
+| TOOL-01 | 1 | Pending |
+| AUTH-01 | 3 | Pending |
+| AUTH-02 | 2 | Pending |
+| AUTH-03 | 2 | Pending |
+| TEST-01 | 4 | Pending |
+| TEST-02 | 4 | Pending |
 
 **Coverage:**
 - v1 requirements: 6 total
-- Mapped to phases: 0
-- Unmapped: 6 ⚠️ (заполняется roadmapper'ом)
+- Mapped to phases: 6
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-10-23*
-*Last updated: 2026-10-23 after initial definition*
+*Last updated: 2026-10-23 after roadmap creation*
