@@ -52,7 +52,7 @@ npm run lint:fix   # автофикс ошибок линтера
 ### Прочее
 
 - **GSD** (`.claude/gsd-core/`): 80+ команд `/gsd-*`, 40+ субагентов, planning-артефакты в `.planning/` (Discovery пройден: PROJECT / REQUIREMENTS / ROADMAP / STATE).
-- **Память** — плагин **claude-mem**: SessionStart инжектит контекст прошлых сессий, SessionEnd сохраняет наблюдения; ручной журнал `docs/memory.md` заморожен (записи перенесены).
+- **Память** — журнал `docs/memory.md`: агент читает историю в начале сессии и дописывает результаты работы в конце.
 - **Быстрая команда** `/check` — build + test + lint одной командой (`.claude/commands/check.md`).
 - **Path-правило** `.claude/rules/js-ts.md` — код-стайл для `**/*.{js,jsx,ts,tsx}` (загружается только при работе с этими файлами).
 - **Skills** — 6 skills в `.claude/skills/` (code-review, grill-me, implement, research, tdd, wayfinder).
@@ -82,4 +82,4 @@ npm run lint:fix   # автофикс ошибок линтера
 | `.claude/hooks/protect-paths.sh` | скрипт PreToolUse-хука блокировки `.env` |
 | `.mcp.json` | chrome-devtools MCP сервер |
 | `docs/about.md` | обзор агентной инфраструктуры + скриншоты |
-| claude-mem (плагин) | память между сессиями (инъекция при старте, сохранение в конце); `docs/memory.md` заморожен |
+| `docs/memory.md` | журнал работ: память между сессиями (агент читает историю и дописывает результаты) |
