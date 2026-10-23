@@ -73,6 +73,22 @@
 
 - `/check` (`.claude/commands/check.md`) — полная проверка: `npm run build` → `npm test` → `npm run lint` + страховка `npx eslint src/ --ext .js,.jsx` (обход известного ложнозелёного кейса).
 
+## Управление контекстом (/compact)
+
+Сценарий проверки компакции (hw-2, п.3 плана):
+
+1. Свежая сессия, контекст нагружен (GSD-фазы, чтение больших файлов).
+2. `/context` до компакции — снимок №1: что в контексте, сколько токенов.
+3. `/compact instructions` — компакция с сохранением фокуса текущей задачи.
+4. `/context` после — снимок №2, сравнение токенов.
+
+| Момент | Скрин | Токены (заполнить) |
+|--------|-------|--------------------|
+| До `/compact` | `assets/context-before.png` | TODO |
+| После `/compact instructions` | `assets/context-after.png` | TODO |
+
+<!-- TODO(hw-2): положить context-before.png / context-after.png в docs/assets/ и вписать числа токенов до/после; краткий вывод (что сохранила компакция, что потеряла) — сюда. -->
+
 ## MCP UI-сценарий (chrome-devtools)
 
 Сценарий пройден агентом через chrome-devtools MCP на dev-сервере (`http://localhost:5173`):
