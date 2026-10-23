@@ -19,16 +19,16 @@
 
 ### 1. Память: claude-mem (заменяет docs/memory.md)
 
-- [ ] Установить: `claude plugin marketplace add thedotmack/claude-mem` → `claude plugin install claude-mem@thedotmack` (сеть; рестарт Claude Code после)
-- [ ] Инициализировать: `npx claude-mem init` — хранилище `~/.claude/memories/` + hooks (SessionStart-инъекция, SessionEnd-сохранение)
-- [ ] Перенести текущие файлы: записи `docs/memory.md` сохранить в claude-mem как первые записи; правило в AGENTS.md («читай docs/memory.md в начале, дописывай в конце») заменить на работу с claude-mem
-- [ ] Демо сохранение/извлечение: сессия 1 — сохранить решение (кейс ложнозелёного `npm run lint` из Discovery); сессия 2 — извлечь, убедиться что claude-mem инжектит его в контекст
+- [x] Установлен ранее: плагин claude-mem активен (hooks SessionStart-инъекция / SessionEnd-сохранение, MCP-инструменты)
+- [x] Записи `docs/memory.md` перенесены в claude-mem как первые записи (3 observation: инициализация проекта, GSD+Discovery, кейс ложнозелёного lint); файл помечен замороженным
+- [x] Правило в AGENTS.md заменено на работу с claude-mem (SessionStart инжектит контекст, `save_memory` для важных решений)
+- [x] Демо-сохранение: кейс ложнозелёного `npm run lint` сохранён (observation #3) + корректирующая запись #4 (при живой проверке кейс не воспроизвёлся, 7 ошибок найдены и исправлены). Извлечение — проверить в следующей сессии (auto-инъекция должна показать записи)
 
 ### 2. Быстрые команды + автоматические hooks
 
-- [ ] Завести GSD-hooks в `.claude/settings.json` (validate-commit, session-state и др.) не затерев существующие protect-paths + eslint --fix
-- [ ] Своя команда `/check` — build + test + lint одной командой
-- [ ] Опционально: PostToolUse-хук для `.planning/`-артефактов
+- [x] GSD-hooks в `.claude/settings.json`: `gsd-validate-commit.sh` (PreToolUse, matcher Bash, Conventional Commits) + `gsd-session-state.sh` (SessionStart, инъекция STATE.md); существующие protect-paths + eslint --fix не тронуты. Opt-in: `hooks.community: true` в `.planning/config.json`. Оба хука проверены вручную (block на bad commit / JSON с STATE.md на старте)
+- [x] Своя команда `/check` — build + test + lint (+ страховка `--ext .js,.jsx`) — `.claude/commands/check.md`
+- [~] PostToolUse-хук для `.planning/` — пропущен осознанно: GSD-субагенты сами пишут в `.planning/` при исполнении фаз, хук-нотификатор срабатывал бы на каждую легитимную правку; защита через GSD workflow enforcement в `.claude/CLAUDE.md`
 
 ### 3. Управление контекстом + /compact (скрины — вручную)
 
@@ -40,6 +40,6 @@
 
 ### 4. Финализация
 
-- [ ] Обновить `docs/about.md` и README (GSD, claude-mem, hooks, контекст-менеджмент)
-- [ ] `npm run build` + `npm test` зелёные
+- [x] Обновить `docs/about.md` и README (GSD, claude-mem, hooks, `/check`)
+- [x] `npm run build` + `npm test` зелёные (плюс lint и 2 e2e; по пути исправлены 7 ошибок линта в `src/main.jsx` и `src/pages/LoginPage.jsx` — jsx-a11y label nesting, semi, import/extensions)
 - [ ] Push (ask)

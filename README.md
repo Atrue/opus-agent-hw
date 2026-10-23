@@ -44,15 +44,19 @@ npm run lint:fix   # автофикс ошибок линтера
 
 ### Hooks
 
+- **SessionStart** (`gsd-session-state.sh`): инжектит состояние `.planning/STATE.md` (фаза, прогресс) в начало каждой сессии.
 - **PreToolUse** (`.claude/hooks/protect-paths.sh`): блокирует запись в `.env` / `.env.*` — второй рубеж поверх deny-правил.
+- **PreToolUse** (`gsd-validate-commit.sh`, matcher `Bash`): энфорсит Conventional Commits для `git commit`.
 - **PostToolUse**: `eslint --fix` на каждом записанном js/ts-файле.
 
 ### Прочее
 
+- **GSD** (`.claude/gsd-core/`): 80+ команд `/gsd-*`, 40+ субагентов, planning-артефакты в `.planning/` (Discovery пройден: PROJECT / REQUIREMENTS / ROADMAP / STATE).
+- **Память** — плагин **claude-mem**: SessionStart инжектит контекст прошлых сессий, SessionEnd сохраняет наблюдения; ручной журнал `docs/memory.md` заморожен (записи перенесены).
+- **Быстрая команда** `/check` — build + test + lint одной командой (`.claude/commands/check.md`).
 - **Path-правило** `.claude/rules/js-ts.md` — код-стайл для `**/*.{js,jsx,ts,tsx}` (загружается только при работе с этими файлами).
 - **Skills** — 6 skills в `.claude/skills/` (code-review, grill-me, implement, research, tdd, wayfinder).
 - **MCP** — chrome-devtools сервер (`.mcp.json`): скриншоты, консоль, network.
-- **Память** — `docs/memory.md`: журнал работ; агент читает его в начале сессии и дописывает в конце (правило в `AGENTS.md`).
 
 ## Что было сделано
 
@@ -69,10 +73,13 @@ npm run lint:fix   # автофикс ошибок линтера
 | Файл | Назначение |
 |------|------------|
 | `AGENTS.md` | гайд для AI-агентов (проект и стек, команды, conventions, правила работы); `CLAUDE.md` ссылается на него |
-| `.claude/settings.json` | permissions (allow/ask/deny), хуки protect-paths и eslint --fix, MCP |
+| `.claude/settings.json` | permissions (allow/ask/deny), хуки (protect-paths, eslint --fix, gsd-validate-commit, gsd-session-state), MCP |
 | `.claude/rules/js-ts.md` | path-scoped код-стайл правила для JS/TS |
 | `.claude/skills/` | 6 skills для рабочих процессов агента |
+| `.claude/commands/check.md` | быстрая команда `/check`: build + test + lint |
+| `.claude/gsd-core/` | GSD v1.18.0: workflow-движок, `/gsd-*`-команды, субагенты |
+| `.planning/` | GSD planning-артефакты: PROJECT / REQUIREMENTS / ROADMAP / STATE / research |
 | `.claude/hooks/protect-paths.sh` | скрипт PreToolUse-хука блокировки `.env` |
 | `.mcp.json` | chrome-devtools MCP сервер |
 | `docs/about.md` | обзор агентной инфраструктуры + скриншоты |
-| `docs/memory.md` | журнал работ — память между сессиями агента |
+| claude-mem (плагин) | память между сессиями (инъекция при старте, сохранение в конце); `docs/memory.md` заморожен |

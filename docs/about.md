@@ -50,6 +50,29 @@
 
 1. **PostToolUse** (`Write|Edit`): `eslint --fix` на изменённом js/ts-файле — стайл чинится автоматически сразу после записи.
 2. **PreToolUse** (`Write|Edit|NotebookEdit`): `.claude/hooks/protect-paths.sh` — блокирует запись в `.env` / `.env.*` (exit 2, агент видит сообщение об отказе). Дубль deny-правил намеренный: defense in depth.
+3. **PreToolUse** (`Bash`): `gsd-validate-commit.sh` — энфорсит Conventional Commits для `git commit` (exit 2 на невалидном сообщении). Opt-in через `hooks.community: true` в `.planning/config.json`.
+4. **SessionStart**: `gsd-session-state.sh` — инжектит голову `.planning/STATE.md` в контекст каждой сессии (ориентация: текущая фаза, прогресс, блокеры).
+
+## GSD (Git. Ship. Done.)
+
+[GSD](https://github.com/) v1.18.0 в `.claude/gsd-core/` + 80+ команд `/gsd-*` и 40+ субагентов в `.claude/commands/` / `.claude/agents/`:
+
+- Discovery пройден (`/gsd-new-project --auto`): `.planning/` — PROJECT / REQUIREMENTS (6 REQ) / ROADMAP (4 фазы) / STATE + research-документы, написанные 4 параллельными субагентами.
+- Режимы: yolo / coarse / parallel / adaptive (`.planning/config.json`).
+- Управление контекстом: `gsd-context-monitor.js` (context_warnings) — предупреждения о заполнении контекста.
+
+## Память (claude-mem)
+
+Плагин **claude-mem** ведёт память между сессиями (заменил ручной журнал `docs/memory.md`, записи перенесены 2026-10-23):
+
+- **SessionStart** — автоматическая инъекция контекста релевантных прошлых наблюдений.
+- **SessionEnd** — автоматическое сохранение наблюдений сессии.
+- `save_memory` / `search` — явное сохранение и поиск (MCP-инструменты плагина).
+- Демо-кейс: «ложнозелёный `npm run lint`» (находка Discovery) сохранён как запись; при живой проверке 2026-10-23 не воспроизвёлся (`eslint .` линтил `.jsx`, нашёл 7 ошибок) — корректирующая запись тоже сохранена в память. Это и есть рабочий цикл памяти: наблюдение → проверка → корректировка.
+
+## Быстрые команды
+
+- `/check` (`.claude/commands/check.md`) — полная проверка: `npm run build` → `npm test` → `npm run lint` + страховка `npx eslint src/ --ext .js,.jsx` (обход известного ложнозелёного кейса).
 
 ## MCP UI-сценарий (chrome-devtools)
 

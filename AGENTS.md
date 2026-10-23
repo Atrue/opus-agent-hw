@@ -33,11 +33,11 @@
 - Юнит-тесты colocated с исходниками в `src/` (`*.test.jsx`), e2e-сценарии — в `e2e/`
 - Функциональные компоненты + хуки, один компонент = один файл (PascalCase)
 - Данные из API — через `useEffect` с cleanup или кастомный хук, не inline в render
-- Коммит-месседжи — краткие, в стиле `agent infra: ...`
+- Коммит-месседжи — Conventional Commits (`type(scope): subject`, типы: feat/fix/docs/style/refactor/perf/test/build/ci/chore); энфорсится PreToolUse-хуком `gsd-validate-commit.sh`
 
 ## Правила работы
 
-1. **Память сессий:** в начале сессии прочитай `docs/memory.md` (журнал работ) — там контекст того, что уже сделано. В конце сессии допиши строку о сделанном.
+1. **Память сессий:** память ведёт claude-mem (плагин): SessionStart автоматически инжектит контекст прошлых сессий, SessionEnd сохраняет наблюдения. Дополнительно используй `save_memory` для важных решений/уроков (с явным project). Исторический журнал `docs/memory.md` заморожен (записи перенесены в claude-mem 2026-10-23) — не дополняй его.
 2. **Защищённые файлы:** `.env` и `.env.*` не читать и не изменять (deny в permissions + PreToolUse-хук).
 3. **Опасные действия:** `rm -rf` запрещён; `git push`, `npm install`, `npx playwright install` — только с подтверждением пользователя (ask).
 4. **Линтер:** после каждой записи JS/TS файла срабатывает PostToolUse-хук `eslint --fix`; финальную проверку делай через `npm run lint`.
