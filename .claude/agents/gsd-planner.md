@@ -9,7 +9,7 @@ color: green
 #       hooks:
 #         - type: command
 #           command: "npx eslint --fix $FILE 2>/dev/null || true"
-effort: xhigh
+effort: high
 ---
 
 <role>
