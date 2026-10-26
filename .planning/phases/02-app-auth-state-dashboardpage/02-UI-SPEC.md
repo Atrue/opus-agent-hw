@@ -1,10 +1,11 @@
 ---
 phase: "2"
 slug: "app-auth-state-dashboardpage"
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: "2026-10-26"
+reviewed_at: "2026-10-26"
 ---
 
 # Phase 2 — UI Design Contract
@@ -122,15 +123,37 @@ This phase's UI work is interaction, not visuals. Locked behavior:
 
 ## UI Considerations
 
-Applicable state considerations resolved: 3 covered, 0 backstop, 0 unresolved.
+Probe: `ui-consideration-probe` over 6 described surfaces (2026-10-26) — 27 applicable considerations: 23 resolved (verification: explicit), 4 resolved (verification: backstop), 0 unresolved, 0 unclassified. Backstop rows abstain → `human_needed` at verify time when unconfirmed with explicit evidence — never a silent pass.
 
-| Category | Element(s) | Status | Resolution / Reason |
-|----------|------------|--------|---------------------|
-| error | Login form (`<p role="alert">`) | ✅ covered | Empty-submit renders the locked «Заполните email и пароль» alert; unchanged from Phase 1, error state dies with LoginPage unmount (D-05) |
-| populated | Dashboard email line | ✅ covered | Renders `Вы вошли как {email}` with the actual submitted email string — asserting the real email (not just prefix) catches the `setUser` shape bug (RESEARCH Pitfall 1) |
-| empty | Dashboard content | ✅ covered | No empty state exists by construction: DashboardPage renders only when `user !== null`; email is always a non-empty submitted string (empty submit is blocked by validation) |
-| loading | Login submit | ✅ covered (N/A) | Login is synchronous — no loading state exists or is added; ASYNC-01 is deferred to a future release |
-| long-text / overflow | Dashboard email line | ✅ covered | Email renders as plain text in a `<p>`; browser default text wrapping applies; no truncation, no `overflow` CSS, no max-width — nothing to design or break |
+| Element | Category | Status | Verification | Resolution |
+|---------|----------|--------|--------------|------------|
+| E1 — Login form (email + password + «Войти») | empty | resolved | explicit | Form renders with empty fields; after logout `LoginPage` remounts empty via unmount reset (D-04) — no manual clearing code |
+| E1 — Login form | loading | resolved | explicit | Login submit is synchronous; no loading/pending UI exists or is added (ASYNC-01 deferred out of scope) |
+| E1 — Login form | error | resolved | explicit | Empty submit renders `<p role="alert">` «Заполните email и пароль» (Copywriting Contract row), unchanged from Phase 1 (D-05); covered by existing unit test |
+| E1 — Login form | partial | resolved | explicit | Both fields are required: submit with exactly one filled field shows the same form-level error (validation unchanged from Phase 1) |
+| E1 — Login form | overflow | resolved | backstop | { statement: "Browser-default form layout; this phase adds no CSS/inline styles (Spacing Scale rule) — no overflow is possible", verification: backstop } |
+| E1 — Login form | long-text | resolved | backstop | { statement: "Native `<input>` elements scroll long values internally; no truncation handling is added", verification: backstop } |
+| E2 — Login heading «Вход» | overflow | resolved | explicit | Heading is the fixed constant «Вход» — no variable content; overflow N/A by construction |
+| E2 — Login heading «Вход» | long-text | resolved | explicit | Heading text is the locked constant «Вход»; long-text N/A by construction |
+| E3 — Login error alert | empty | resolved | explicit | The alert IS the empty-submit response — shown when fields are empty; covered by existing unit test |
+| E3 — Login error alert | loading | resolved | explicit | Alert appears synchronously on submit (synchronous validation); no loading state |
+| E3 — Login error alert | error | resolved | explicit | The form-level alert is the only error surface; the user corrects fields and resubmits — no retry affordance in scope |
+| E3 — Login error alert | partial | resolved | explicit | One-field-missing submit shows the same alert (both fields required) |
+| E3 — Login error alert | overflow | resolved | explicit | Alert text is the fixed constant «Заполните email и пароль» — overflow N/A by construction |
+| E3 — Login error alert | long-text | resolved | explicit | Alert text is a locked constant; long-text N/A by construction |
+| E4 — Dashboard heading «Дашборд» | overflow | resolved | explicit | Heading is the fixed constant «Дашборд» (D-01) — overflow N/A by construction |
+| E4 — Dashboard heading «Дашборд» | long-text | resolved | explicit | Heading text is the locked constant «Дашборд» (D-01); long-text N/A by construction |
+| E5 — Dashboard identity line | empty | resolved | explicit | `DashboardPage` renders only when `user !== null` (conditional render in `App.jsx`); email is non-empty because empty submit is blocked — empty state N/A by construction; the populated check asserts the real submitted email string (catches the `setUser` shape bug, RESEARCH Pitfall 1) |
+| E5 — Dashboard identity line | loading | resolved | explicit | Dashboard renders synchronously from in-memory `user` state; no loading state exists |
+| E5 — Dashboard identity line | error | resolved | explicit | No error path on the dashboard: no async data, content fully derived from `user` state |
+| E5 — Dashboard identity line | partial | resolved | explicit | Dashboard content (h1 + email line + logout button) is fully derived from `user`; no partial-data rendering path |
+| E5 — Dashboard identity line | overflow | resolved | backstop | { statement: "Email renders as plain text in a `<p>`; browser default wrapping — no truncation or overflow CSS exists in the project", verification: backstop } |
+| E5 — Dashboard identity line | long-text | resolved | backstop | { statement: "A long email wraps by browser default text wrapping; no truncation, ellipsis, or max-width — nothing to design", verification: backstop } |
+| E6 — Logout button «Выйти» | empty | resolved | explicit | Button label is the fixed constant «Выйти» (D-03); no data-dependent content |
+| E6 — Logout button «Выйти» | loading | resolved | explicit | Logout executes synchronously (`setUser(null)`); no pending or disabled state |
+| E6 — Logout button «Выйти» | error | resolved | explicit | `onLogout` only resets in-memory state; no failure path exists |
+| E6 — Logout button «Выйти» | partial | resolved | explicit | Constant label; no partial rendering path |
+| E6 — Logout button «Выйти» | long-text | resolved | explicit | Label is the locked constant «Выйти» (D-03); long-text N/A by construction |
 
 ---
 
@@ -144,12 +167,12 @@ Applicable state considerations resolved: 3 covered, 0 backstop, 0 unresolved.
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
-- [ ] Dimension 7 Inventory Provenance: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
+- [x] Dimension 7 Inventory Provenance: PASS
 
-**Approval:** pending
+**Approval:** approved (gsd-ui-checker, 2026-10-26 — 7/7 dimensions PASS, no recommendations)
