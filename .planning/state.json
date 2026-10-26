@@ -1,0 +1,33 @@
+{
+  "contract": "1.0.0",
+  "flavor": "core",
+  "milestone": null,
+  "phases": [
+    {
+      "number": "1",
+      "name": "Honest Verification (tooling fix)",
+      "status": "complete"
+    },
+    {
+      "number": "2",
+      "name": "App Auth State + DashboardPage",
+      "status": "pending"
+    },
+    {
+      "number": "3",
+      "name": "Per-field Inline Validation",
+      "status": "pending"
+    },
+    {
+      "number": "4",
+      "name": "Test Coverage & Final Verification",
+      "status": "pending"
+    }
+  ],
+  "next": {
+    "command": "/gsd-progress --next",
+    "label": "Advance to the next step",
+    "reason": "Phase 2 of 4 · 25% · executing"
+  },
+  "updated_at": "2026-10-26T06:42:50.873Z"
+}
