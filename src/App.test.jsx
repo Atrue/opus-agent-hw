@@ -1,4 +1,6 @@
-import { describe, expect, test } from 'vitest';
+import {
+  describe, expect, test, vi,
+} from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import App from './App';
@@ -28,14 +30,16 @@ describe('LoginPage', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('Заполните email и пароль');
   });
 
-  test('не показывает ошибку при заполненных полях', async () => {
+  test('не показывает ошибку при заполненных полях и сообщает об успехе', async () => {
     const user = userEvent.setup();
-    render(<LoginPage />);
+    const onLoginSuccess = vi.fn();
+    render(<LoginPage onLoginSuccess={onLoginSuccess} />);
 
     await user.type(screen.getByLabelText(/email/i), 'user@example.com');
     await user.type(screen.getByLabelText(/пароль/i), 'secret');
     await user.click(screen.getByRole('button', { name: 'Войти' }));
 
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(onLoginSuccess).toHaveBeenCalledWith('user@example.com');
   });
 });

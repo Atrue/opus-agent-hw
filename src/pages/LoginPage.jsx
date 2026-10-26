@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-function LoginPage() {
+function LoginPage({ onLoginSuccess }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -11,10 +11,10 @@ function LoginPage() {
       setError('Заполните email и пароль');
       return;
     }
-    // Заглушка: реальная авторизация будет добавлена позже.
+    // Успех: сообщаем владельцу state (App) — наружу уходит только email (D-07).
     // Поведение формы покрыто тестами: src/App.test.jsx (юниты) и e2e/login.spec.js (browser).
     setError('');
-    console.log('login', { email });
+    onLoginSuccess(email);
   };
 
   return (

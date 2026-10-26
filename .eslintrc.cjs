@@ -32,5 +32,7 @@ module.exports = {
   rules: {
     // React 17+ JSX transform: import React не нужен
     'react/react-in-jsx-scope': 'off',
+    // Пропсы описываются контрактом фазы (CONTEXT.md D-06/D-07); пакет prop-types не в зависимостях (стек заморожен)
+    'react/prop-types': 'off',
   },
 };

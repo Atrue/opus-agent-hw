@@ -18,4 +18,6 @@ test('заполненная форма отправляется без пред
   await page.getByRole('button', { name: 'Войти' }).click();
 
   await expect(page.getByRole('alert')).toBeHidden();
+  await expect(page.getByRole('heading', { name: 'Дашборд' })).toBeVisible();
+  await expect(page.getByText('Вы вошли как user@example.com')).toBeVisible();
 });
