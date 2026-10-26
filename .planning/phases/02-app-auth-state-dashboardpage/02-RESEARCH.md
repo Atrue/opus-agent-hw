@@ -315,16 +315,20 @@ Not applicable in any meaningful sense — this phase uses only stable, years-ol
 
 All other claims are verified against in-repo files (cited with line ranges) or Playwright's official docs. `[ASSUMED]`-tagged knowledge is not load-bearing for this phase.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **How far to strengthen `e2e/login.spec.js`?**
+Both questions were resolved at planning time and adopted in 02-01-PLAN.md; neither requires a user decision.
+
+1. **How far to strengthen `e2e/login.spec.js`?** — RESOLVED: strengthen.
    - What we know: both existing e2e tests remain green without changes (verified semantics); test-update scope is explicit discretion; full round-trip e2e is Phase 4 (TEST-02).
    - What's unclear: whether the user wants the two extra assertions now or the absolute minimum diff.
    - Recommendation: add the dashboard-heading + email assertions to the valid-submit test (cheap, makes the e2e meaningful for this phase's headline behavior); leave the logout round-trip to Phase 4. Flag as a small decision at plan review if needed.
+   - RESOLVED: adopted as recommended — 02-01-PLAN.md Task 1 (RED step) adds the two assertions (`heading` «Дашборд» + `getByText('Вы вошли как user@example.com')`) to the valid-submit test; noted in plan key_risk 3 and Assumption A1. Logout round-trip stays in Phase 4 TEST-02.
 
-2. **Where do updated LoginPage unit tests live?**
+2. **Where do updated LoginPage unit tests live?** — RESOLVED: keep in `App.test.jsx`.
    - What we know: today all four tests are in `src/App.test.jsx`; ARCHITECTURE.md suggests optional per-page colocated files; both satisfy the project convention (tests in `src/`).
    - Recommendation: keep them in `App.test.jsx` — minimal churn, and Phase 4 will reorganize coverage anyway (TEST-01). Not worth a user decision.
+   - RESOLVED: adopted as recommended — 02-01-PLAN.md Task 1 (RED step) rewrites the valid-submit test in place in `src/App.test.jsx` (lines 31-40), no new per-page test file for LoginPage; reorganization deferred to Phase 4 TEST-01.
 
 ## Security Domain
 
