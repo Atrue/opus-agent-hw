@@ -9,7 +9,7 @@ Requirements for milestone «login → dashboard + per-field валидация�
 
 ### Tooling
 
-- [ ] **TOOL-01**: `npm run lint` проверяет `.js` и `.jsx` (`--ext .js,.jsx`); накопленные ошибки jsx-a11y в `LoginPage.jsx` устранены — без этого «lint green» фиктивен
+- [x] **TOOL-01**: `npm run lint` проверяет `.js` и `.jsx` (`--ext .js,.jsx`); накопленные ошибки jsx-a11y в `LoginPage.jsx` устранены — без этого «lint green» фиктивен
 
 ### Auth Flow
 
@@ -57,7 +57,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TOOL-01 | 1 | Pending |
+| TOOL-01 | 1 | Complete |
 | AUTH-01 | 3 | Pending |
 | AUTH-02 | 2 | Pending |
 | AUTH-03 | 2 | Pending |
