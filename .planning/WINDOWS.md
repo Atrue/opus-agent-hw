@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 3
+open_count: 1
 waived_count: 0
-fixed_count: 0
+fixed_count: 2
 total_count: 3
-last_updated: 2026-11-02T12:58:55.635Z
+last_updated: 2026-11-02T13:15:07.217Z
 ---
 
 # Broken Windows Ledger
@@ -16,8 +16,8 @@ last_updated: 2026-11-02T12:58:55.635Z
 | id | phase | kind | file | line | description | status | reason | recorded_at | resolved_at |
 |----|-------|------|------|------|-------------|--------|--------|-------------|-------------|
 | 1 | 1 | deviation | src/player/store.ts | 1 | zustand исключён решением пользователя (checkpoint 01-01); store на React-хуках; правило: store-библиотеки — только после вопроса пользователю | open |  | 2026-11-02T12:35:08.302Z |  |
-| 2 | 1 | stub | src/ui/App.tsx |  | Слот диаграммы (55%) пуст — SVG-диаграмма 2-3-1: план 01-03 (отложено objective плана 01-02) | open |  | 2026-11-02T12:58:55.554Z |  |
-| 3 | 1 | stub | src/ui/StepPanel.tsx |  | Клик по числу вызывает openDrill; панель NumberDrilldown не рендерится — план 01-03 (отложено objective плана 01-02) | open |  | 2026-11-02T12:58:55.635Z |  |
+| 2 | 1 | stub | src/ui/App.tsx |  | Слот диаграммы (55%) пуст — SVG-диаграмма 2-3-1: план 01-03 (отложено objective плана 01-02) | fixed |  | 2026-11-02T12:58:55.554Z | 2026-11-02T13:15:07.131Z |
+| 3 | 1 | stub | src/ui/StepPanel.tsx |  | Клик по числу вызывает openDrill; панель NumberDrilldown не рендерится — план 01-03 (отложено objective плана 01-02) | fixed |  | 2026-11-02T12:58:55.635Z | 2026-11-02T13:15:07.217Z |
 
 ````json
 [
@@ -41,10 +41,10 @@ last_updated: 2026-11-02T12:58:55.635Z
     "file": "src/ui/App.tsx",
     "line": null,
     "description": "Слот диаграммы (55%) пуст — SVG-диаграмма 2-3-1: план 01-03 (отложено objective плана 01-02)",
-    "status": "open",
+    "status": "fixed",
     "reason": "",
     "recorded_at": "2026-11-02T12:58:55.554Z",
-    "resolved_at": null,
+    "resolved_at": "2026-11-02T13:15:07.131Z",
     "milestone": null
   },
   {
@@ -54,10 +54,10 @@ last_updated: 2026-11-02T12:58:55.635Z
     "file": "src/ui/StepPanel.tsx",
     "line": null,
     "description": "Клик по числу вызывает openDrill; панель NumberDrilldown не рендерится — план 01-03 (отложено objective плана 01-02)",
-    "status": "open",
+    "status": "fixed",
     "reason": "",
     "recorded_at": "2026-11-02T12:58:55.635Z",
-    "resolved_at": null,
+    "resolved_at": "2026-11-02T13:15:07.217Z",
     "milestone": null
   }
 ]

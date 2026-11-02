@@ -29,7 +29,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Кликабельный прототип XOR-walkthrough (мок-числа, скелет нарратива) существует; 5–8 респондентов юзабилити-теста проходят полный путь вперёд и назад без тупиков
   3. Порог «найти нужное число < 10 сек» откалиброван на прототипе — wall-of-numbers пойман до кода (или подтверждено, что не возникает)
   4. Зафиксированы стиль обозначений (micrograd/CS231n), дизайн-токены (colorblind-safe палитра, табличные цифры) и решение по мобильному тиру — фазы 2–3 не перекрашивают
-**Plans**: 2/4 plans executed
+**Plans**: 3/4 plans executed
 Plans:
 **Wave 1**
 - [x] 01-01-PLAN.md — Walking skeleton: скаффолд Vite 8 + React 19 + TS strict + Tailwind 4, Python-генератор мок-трейса (2-3-1, 14 шагов, gradcheck), Zustand-плеер с кнопкой «Шаг», production build, SKELETON.md
@@ -38,7 +38,7 @@ Plans:
 - [x] 01-02-PLAN.md — Экран шага: @theme-токены + формат чисел (d3-format), layout-контракт (header/main/bottom), StepPanel + NarrativeLine + StepControls, лекционный режим, format/player-тесты
 
 **Wave 3** *(blocked on Wave 2 completion)*
-- [ ] 01-03-PLAN.md — Drill-down + SVG-диаграмма 2-3-1 + URL-state (#step=N&mode=lecture), 01-DESIGN-TOKENS.md, Playwright-смок (5 проверок) + скриншот-self-check
+- [x] 01-03-PLAN.md — Drill-down + SVG-диаграмма 2-3-1 + URL-state (#step=N&mode=lecture), 01-DESIGN-TOKENS.md, Playwright-смок (5 проверок) + скриншот-self-check
 
 **Wave 4** *(blocked on Wave 3 completion)*
 - [ ] 01-04-PLAN.md — H2/H3-инструментарий человека: Mom Test-гайд интервью + скрининг, юзабилити-протокол с порогами, шаблоны EVIDENCE.md, go/no-go сводка (D-07), фиксация вердикта
@@ -91,7 +91,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Валидация H2/H3 — кликабельный прототип | 2/4 | In Progress | - |
+| 1. Валидация H2/H3 — кликабельный прототип | 3/4 | In Progress | - |
 | 2. Движок и MVP-walkthrough на XOR | 0/TBD | Not started | - |
 | 3. Прогрессия сценариев и лекционный режим | 0/TBD | Not started | - |
 | 4. Замер понимания и подготовка к пилоту | 0/TBD | Not started | - |

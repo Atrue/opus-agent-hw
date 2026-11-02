@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 1
 current_phase_name: Валидация H2/H3 — кликабельный прототип
 status: executing
-stopped_at: Completed 01-02-PLAN.md
-last_updated: "2026-11-02T12:59:07.408Z"
+stopped_at: Completed 01-03-PLAN.md
+last_updated: "2026-11-02T13:17:00.795Z"
 last_activity: 2026-11-02
 last_activity_desc: Phase 1 execution started
-state_head: 75ce497390324923e544ab88b1af076a3ee9c842
+state_head: d88166921abdb0c5620adea66212ab1ebfbeff33
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 4
-  completed_plans: 2
+  completed_plans: 3
   percent: 0
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-02)
 ## Current Position
 
 Phase: 1 (Валидация H2/H3 — кликабельный прототип) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Ready to execute
 Last activity: 2026-11-02 — Phase 1 execution started
 
@@ -58,6 +58,7 @@ Progress: [░░░░░░░░░░] 0%
 |------|----------|-------|-------|
 | Phase 01 P01 | 11 min | 2 tasks | 21 files |
 | Phase 01 P02 | 19 min | 2 tasks | 13 files |
+| Phase 01 P03 | 14 min | 2 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -76,6 +77,9 @@ Recent decisions affecting current work:
 - [Phase 01]: [01-02] План Б §5.5: глифы ₁₂/⊙/←/→ отсутствуют в JetBrains Mono/Inter → генератор на ASCII-индексы + <sub>-рендер UI; ∂ оставлен Unicode (D-06) с системным фолбэком; числа трейса бит-идентичны
 - [Phase 01]: [01-02] Accent-тинт изменившегося числа = 10% (must_haves плана; Color-секция UI-SPEC говорила 20%) — зафиксировать единое значение в 01-DESIGN-TOKENS.md (01-03)
 - [Phase 01]: [01-02] Чистая модель вида шага (stepRows.ts: потолки ≤7/≤30, highlight) отделена от рендера и покрыта юнит-тестами по всем 14 шагам трейса
+- [Phase 01]: Активная op на диаграмме: рёбра подсвечиваются оранжевым «кейсингом» (+3px) под знаковым цветом — UI-SPEC-подсветка без потери знакового кодирования (Pitfall 6); узлы — обводка #E69F00 3px + тинт 10%
+- [Phase 01]: 01-DESIGN-TOKENS.md зафиксирован (D-06, критерий 4 ROADMAP): все текстовые пары PASS WCAG AA; #E69F00 как нетекстовый акцент 2.25:1 — принятое исключение (не единственный носитель информации), пересмотр по итогам 01-04; тинт изменившегося 10% — единое значение; мобильный тир — Phase 3 numbers-first
+- [Phase 01]: ∂-фолбэк подтверждён измерением: ∂ в .num рендерится системным моно (15.81px ≠ advance JBM 19.20px ≠ notdef 38.41px); document.fonts.check даёт false-positive — не доверять
 
 ### Pending Todos
 
@@ -95,6 +99,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-11-02T12:59:07.391Z
-Stopped at: Completed 01-02-PLAN.md
+Last session: 2026-11-02T13:17:00.774Z
+Stopped at: Completed 01-03-PLAN.md
 Resume file: None
