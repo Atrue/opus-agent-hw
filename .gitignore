@@ -25,3 +25,8 @@ dist-ssr
 
 # GSD tooling runtime state (regenerable)
 .planning/state.json
+
+# Playwright e2e artifacts (regenerable: pnpm e2e)
+e2e/screenshots/
+test-results/
+playwright-report/
