@@ -12,7 +12,7 @@ function numbersOf(value: unknown): number[] {
 
 describe('formatKey — ключевое число (.4g, ≤9 символов)', () => {
   it('0.63842… → «0.6384»', () => {
-    expect(formatKey(0.6384243621457853)).toBe('0.6384')
+    expect(formatKey(0.63842)).toBe('0.6384')
   })
 
   it('|x| < 1e-3 → экспоненциальная форма .3e', () => {
@@ -39,9 +39,13 @@ describe('formatKey — ключевое число (.4g, ≤9 символов)
 })
 
 describe('exactRepr — полный repr из JSON без округления', () => {
+  // repr-строки как в JSON (Python repr = shortest round-trip) — без литералов-потерь
+  const repr1 = '0.028141387967825185'
+  const repr2 = '-0.03287702859630931'
+
   it('восстанавливает double без потерь (round-trip через JSON.parse)', () => {
-    expect(exactRepr(0.028141387967825185)).toBe('0.028141387967825185')
-    expect(JSON.parse(exactRepr(-0.03287702859630931).replaceAll(MINUS, '-'))).toBe(-0.03287702859630931)
+    expect(exactRepr(JSON.parse(repr1))).toBe(repr1)
+    expect(JSON.parse(exactRepr(JSON.parse(repr2)).replaceAll(MINUS, '-'))).toBe(JSON.parse(repr2))
   })
 
   it('display-минус U+2212, ASCII-минус не остаётся', () => {
