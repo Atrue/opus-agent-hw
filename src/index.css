@@ -2,8 +2,143 @@
 @import "@fontsource-variable/inter";
 @import "@fontsource-variable/jetbrains-mono";
 
-/* Минимальный каркас скелета: только шрифты. Полный @theme-блок дизайн-токенов — план 01-02. */
+/*
+ * Дизайн-токены (D-06) — единственный источник цветов/кеглей (Tailwind 4 CSS-first,
+ * без tailwind.config.js). Человекочитаемый контракт поверх — 01-DESIGN-TOKENS.md
+ * (deliverable плана 01-03). Токены фиксируются надолго: «фазы 2–3 не перекрашивают».
+ *
+ * Палитра Okabe-Ito (colorblind-safe): чистые цвета — SVG-заливки/точки бейджей;
+ * затемнённые *-text — AA-варианты цвета текста чисел на белом (UI-SPEC A-4).
+ * Знак числа никогда не кодируется только цветом: минус U+2212 + цвет (Pitfall 6).
+ */
 @theme {
   --font-sans: "Inter Variable", system-ui, sans-serif;
   --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
+
+  /* Okabe-Ito: заливки/SVG/точки фазных бейджей */
+  --color-neg: #D55E00;        /* Vermillion — отрицательные значения/градиенты */
+  --color-pos: #009E73;        /* Bluish Green — положительные */
+  --color-attention: #E69F00;  /* Orange — подсветка изменившегося числа, primary CTA */
+
+  /* AA-варианты текста чисел на белом (контраст ≥ 4.5:1, UI-SPEC A-4) */
+  --color-neg-text: #C24A00;
+  --color-pos-text: #007A56;
+
+  /* Фазные бейджи (A-5): точка чистого цвета + текст gray-900 на тинте 12% */
+  --color-phase-fwd: #0072B2;  /* Blue */
+  --color-phase-loss: #E69F00; /* Orange (hue совпадает с accent — принято в UI-SPEC) */
+  --color-phase-bwd: #CC79A7;  /* Reddish Purple */
+  --color-phase-upd: #56B4E9;  /* Sky Blue */
+  --color-phase-summary: #6B7280; /* gray-500 */
+
+  /* Кегли: default-шкала 14/16/20. Лекционный режим меняет ТОЛЬКО переменные. */
+  --num-size: 16px;   /* числа/формулы → 32px в .lecture */
+  --ui-size: 16px;    /* UI-текст/контролы → 20px в .lecture */
+  --diag-scale: 1;    /* масштаб подписей диаграммы → 1.25 в .lecture (план 01-03) */
+}
+
+/* Лекционный режим (D-06): класс на корне, без JS-пересчёта layout. */
+.lecture {
+  --num-size: 32px;
+  --ui-size: 20px;
+  --diag-scale: 1.25;
+}
+
+/*
+ * Типографика экрана шага (UI-SPEC Typography): ровно 2 веса, числа всегда
+ * weight 400 — акцент через фон-тинт и цвет, не через вес.
+ */
+.num { /* числа/формулы — главный контент; JetBrains Mono + табличные цифры */
+  font-family: var(--font-mono);
+  font-size: var(--num-size);
+  font-weight: 400;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums; /* A-5: табличные цифры на всех числах */
+}
+.ui-text { /* нарратив, подписи */
+  font-size: var(--ui-size);
+  font-weight: 400;
+  line-height: 1.5;
+}
+.ui-label { /* кнопки, бейджи, «Шаг N из 14» */
+  font-size: var(--ui-size);
+  font-weight: 600;
+  line-height: 1.2;
+}
+.app-heading { /* заголовок сценария (1 на экран): 20px → 24px в .lecture */
+  font-size: calc(var(--ui-size) + 4px);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+sub { /* подстрочные индексы (план Б §5.5: ASCII z1 + <sub>-рендер) */
+  line-height: 0;
+}
+
+/* Фазный бейдж (A-5): тинт 12% + точка чистого цвета + текст gray-900.
+   min-width гарантирует, что смена фазы не сдвигает соседние элементы. */
+.phase-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;              /* xs */
+  min-width: 124px;      /* «backward» в .lecture (20px) без сдвига кластера */
+  padding: 2px 8px;      /* инлайн-паддинг бейджа: xs/sm */
+  border-radius: 9999px;
+  color: #111827;        /* gray-900 */
+}
+.phase-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  flex: none;
+}
+
+/* Контролы: минимальная высота 40px; focus-ring 2px #0072B2 offset 2px. */
+.btn {
+  min-height: 40px;
+  padding: 8px 16px;     /* sm/md */
+  border-radius: 8px;
+  cursor: pointer;
+  background: #FFFFFF;
+}
+.btn:disabled {
+  opacity: 50%;
+  cursor: not-allowed;
+}
+.btn-secondary {
+  border: 1px solid #D1D5DB; /* gray-300 */
+  color: #111827;
+}
+.btn-primary { /* primary CTA «Шаг»: рамка 2px #E69F00, фон белый, текст gray-900 */
+  border: 2px solid var(--color-attention);
+  color: #111827;
+}
+.btn[aria-pressed="true"] { /* активный toggle «Лекционный режим» */
+  background: #E5E7EB;
+}
+:is(button, a, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-phase-fwd); /* #0072B2 */
+  outline-offset: 2px;
+}
+
+/* Кликабельные числа (drill-down — план 01-03): подсветка кликабельности. */
+.value-btn {
+  border: 0;
+  margin: 0;
+  padding: 0 2px;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline dotted;
+  text-underline-offset: 4px;
+}
+.value-changed { /* изменившееся: gray-900 + accent-тинт #E69F00 @ 10% */
+  background: color-mix(in srgb, var(--color-attention) 10%, transparent);
+  color: #111827;
+}
+.value-unchanged { /* неизменившееся: gray-500 */
+  color: #6B7280;
 }

@@ -8,7 +8,7 @@ src/data/xor-trace.json байт-стабильно (фиксированные 
 
 Самопроверки:
   * санити-фильтр весов (RESEARCH §3.4): начальный L в [0.4, 1.0],
-    все |pre-tanh| и |pre-sigmoid| < 2.5, веса в ±1, |∂L/∂W₁| > 1e-4;
+    все |pre-tanh| и |pre-sigmoid| < 2.5, веса в ±1, |∂L/∂W1| > 1e-4;
   * central-difference gradcheck каждого аналитического градиента
     (h = 1e-6, допуск rel 1e-4) — ненулевой exit-код при расхождении.
 
@@ -288,7 +288,13 @@ def grads_of(rows):
 
 
 def build_steps(seed, w1, b1, w2, b2, g, updated):
-    """Развёртка графа в 14 шагов walkthrough (RESEARCH §3.2)."""
+    """Развёртка графа в 14 шагов walkthrough (RESEARCH §3.2).
+
+    Нотация (план Б §5.5, глиф-проверка 01-02): индексы — ASCII («z1», «W2»),
+    UI рендерит цифры после буквы как <sub>. Используются только глифы,
+    покрытые JetBrains Mono / Inter: − · ² ᵀ σ ŷ η ‖ ∂ (∂ — системный фолбэк).
+    Не покрыты и потому запрещены: ₁ ₂ (U+2080..), *, ←, →.
+    """
     seed_note = "вес, инициализация (seed %d)" % seed
     yhat = g["yhat"].data
     loss = g["loss"].data
@@ -298,61 +304,61 @@ def build_steps(seed, w1, b1, w2, b2, g, updated):
     steps = [
         {
             "index": 0, "phase": "forward", "op": "matvec", "layer": 1,
-            "formula": "z₁ = W₁·x",
-            "narrative": {"ru": "Каждый скрытый нейрон считает скалярное произведение своей строки W₁ на вход x — первый шаг forward-pass."},
+            "formula": "z1 = W1·x",
+            "narrative": {"ru": "Каждый скрытый нейрон считает скалярное произведение своей строки W1 на вход x — первый шаг forward-pass."},
             "inputs": [
-                tensor("W₁", [[c.data for c in row] for row in g["w1"]], seed_note),
+                tensor("W1", [[c.data for c in row] for row in g["w1"]], seed_note),
                 tensor("x", datas(g["x"]), "входные данные — граница графа"),
             ],
-            "outputs": tensor("z₁", datas(g["z1_pre"])),
+            "outputs": tensor("z1", datas(g["z1_pre"])),
             "grads": None, "changed": ["z1"],
         },
         {
             "index": 1, "phase": "forward", "op": "add", "layer": 1,
-            "formula": "z₁ = z₁ + b₁",
-            "narrative": {"ru": "Каждый нейрон добавляет свой биас b₁ — сдвиг, который не зависит от входа."},
+            "formula": "z1 = z1 + b1",
+            "narrative": {"ru": "Каждый нейрон добавляет свой биас b1 — сдвиг, который не зависит от входа."},
             "inputs": [
-                tensor("z₁", datas(g["z1_pre"]), "шаг 1 (matvec)"),
-                tensor("b₁", datas(g["b1"]), seed_note),
+                tensor("z1", datas(g["z1_pre"]), "шаг 1 (matvec)"),
+                tensor("b1", datas(g["b1"]), seed_note),
             ],
-            "outputs": tensor("z₁", datas(g["z1"])),
+            "outputs": tensor("z1", datas(g["z1"])),
             "grads": None, "changed": ["z1"],
         },
         {
             "index": 2, "phase": "forward", "op": "tanh", "layer": 1,
-            "formula": "a₁ = tanh(z₁)",
+            "formula": "a1 = tanh(z1)",
             "narrative": {"ru": "Нелинейность: tanh зажимает каждое число в (−1, 1) — без неё любой стек слоёв оставался бы линейным."},
-            "inputs": [tensor("z₁", datas(g["z1"]), "шаг 2 (add)")],
-            "outputs": tensor("a₁", datas(g["a1"])),
+            "inputs": [tensor("z1", datas(g["z1"]), "шаг 2 (add)")],
+            "outputs": tensor("a1", datas(g["a1"])),
             "grads": None, "changed": ["a1"],
         },
         {
             "index": 3, "phase": "forward", "op": "matvec", "layer": 2,
-            "formula": "z₂ = W₂·a₁",
+            "formula": "z2 = W2·a1",
             "narrative": {"ru": "Выходной нейрон собирает взвешенную сумму активаций скрытого слоя."},
             "inputs": [
-                tensor("W₂", [[c.data for c in row] for row in g["w2"]], seed_note),
-                tensor("a₁", datas(g["a1"]), "шаг 3 (tanh)"),
+                tensor("W2", [[c.data for c in row] for row in g["w2"]], seed_note),
+                tensor("a1", datas(g["a1"]), "шаг 3 (tanh)"),
             ],
-            "outputs": tensor("z₂", [g["z2_pre"].data]),
+            "outputs": tensor("z2", [g["z2_pre"].data]),
             "grads": None, "changed": ["z2"],
         },
         {
             "index": 4, "phase": "forward", "op": "add", "layer": 2,
-            "formula": "z₂ = z₂ + b₂",
-            "narrative": {"ru": "Выходной биас b₂ — последний сдвиг перед активацией."},
+            "formula": "z2 = z2 + b2",
+            "narrative": {"ru": "Выходной биас b2 — последний сдвиг перед активацией."},
             "inputs": [
-                tensor("z₂", [g["z2_pre"].data], "шаг 4 (matvec)"),
-                tensor("b₂", datas(g["b2"]), seed_note),
+                tensor("z2", [g["z2_pre"].data], "шаг 4 (matvec)"),
+                tensor("b2", datas(g["b2"]), seed_note),
             ],
-            "outputs": tensor("z₂", [g["z2"].data]),
+            "outputs": tensor("z2", [g["z2"].data]),
             "grads": None, "changed": ["z2"],
         },
         {
             "index": 5, "phase": "forward", "op": "sigmoid", "layer": 2,
-            "formula": "ŷ = σ(z₂)",
+            "formula": "ŷ = σ(z2)",
             "narrative": {"ru": "σ переводит любое число в вероятность ŷ ∈ (0, 1) — это прогноз сети для входа x."},
-            "inputs": [tensor("z₂", [g["z2"].data], "шаг 5 (add)")],
+            "inputs": [tensor("z2", [g["z2"].data], "шаг 5 (add)")],
             "outputs": tensor("ŷ", [yhat]),
             "grads": None, "changed": ["yhat"],
         },
@@ -381,70 +387,70 @@ def build_steps(seed, w1, b1, w2, b2, g, updated):
         },
         {
             "index": 8, "phase": "backward", "op": "sigmoid-grad", "layer": 2,
-            "formula": "∂L/∂z₂ = ∂L/∂ŷ · ŷ(1−ŷ)",
-            "narrative": {"ru": "Цепное правило: градиент протекает через σ обратно к z₂ — умножаем на локальную производную σ(z₂) = ŷ(1−ŷ)."},
+            "formula": "∂L/∂z2 = ∂L/∂ŷ · ŷ(1−ŷ)",
+            "narrative": {"ru": "Цепное правило: градиент протекает через σ обратно к z2 — умножаем на локальную производную σ(z2) = ŷ(1−ŷ)."},
             "inputs": [tensor("∂L/∂ŷ", [g["yhat"].grad], "шаг 8 (bce-grad)")],
-            "outputs": tensor("∂L/∂z₂", [g["z2"].grad]),
-            "grads": {"∂L/∂z₂": [g["z2"].grad]},
+            "outputs": tensor("∂L/∂z2", [g["z2"].grad]),
+            "grads": {"∂L/∂z2": [g["z2"].grad]},
             "changed": ["dz2"],
         },
         {
             "index": 9, "phase": "backward", "op": "matvec-grad", "layer": 2,
-            "formula": "∂L/∂W₂ = ∂L/∂z₂ · a₁ᵀ,  ∂L/∂b₂ = ∂L/∂z₂,  ∂L/∂a₁ = W₂ᵀ·∂L/∂z₂",
-            "narrative": {"ru": "Градиент matvec-а: градиент веса = восходящий градиент × активация-вход этой связи; ∂L/∂a₁ уходит дальше вглубь сети."},
+            "formula": "∂L/∂W2 = ∂L/∂z2 · a1ᵀ,  ∂L/∂b2 = ∂L/∂z2,  ∂L/∂a1 = W2ᵀ·∂L/∂z2",
+            "narrative": {"ru": "Градиент matvec-а: градиент веса = восходящий градиент × активация-вход этой связи; ∂L/∂a1 уходит дальше вглубь сети."},
             "inputs": [
-                tensor("∂L/∂z₂", [g["z2"].grad], "шаг 9 (sigmoid-grad)"),
-                tensor("a₁", datas(g["a1"]), "шаг 3 (tanh)"),
+                tensor("∂L/∂z2", [g["z2"].grad], "шаг 9 (sigmoid-grad)"),
+                tensor("a1", datas(g["a1"]), "шаг 3 (tanh)"),
             ],
-            "outputs": tensor("∂L/∂W₂", grads_of(g["w2"])),
+            "outputs": tensor("∂L/∂W2", grads_of(g["w2"])),
             "grads": {
-                "∂L/∂W₂": grads_of(g["w2"]),
-                "∂L/∂b₂": [g["b2"][0].grad],
-                "∂L/∂a₁": [v.grad for v in g["a1"]],
+                "∂L/∂W2": grads_of(g["w2"]),
+                "∂L/∂b2": [g["b2"][0].grad],
+                "∂L/∂a1": [v.grad for v in g["a1"]],
             },
             "changed": ["dW2", "db2", "da1"],
         },
         {
             "index": 10, "phase": "backward", "op": "tanh-grad", "layer": 1,
-            "formula": "∂L/∂z₁ = ∂L/∂a₁ ⊙ (1−a₁²)",
-            "narrative": {"ru": "Через tanh: на месте каждой активации умножаем восходящий градиент на производную 1−a₁²."},
-            "inputs": [tensor("∂L/∂a₁", [v.grad for v in g["a1"]], "шаг 10 (matvec-grad)")],
-            "outputs": tensor("∂L/∂z₁", [v.grad for v in g["z1"]]),
-            "grads": {"∂L/∂z₁": [v.grad for v in g["z1"]]},
+            "formula": "∂L/∂z1 = ∂L/∂a1 * (1−a1²)",
+            "narrative": {"ru": "Через tanh: на месте каждой активации умножаем восходящий градиент на производную 1−a1²."},
+            "inputs": [tensor("∂L/∂a1", [v.grad for v in g["a1"]], "шаг 10 (matvec-grad)")],
+            "outputs": tensor("∂L/∂z1", [v.grad for v in g["z1"]]),
+            "grads": {"∂L/∂z1": [v.grad for v in g["z1"]]},
             "changed": ["dz1"],
         },
         {
             "index": 11, "phase": "backward", "op": "matvec-grad", "layer": 1,
-            "formula": "∂L/∂W₁ = ∂L/∂z₁ · xᵀ,  ∂L/∂b₁ = ∂L/∂z₁,  ∂L/∂x = W₁ᵀ·∂L/∂z₁",
+            "formula": "∂L/∂W1 = ∂L/∂z1 · xᵀ,  ∂L/∂b1 = ∂L/∂z1,  ∂L/∂x = W1ᵀ·∂L/∂z1",
             "narrative": {"ru": "Градиенты первого слоя. ∂L/∂x дальше не распространяется: x — вход, старт цепного правила."},
             "inputs": [
-                tensor("∂L/∂z₁", [v.grad for v in g["z1"]], "шаг 11 (tanh-grad)"),
+                tensor("∂L/∂z1", [v.grad for v in g["z1"]], "шаг 11 (tanh-grad)"),
                 tensor("x", datas(g["x"]), "входные данные — граница графа"),
             ],
-            "outputs": tensor("∂L/∂W₁", grads_of(g["w1"])),
+            "outputs": tensor("∂L/∂W1", grads_of(g["w1"])),
             "grads": {
-                "∂L/∂W₁": grads_of(g["w1"]),
-                "∂L/∂b₁": [v.grad for v in g["b1"]],
+                "∂L/∂W1": grads_of(g["w1"]),
+                "∂L/∂b1": [v.grad for v in g["b1"]],
                 "∂L/∂x": [v.grad for v in g["x"]],
             },
             "changed": ["dW1", "db1", "dx"],
         },
         {
             "index": 12, "phase": "update", "op": "sgd", "layer": 0,
-            "formula": "W ← W − η·∂L/∂W",
+            "formula": "W = W − η·∂L/∂W",
             "narrative": {"ru": "SGD: каждый вес шагает против своего градиента (η = 0.5). Показан один вес явно, остальные обновляются той же формулой."},
             "inputs": [
-                tensor("W₂[0,0]", [g["w2"][0][0].data], seed_note),
-                tensor("∂L/∂W₂[0,0]", [dw2[0]], "шаг 10 (matvec-grad)"),
+                tensor("W2[0,0]", [g["w2"][0][0].data], seed_note),
+                tensor("∂L/∂W2[0,0]", [dw2[0]], "шаг 10 (matvec-grad)"),
                 tensor("η", [LR], "гиперпараметр SGD"),
             ],
-            "outputs": tensor("W₂[0,0]", [g["w2"][0][0].data, w2_00_after]),
+            "outputs": tensor("W2[0,0]", [g["w2"][0][0].data, w2_00_after]),
             "grads": None,
             "changed": ["W"],
         },
         {
             "index": 13, "phase": "summary", "op": "", "layer": 0,
-            "formula": "L: до → после",
+            "formula": "L: до -> после",
             "narrative": {"ru": "Один полный цикл на одном сэмпле завершён: L уменьшился. Дальше — такие же шаги по остальным примерам XOR, по каждому градиенту своих весов."},
             "inputs": [
                 tensor("L", [loss], "шаг 7 (bce)"),
@@ -458,7 +464,7 @@ def build_steps(seed, w1, b1, w2, b2, g, updated):
 
 
 def apply_sgd(w1, b1, w2, b2, g):
-    """W ← W − η·∂L/∂W по всем параметрам + пересчёт loss после обновления."""
+    """W = W − η·∂L/∂W по всем параметрам + пересчёт loss после обновления."""
     lr = LR
     u_w1 = [[g["w1"][j][i].data - lr * g["w1"][j][i].grad for i in range(2)] for j in range(3)]
     u_b1 = [g["b1"][j].data - lr * g["b1"][j].grad for j in range(3)]
