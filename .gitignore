@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# GSD tooling runtime state (regenerable)
+.planning/state.json
