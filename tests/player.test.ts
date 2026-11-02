@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { trace, transition, type PlayerState } from '../src/player/store'
-import { buildStepRows } from '../src/ui/StepPanel'
+import { buildStepRows } from '../src/ui/stepRows'
 
 const last = trace.steps.length - 1 // 13
 

@@ -1,9 +1,17 @@
-import { useEffect } from 'react'
-import { format } from 'd3-format'
-import { player, selectIsFirst, selectIsLast, selectPosition, selectStep, usePlayer } from '../player/store'
-import type { Phase, TensorValues } from '../player/types'
+import { player, selectIsFirst, selectIsLast, selectPosition, selectStep, trace, usePlayer } from '../player/store'
+import type { Phase } from '../player/types'
+import NarrativeLine from './NarrativeLine'
+import StepControls from './StepControls'
+import StepPanel from './StepPanel'
 
-const fmt4g = format('.4g')
+/**
+ * Экран шага — layout-контракт UI-SPEC «Interaction Contract»:
+ * header 56px (заголовок слева; справа «Шаг N из 14» + бейдж фазы + toggle
+ * «Лекционный режим»), main 55% слот диаграммы / 45% StepPanel, gap 32px,
+ * bottom bar 72px (контролы слева, нарратив справа). Слоты фиксированы:
+ * смена шага не меняет высоты зон (проекторная стабильность, D-02).
+ * Лекционный режим — класс .lecture на корне: меняет только CSS-переменные.
+ */
 
 const PHASE_LABEL: Record<Phase, string> = {
   forward: 'forward',
@@ -13,74 +21,62 @@ const PHASE_LABEL: Record<Phase, string> = {
   summary: 'сводка',
 }
 
-/** Первое ключевое число шага: только чтение из trace, никаких вычислений (Pattern 1). */
-function firstOutputValue(values: TensorValues): number {
-  const first = values[0]
-  return Array.isArray(first) ? (first[0] as number) : (first as number)
+const PHASE_COLOR_VAR: Record<Phase, string> = {
+  forward: '--color-phase-fwd',
+  loss: '--color-phase-loss',
+  backward: '--color-phase-bwd',
+  update: '--color-phase-upd',
+  summary: '--color-phase-summary',
 }
 
 export default function App() {
   const state = usePlayer()
   const step = selectStep(state)
-  const position = selectPosition(state)
-  const isFirst = selectIsFirst(state)
-  const isLast = selectIsLast(state)
-
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'ArrowRight' || event.key === ' ') {
-        event.preventDefault()
-        player.next()
-      } else if (event.key === 'ArrowLeft') {
-        event.preventDefault()
-        player.prev()
-      }
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [])
+  const phaseVar = PHASE_COLOR_VAR[step.phase]
 
   return (
-    <div className="flex min-h-screen flex-col bg-white font-sans text-neutral-900">
-      <header className="flex min-h-14 items-center justify-between border-b border-neutral-200 px-6">
-        <h1 className="text-lg font-semibold">XOR — backprop за 14 шагов</h1>
-        <div className="flex items-center gap-3">
-          <span data-testid="step-indicator" className="text-sm text-neutral-500">
-            {position}
+    <div className={`flex h-screen flex-col bg-white font-sans text-neutral-900${state.mode === 'lecture' ? ' lecture' : ''}`}>
+      <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-neutral-200 px-6">
+        <h1 className="app-heading">XOR — backprop за 14 шагов</h1>
+        <div className="flex items-center gap-2">
+          <span data-testid="step-indicator" className="ui-label whitespace-nowrap text-neutral-500">
+            {selectPosition(state)}
           </span>
-          <span className="rounded bg-neutral-700 px-2 py-0.5 text-xs font-medium text-white">
+          <span
+            data-testid="phase-badge"
+            className="phase-badge ui-label"
+            style={{ background: `color-mix(in srgb, var(${phaseVar}) 12%, white)` }}
+          >
+            <span className="phase-dot" style={{ background: `var(${phaseVar})` }} />
             {PHASE_LABEL[step.phase]}
           </span>
+          <button
+            type="button"
+            data-testid="toggle-lecture"
+            className="btn btn-secondary ui-label whitespace-nowrap"
+            aria-pressed={state.mode === 'lecture'}
+            onClick={player.toggleMode}
+          >
+            Лекционный режим
+          </button>
         </div>
       </header>
 
-      <main className="flex max-w-3xl flex-1 flex-col items-start gap-4 px-6 py-6">
-        <p className="font-mono text-2xl">{step.formula}</p>
-        <p className="text-base leading-relaxed text-neutral-700">{step.narrative.ru}</p>
-        <p data-testid="key-number" className="font-mono tabular-nums text-5xl">
-          {fmt4g(firstOutputValue(step.outputs.values))}
-        </p>
+      <main className="flex min-h-0 flex-1 gap-8 px-6 py-6">
+        {/* Слот SVG-диаграммы 2-3-1 (55%) — рендер диаграммы: план 01-03 */}
+        <section
+          aria-label="Слот диаграммы сети"
+          data-testid="diagram-slot"
+          className="w-[55%] rounded-lg border border-neutral-200 bg-neutral-50"
+        />
+        <section aria-label="Панель шага" className="w-[45%]">
+          <StepPanel step={step} final={trace.final} />
+        </section>
       </main>
 
-      <footer className="flex min-h-18 items-center gap-3 border-t border-neutral-200 px-6 py-3">
-        <button
-          type="button"
-          data-testid="btn-prev"
-          onClick={player.prev}
-          disabled={isFirst}
-          className="rounded border border-neutral-300 px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          Назад
-        </button>
-        <button
-          type="button"
-          data-testid="btn-next"
-          onClick={player.next}
-          disabled={isLast}
-          className="rounded bg-neutral-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          Шаг
-        </button>
+      <footer className="flex h-[72px] shrink-0 items-center justify-between gap-8 border-t border-neutral-200 px-6">
+        <StepControls isFirst={selectIsFirst(state)} isLast={selectIsLast(state)} />
+        <NarrativeLine text={step.narrative.ru} />
       </footer>
     </div>
   )
