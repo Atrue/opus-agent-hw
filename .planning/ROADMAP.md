@@ -31,9 +31,16 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. Зафиксированы стиль обозначений (micrograd/CS231n), дизайн-токены (colorblind-safe палитра, табличные цифры) и решение по мобильному тиру — фазы 2–3 не перекрашивают
 **Plans**: 4 plans
 Plans:
+**Wave 1**
 - [ ] 01-01-PLAN.md — Walking skeleton: скаффолд Vite 8 + React 19 + TS strict + Tailwind 4, Python-генератор мок-трейса (2-3-1, 14 шагов, gradcheck), Zustand-плеер с кнопкой «Шаг», production build, SKELETON.md
+
+**Wave 2** *(blocked on Wave 1 completion)*
 - [ ] 01-02-PLAN.md — Экран шага: @theme-токены + формат чисел (d3-format), layout-контракт (header/main/bottom), StepPanel + NarrativeLine + StepControls, лекционный режим, format/player-тесты
+
+**Wave 3** *(blocked on Wave 2 completion)*
 - [ ] 01-03-PLAN.md — Drill-down + SVG-диаграмма 2-3-1 + URL-state (#step=N&mode=lecture), 01-DESIGN-TOKENS.md, Playwright-смок (5 проверок) + скриншот-self-check
+
+**Wave 4** *(blocked on Wave 3 completion)*
 - [ ] 01-04-PLAN.md — H2/H3-инструментарий человека: Mom Test-гайд интервью + скрининг, юзабилити-протокол с порогами, шаблоны EVIDENCE.md, go/no-go сводка (D-07), фиксация вердикта
 **UI hint**: yes
 
