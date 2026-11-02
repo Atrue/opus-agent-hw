@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 1
 current_phase_name: Валидация H2/H3 — кликабельный прототип
 status: executing
-stopped_at: Completed 01-01-PLAN.md
-last_updated: "2026-11-02T12:35:03.576Z"
+stopped_at: Completed 01-02-PLAN.md
+last_updated: "2026-11-02T12:59:07.408Z"
 last_activity: 2026-11-02
 last_activity_desc: Phase 1 execution started
-state_head: adea4d601abfd0c2ce385607a9a338d5c081223c
+state_head: 75ce497390324923e544ab88b1af076a3ee9c842
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 4
-  completed_plans: 1
+  completed_plans: 2
   percent: 0
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-02)
 ## Current Position
 
 Phase: 1 (Валидация H2/H3 — кликабельный прототип) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-11-02 — Phase 1 execution started
 
@@ -57,6 +57,7 @@ Progress: [░░░░░░░░░░] 0%
 | Plan | Duration | Tasks | Files |
 |------|----------|-------|-------|
 | Phase 01 P01 | 11 min | 2 tasks | 21 files |
+| Phase 01 P02 | 19 min | 2 tasks | 13 files |
 
 ## Accumulated Context
 
@@ -72,6 +73,9 @@ Recent decisions affecting current work:
 - [Phase 01]: Store плеера — встроенные средства React (useSyncExternalStore + чистая transition), zustand исключён решением пользователя на checkpoint 01-01
 - [Phase 01]: d3-format без @types: локальная декларация src/d3-format.d.ts — пакеты вне утверждённого checkpoint-списка не ставятся
 - Постоянное правило (пользователь, 2026-11-02, checkpoint 01-01): store-библиотеки не вводить без явного вопроса пользователю с обоснованием (перед добавлением любой store-библиотеки в любом плане/фазе — вопрос с детальным обоснованием «зачем»)
+- [Phase 01]: [01-02] План Б §5.5: глифы ₁₂/⊙/←/→ отсутствуют в JetBrains Mono/Inter → генератор на ASCII-индексы + <sub>-рендер UI; ∂ оставлен Unicode (D-06) с системным фолбэком; числа трейса бит-идентичны
+- [Phase 01]: [01-02] Accent-тинт изменившегося числа = 10% (must_haves плана; Color-секция UI-SPEC говорила 20%) — зафиксировать единое значение в 01-DESIGN-TOKENS.md (01-03)
+- [Phase 01]: [01-02] Чистая модель вида шага (stepRows.ts: потолки ≤7/≤30, highlight) отделена от рендера и покрыта юнит-тестами по всем 14 шагам трейса
 
 ### Pending Todos
 
@@ -91,6 +95,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-11-02T12:35:03.559Z
-Stopped at: Completed 01-01-PLAN.md
+Last session: 2026-11-02T12:59:07.391Z
+Stopped at: Completed 01-02-PLAN.md
 Resume file: None
