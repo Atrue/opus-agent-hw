@@ -37,11 +37,13 @@
   --diag-scale: 1;    /* масштаб подписей диаграммы → 1.25 в .lecture (план 01-03) */
 }
 
-/* Лекционный режим (D-06): класс на корне, без JS-пересчёта layout. */
+/* Лекционный режим (D-06): класс на корне, без JS-пересчёта layout.
+   --edge-scale ×2 — толщина SVG-рёбер; --diag-scale 1.25 — подписи диаграммы. */
 .lecture {
   --num-size: 32px;
   --ui-size: 20px;
   --diag-scale: 1.25;
+  --edge-scale: 2;
 }
 
 /*
@@ -141,4 +143,65 @@ sub { /* подстрочные индексы (план Б §5.5: ASCII z1 + <s
 }
 .value-unchanged { /* неизменившееся: gray-500 */
   color: #6B7280;
+}
+
+/* SVG-диаграмма 2-3-1 (Interaction Contract). Толщина ребра 1.5–4px ∝ |w|
+   задаётся инлайн-переменной --w; лекционный режим умножает её только
+   CSS-переменной --edge-scale — без JS-пересчёта layout. */
+.diag-edge {
+  stroke-linecap: round;
+  stroke-width: calc(var(--w) * var(--edge-scale, 1));
+}
+.diag-edge-casing { /* обводка активной op: #E69F00, +3px к толщине ребра */
+  stroke-linecap: round;
+  stroke-width: calc((var(--w) + 3) * var(--edge-scale, 1));
+}
+.diag-edge-label { /* подпись веса: скрыта по умолчанию, видна на активной op и hover */
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: calc(14px * var(--diag-scale)); /* Diagram label: 14px → 17.5px в .lecture */
+  fill: #111827;
+  opacity: 0;
+  paint-order: stroke;
+  stroke: #FFFFFF;
+  stroke-width: 3px;
+}
+.diag-edge-g.active .diag-edge-label,
+.diag-edge-g:hover .diag-edge-label {
+  opacity: 1;
+}
+.diag-node-label {
+  font-family: var(--font-mono);
+  font-size: calc(14px * var(--diag-scale));
+  fill: #111827;
+}
+.diag-hit {
+  cursor: pointer;
+}
+.diag-hit:focus-visible {
+  outline: 2px solid var(--color-phase-fwd);
+  outline-offset: 2px;
+}
+
+/* Exact-repr в NumberDrilldown: отдельная строка с горизонтальным скроллом
+   внутри панели (UI Considerations: overflow). */
+.exact-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.exact-value {
+  overflow-x: auto;
+  white-space: nowrap;
+  color: #111827;
+}
+.terminal-panel { /* граница графа (шаг 12, ∂L/∂x) — терминальная панель, не пустой экран */
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px dashed #6B7280;
+  background: #F9FAFB;
 }
