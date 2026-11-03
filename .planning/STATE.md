@@ -3,11 +3,11 @@ gsd_state_version: "1.0"
 current_phase: "01.1"
 current_phase_name: Архитектурный рефакторинг R1–R5
 status: executing
-stopped_at: Completed 01.1-04-PLAN.md (интерактивность R5)
-last_updated: "2026-11-03T18:12:19.129Z"
+stopped_at: Completed 01.1-05-PLAN.md
+last_updated: "2026-11-03T18:19:56.265Z"
 last_activity: 2026-11-03
 last_activity_desc: Phase 01.1 execution started
-state_head: a371a1b73cdf5e8b1d9a89cb46afe715b024676a
+state_head: ea177ab1d55f305f40d4103024e9dc008202e7be
 progress:
   total_phases: 5
   completed_phases: 0
@@ -63,6 +63,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01.1 P02 | 171 min | 2 tasks | 9 files |
 | Phase 01.1 P03 | 13 min | 3 tasks | 11 files |
 | Phase 01.1 P04 | 25 min | 2 tasks | 11 files |
+| Phase 01.1 P05 | 4 min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -100,6 +101,8 @@ Recent decisions affecting current work:
 - [Phase 01.1]: [01.1-03] oxlint negation '!**/etalon-constants': plain-TS эталон-модуль — не deep-импорт тензорной библиотеки; требуется планом для e2e, границы движка не сужаются
 - [Phase 01.1]: [01.1-04] Поток вычислений R5 — CSS-only «бегущий пунктир» с направлением по фазе (data-flow корня svg + один селектор); @floating-ui/react 0.27.20: план требовал несуществующую «1.x», установлена фактическая актуальная (та же org/API R5, +14.58 KB gz) — эмпирическая сверка реестра показала dist-tags.latest=0.27.20 — цифра «1.x» в плане была ошибкой о реестре; легитимность по T-01.1-06 (maintainers fezvrasta/atomiks, MIT, 33.7M/нед) сверена до установки
 - [Phase 01.1]: [01.1-04] e2e-детерминизм — два рычага: emulateMedia reducedMotion reduce (гасит анимации) + deviceScaleFactor 2 (полупиксельные скругления кнопок footer растеризуются недетерминированно между загрузками; DPR 2 делает полупиксели целыми) — двойные прогоны бит-идентичны — плановая ручная сверка «e2e дважды» поймала дрожание AA на y=744.5 (h-[72px] border-box с border-t → контент 71px); фикс в тест-инфраструктуре, layout приложения не тронут
+- [Phase 01.1]: [01.1-05] Порядок «захват → удаление» соблюдён: precondition-гейт подтвердил зелёность эталон-теста (3/3) и 0 ссылок на JSON до git rm; повторная сверка с Python после удаления невозможна by design (R3) — самосогласованность держат инварианты
+- [Phase 01.1]: [01.1-05] Док-комментарии живого кода (value.ts, expanders.test.ts) переформулированы без имени удалённого генератора — must_have «ни одной ссылки на конвейер в src/tests»; глоссарий PROJECT.md сверен с фактическими идентификаторами кода (TrainingRun/StepRecord/useRunSlice)
 
 ### Pending Todos
 
@@ -123,6 +126,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-11-03T18:12:19.104Z
-Stopped at: Completed 01.1-04-PLAN.md (интерактивность R5)
+Last session: 2026-11-03T18:19:56.240Z
+Stopped at: Completed 01.1-05-PLAN.md
 Resume file: None
