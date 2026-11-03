@@ -1,14 +1,15 @@
 import { useEffect } from 'react'
-import { player } from '../player/store'
+import { run } from '../run/runState'
 
 /**
- * Контролы навигации (Interaction Contract): «К началу» / «Назад» / «Шаг»
- * (primary CTA — рамка 2px #E69F00, фон белый). Disabled-границы: «Шаг» на
- * шаге 14 (opacity 50%, cursor not-allowed), «Назад» на шаге 1. Клавиатура:
- * → / Space / PgDn → next, ← / PgUp → prev, Esc → закрыть drill. Смена шага
- * мгновенная, без анимаций (A-8). Focus-ring 2px #0072B2 offset 2px — в CSS.
+ * Контролы прогона (R3, forward-only): [Сброс] (детерминированный старт,
+ * без подтверждения — состояние полностью восстанавливается прогоном) и
+ * [Шаг →] (primary CTA — рамка 2px #E69F00): каждое нажатие ИСПОЛНЯЕТ
+ * следующую операцию живого движка. Перехода назад нет ни кнопкой, ни
+ * клавиатурой. Клавиатура: → / Space / PgDn → следующая операция,
+ * Esc → закрыть drill. Focus-ring 2px #0072B2 offset 2px — в CSS.
  */
-export default function StepControls({ isFirst, isLast }: { isFirst: boolean; isLast: boolean }) {
+export default function StepControls() {
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent): void => {
       // Space на сфокусированной кнопке обрабатывает нативный click — не дублируем
@@ -18,15 +19,10 @@ export default function StepControls({ isFirst, isLast }: { isFirst: boolean; is
         case 'PageDown':
         case ' ':
           event.preventDefault()
-          player.next()
-          break
-        case 'ArrowLeft':
-        case 'PageUp':
-          event.preventDefault()
-          player.prev()
+          run.advance()
           break
         case 'Escape':
-          player.closeDrill()
+          run.closeDrill()
           break
       }
     }
@@ -35,32 +31,22 @@ export default function StepControls({ isFirst, isLast }: { isFirst: boolean; is
   }, [])
 
   return (
-    <div className="flex items-center gap-2" role="group" aria-label="Навигация по шагам">
+    <div className="flex items-center gap-2" role="group" aria-label="Управление прогоном">
       <button
         type="button"
         data-testid="btn-reset"
         className="btn btn-secondary ui-label"
-        onClick={() => player.jumpTo(0)}
+        onClick={() => run.reset()}
       >
-        К началу
-      </button>
-      <button
-        type="button"
-        data-testid="btn-prev"
-        className="btn btn-secondary ui-label"
-        onClick={player.prev}
-        disabled={isFirst}
-      >
-        Назад
+        Сброс
       </button>
       <button
         type="button"
         data-testid="btn-next"
         className="btn btn-primary ui-label"
-        onClick={player.next}
-        disabled={isLast}
+        onClick={() => run.advance()}
       >
-        Шаг
+        Шаг →
       </button>
     </div>
   )

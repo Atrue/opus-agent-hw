@@ -1,4 +1,4 @@
-import type { TensorValues, TraceStep } from '../player/types'
+import type { StepRecord, TensorValues } from '../tensor'
 
 /**
  * Чистая модель дефолтного вида шага (без React): какие числа показать,
@@ -13,16 +13,16 @@ export interface NumberRow {
   kind: 'result' | 'grad' | 'input'
   sym: string
   values: number[] // показанные значения
-  hidden: number // скрыто до drill-down (план 01-03)
+  hidden: number // скрыто до drill-down
   changed: boolean
 }
 
-/** «∂L/∂W2» → «dW2», «ŷ» → «yhat»: соответствие ASCII-ключам step.changed генератора. */
+/** «∂L/∂W2» → «dW2», «ŷ» → «yhat»: соответствие ASCII-ключам changed записи. */
 function normalizeSym(sym: string): string {
   return sym.replace('∂L/∂', 'd').replace('ŷ', 'yhat')
 }
 
-function isChangedSym(step: TraceStep, sym: string): boolean {
+function isChangedSym(step: StepRecord, sym: string): boolean {
   const n = normalizeSym(sym)
   return step.changed.some((c) => n === c || n.startsWith(c))
 }
@@ -34,7 +34,7 @@ function flatten(values: TensorValues): number[] {
 }
 
 /** Выходы + градиенты (без дублей) в пределах бюджета ключевых чисел, затем входы. */
-export function buildStepRows(step: TraceStep): NumberRow[] {
+export function buildStepRows(step: StepRecord): NumberRow[] {
   const rows: NumberRow[] = []
   let budget = KEY_NUMBER_CAP
 

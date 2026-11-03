@@ -39,7 +39,13 @@ export class MLP {
     return [this.W1, this.b1, this.W2, this.b2]
   }
 
-  forward(_x: Tensor): MlpForward {
-    throw new Error('MLP.forward: не реализовано (RED)')
+  forward(x: Tensor): MlpForward {
+    const z1p = this.W1.matmul(x)
+    const z1 = z1p.add(this.b1)
+    const a1 = z1.tanh()
+    const z2p = this.W2.matmul(a1)
+    const z2 = z2p.add(this.b2)
+    const yhat = z2.sigmoid()
+    return { z1p, z1, a1, z2p, z2, yhat }
   }
 }

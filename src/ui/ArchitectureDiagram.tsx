@@ -1,17 +1,16 @@
-import { player, trace } from '../player/store'
-import type { TraceStep } from '../player/types'
+import { run, useRunSlice } from '../run/runState'
+import type { StepRecord } from '../tensor'
 import { formatKey } from '../format/numbers'
 
 /**
  * SVG-диаграмма сети 2-3-1 (Interaction Contract): слои слева-направо
- * x (2 узла) → скрытый (3) → ŷ (1); рёбра = веса W₁ (6) и W₂ (3), биасы
- * не рисуются. Цвет ребра — знак веса (neg/pos SVG-токены), толщина
- * 1.5–4px линейно ∝ |w|; числовая подпись ребра скрыта по умолчанию,
- * видна на активной op и по hover (анти-«стена цифр»). Активная op шага:
- * обводка #E69F00 3px + тинт 10%. Клик по узлу/ребру → openDrill(ref).
- * Layout детерминированный, hand-rolled (топология фиксирована);
- * числа не вычисляются — только форматирование (Pattern 1).
- * Лекционный режим: только CSS-переменные (--edge-scale ×2, --diag-scale).
+ * x (2 узла) → скрытый (3) → ŷ (1); рёбра = живые веса прогона W1 (6) и
+ * W2 (3), биасы не рисуются. Цвет ребра — знак веса (neg/pos SVG-токены),
+ * толщина 1.5–4px линейно ∝ |w| — пересчитывается после update-оп;
+ * числовая подпись ребра видна на активной op и по hover (анти-«стена
+ * цифр»). Активная op записи: обводка #E69F00 3px + тинт 10%. Клик по
+ * узлу/ребру → openDrill(ref). Layout детерминированный, hand-rolled.
+ * Подписка на version — веса мутируются в Float64Array на месте (R4 §6.2).
  */
 
 const VIEW_W = 640
@@ -44,26 +43,16 @@ interface EdgeDef {
   to: NodeDef
 }
 
-const W1_EDGES: EdgeDef[] = H_NODES.flatMap((h, j) =>
-  X_NODES.map((x, i) => ({ ref: `W1[${j * 2 + i}]`, w: trace.weights.w1[j]![i]!, from: x, to: h })),
-)
-const W2_EDGES: EdgeDef[] = H_NODES.map((h, j) => ({ ref: `W2[${j}]`, w: trace.weights.w2[0]![j]!, from: h, to: Y_NODE }))
-const EDGES = [...W1_EDGES, ...W2_EDGES]
-
-/** Толщина 1.5–4px линейно ∝ |w| (максимум по всем 9 весам трейса). */
-const MAX_ABS_W = Math.max(...EDGES.map((e) => Math.abs(e.w)))
-const edgeWidth = (w: number): number => 1.5 + (2.5 * Math.abs(w)) / MAX_ABS_W
-
-/** Активная топология шага (op + layer): какие узлы/рёбра подсвечивать. */
-function activeGeometry(step: TraceStep): { nodes: Set<string>; edges: Set<string> } {
+/** Активная топология операции (op + layer): какие узлы/рёбра подсвечивать. */
+function activeGeometry(record: StepRecord): { nodes: Set<string>; edges: Set<string> } {
   const xIds = X_NODES.map((n) => n.id)
   const hIds = H_NODES.map((n) => n.id)
-  const w1Refs = W1_EDGES.map((e) => e.ref)
-  const w2Refs = W2_EDGES.map((e) => e.ref)
+  const w1Refs = ['W1[0]', 'W1[1]', 'W1[2]', 'W1[3]', 'W1[4]', 'W1[5]']
+  const w2Refs = ['W2[0]', 'W2[1]', 'W2[2]']
   const nodes = new Set<string>()
   const edges = new Set<string>()
-  const L = step.layer
-  switch (step.op) {
+  const L = record.layer
+  switch (record.op) {
     case 'matvec':
       if (L === 1) {
         w1Refs.forEach((r) => edges.add(r))
@@ -104,7 +93,7 @@ function activeGeometry(step: TraceStep): { nodes: Set<string>; edges: Set<strin
       w1Refs.forEach((r) => edges.add(r))
       w2Refs.forEach((r) => edges.add(r))
       break
-    default: // summary — ничего не активно
+    default:
       break
   }
   return { nodes, edges }
@@ -131,7 +120,7 @@ function SvgSubLabel({ text, x, y, className }: { text: string; x: number; y: nu
   )
 }
 
-function EdgeView({ edge, active }: { edge: EdgeDef; active: boolean }) {
+function EdgeView({ edge, active, maxAbsW }: { edge: EdgeDef; active: boolean; maxAbsW: number }) {
   const { from, to, w, ref } = edge
   const mx = (from.cx + to.cx) / 2
   const my = (from.cy + to.cy) / 2
@@ -142,7 +131,7 @@ function EdgeView({ edge, active }: { edge: EdgeDef; active: boolean }) {
   const lx = mx + (dy / len) * 14
   const ly = my - (dx / len) * 14
   const sign = w < 0 ? 'var(--color-neg)' : 'var(--color-pos)'
-  const open = (): void => player.openDrill(ref)
+  const open = (): void => run.openDrill(ref)
   const onKeyDown = (event: React.KeyboardEvent): void => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault()
@@ -167,7 +156,7 @@ function EdgeView({ edge, active }: { edge: EdgeDef; active: boolean }) {
         x2={to.cx - R}
         y2={to.cy}
         className="diag-edge"
-        style={{ stroke: sign, ['--w' as string]: edgeWidth(w) }}
+        style={{ stroke: sign, ['--w' as string]: edgeWidth(w, maxAbsW) }}
       />
       <text x={lx} y={ly} textAnchor="middle" className="diag-edge-label">
         {formatKey(w)}
@@ -191,7 +180,7 @@ function EdgeView({ edge, active }: { edge: EdgeDef; active: boolean }) {
 }
 
 function NodeView({ node, active }: { node: NodeDef; active: boolean }) {
-  const open = (): void => player.openDrill(node.id)
+  const open = (): void => run.openDrill(node.id)
   const onKeyDown = (event: React.KeyboardEvent): void => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault()
@@ -228,18 +217,39 @@ function NodeView({ node, active }: { node: NodeDef; active: boolean }) {
   )
 }
 
-export default function ArchitectureDiagram({ step }: { step: TraceStep }) {
-  const active = activeGeometry(step)
+/** Толщина 1.5–4px линейно ∝ |w| (максимум по текущим 9 живым весам). */
+function edgeWidth(w: number, maxAbsW: number): number {
+  return 1.5 + (2.5 * Math.abs(w)) / maxAbsW
+}
+
+function buildEdges(): { edges: EdgeDef[]; maxAbsW: number } {
+  const w1 = run.model.W1.data // row-major [3,2]
+  const w2 = run.model.W2.data // row-major [1,3]
+  const w1Edges: EdgeDef[] = H_NODES.flatMap((h, j) =>
+    X_NODES.map((x, i) => ({ ref: `W1[${j * 2 + i}]`, w: w1[j * 2 + i]!, from: x, to: h })),
+  )
+  const w2Edges: EdgeDef[] = H_NODES.map((h, j) => ({ ref: `W2[${j}]`, w: w2[j]!, from: h, to: Y_NODE }))
+  const edges = [...w1Edges, ...w2Edges]
+  const maxAbsW = Math.max(...edges.map((e) => Math.abs(e.w)), 1e-12)
+  return { edges, maxAbsW }
+}
+
+export default function ArchitectureDiagram({ record }: { record: StepRecord | null }) {
+  // версия прогона: перерисовка на каждую операцию (веса мутируются на месте)
+  const version = useRunSlice((r) => r.version)
+  const { edges, maxAbsW } = buildEdges()
+  const active = record !== null ? activeGeometry(record) : { nodes: new Set<string>(), edges: new Set<string>() }
   return (
     <svg
       data-testid="architecture-diagram"
+      data-version={version}
       viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
       className="h-full w-full"
       role="img"
-      aria-label="Диаграмма сети 2-3-1: входы x, скрытый слой a1, выход ŷ; рёбра — веса"
+      aria-label="Диаграмма сети 2-3-1: входы x, скрытый слой a1, выход ŷ; рёбра — живые веса"
     >
-      {EDGES.map((edge) => (
-        <EdgeView key={edge.ref} edge={edge} active={active.edges.has(edge.ref)} />
+      {edges.map((edge) => (
+        <EdgeView key={edge.ref} edge={edge} active={active.edges.has(edge.ref)} maxAbsW={maxAbsW} />
       ))}
       {X_NODES.map((n) => (
         <NodeView key={n.id} node={n} active={active.nodes.has(n.id)} />

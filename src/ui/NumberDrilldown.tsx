@@ -1,19 +1,17 @@
-import { player, trace } from '../player/store'
-import type { Drill } from '../player/store'
-import type { TensorValues, TraceStep } from '../player/types'
+import { run, type Drill } from '../run/runState'
+import type { StepRecord, TensorValues } from '../tensor'
 import { exactRepr, formatKey } from '../format/numbers'
 import SubscriptText from './SubscriptText'
 
 /**
  * NumberDrilldown (Interaction Contract): открывается в слоте StepPanel
  * (замещает содержимое) по клику на число в StepPanel или узел/ребро
- * диаграммы. Состав: exact-repr (отдельная строка с горизонтальным
- * скроллом) + отформатированное значение + формула + provenance
- * (provenance в данных — Pattern 3, чистый data lookup); на backward-шагах
- * — раскрытие цепного правила на 1 уровень (формула + восходящие входы).
- * Граница графа (шаг 12, ∂L/∂x) — терминальная панель по Copywriting
- * Contract, не пустой экран. Закрытие: backlink «← к шагу», Esc,
- * автосброс при смене шага (в transition стора).
+ * диаграммы. Состав: exact-repr + отформатированное значение + формула +
+ * provenance; на backward-опах — раскрытие цепного правила на 1 уровень.
+ * resolveRef работает над ТЕКУЩЕЙ записи прогона + живыми глобальными
+ * тензорами (веса модели, вход/метка активного сэмпла) — только lookup,
+ * без вычислений. Граница графа (∂L/∂x) — терминальная панель, не пустой
+ * экран. Закрытие: backlink «← к шагу», Esc, автосброс при смене операции.
  */
 
 const TERMINAL_BODY = 'Градиент дальше не распространяется: x — старт цепного правила. Смотри ∂L/∂W1 и ∂L/∂b1.'
@@ -31,36 +29,35 @@ interface ResolvedNumber {
   provenance: string
 }
 
-/** Provenance из данных: ищем первое упоминание символа во входах всех шагов. */
-function provenanceFromData(sym: string): string | undefined {
-  for (const step of trace.steps) {
-    const input = step.inputs.find((i) => i.sym === sym)
-    if (input?.provenance !== undefined) return input.provenance
+const PROV_WEIGHT = 'вес модели (живое значение)'
+const PROV_INPUT = 'входные данные — граница графа'
+const PROV_TARGET = 'метка — граница графа'
+
+/** Живые глобальные тензоры прогона: веса модели + вход/метка активного сэмпла. */
+function globalTensors(): Record<string, { values: TensorValues; provenance: string }> {
+  const cursor = run.activeCursor
+  return {
+    W1: { values: Array.from(run.model.W1.data), provenance: PROV_WEIGHT },
+    b1: { values: Array.from(run.model.b1.data), provenance: PROV_WEIGHT },
+    W2: { values: Array.from(run.model.W2.data), provenance: PROV_WEIGHT },
+    b2: { values: Array.from(run.model.b2.data), provenance: PROV_WEIGHT },
+    x: { values: Array.from(cursor.x.data), provenance: PROV_INPUT },
+    y: { values: Array.from(cursor.y.data), provenance: PROV_TARGET },
   }
-  return undefined
 }
 
-const GLOBAL_TENSORS: Record<string, TensorValues> = {
-  W1: trace.weights.w1,
-  b1: trace.weights.b1,
-  W2: trace.weights.w2,
-  b2: trace.weights.b2,
-  x: trace.sample.x,
-  y: [trace.sample.y],
-}
-
-/** Разрешение ref → число: текущий шаг (grads → outputs → inputs), затем
- *  глобальные тензоры трейса (веса/вход). Только lookup, без вычислений. */
-function resolveRef(step: TraceStep, ref: string): ResolvedNumber | null {
+/** Разрешение ref → число: текущая запись (grads → outputs → inputs), затем
+ *  живые глобальные тензоры прогона. Только lookup, без вычислений. */
+function resolveRef(record: StepRecord, ref: string): ResolvedNumber | null {
   const m = /^(.+)\[(\d+)\]$/.exec(ref)
   const sym = m ? m[1]! : ref
   const index = m ? Number(m[2]) : 0
 
-  const stepProvenance = `шаг ${step.index + 1} (${step.op})`
+  const stepProvenance = `шаг ${record.index + 1} (${record.op})`
   const local: { values: TensorValues; provenance: string }[] = []
-  if (step.grads !== null && sym in step.grads) local.push({ values: step.grads[sym]!, provenance: stepProvenance })
-  if (step.outputs.sym === sym) local.push({ values: step.outputs.values, provenance: stepProvenance })
-  const input = step.inputs.find((i) => i.sym === sym)
+  if (record.grads !== null && sym in record.grads) local.push({ values: record.grads[sym]!, provenance: stepProvenance })
+  if (record.outputs.sym === sym) local.push({ values: record.outputs.values, provenance: stepProvenance })
+  const input = record.inputs.find((i) => i.sym === sym)
   if (input !== undefined) local.push({ values: input.values, provenance: input.provenance ?? stepProvenance })
 
   if (local.length > 0) {
@@ -68,12 +65,11 @@ function resolveRef(step: TraceStep, ref: string): ResolvedNumber | null {
     const i = Math.min(Math.max(index, 0), all.length - 1)
     return { sym, value: all[i]!, provenance: local[0]!.provenance }
   }
-  const globalValues = GLOBAL_TENSORS[sym]
-  const globalProvenance = provenanceFromData(sym)
-  if (globalValues === undefined || globalProvenance === undefined) return null
-  const all = flatten(globalValues)
+  const globalEntry = globalTensors()[sym]
+  if (globalEntry === undefined) return null
+  const all = flatten(globalEntry.values)
   const i = Math.min(Math.max(index, 0), all.length - 1)
-  return { sym, value: all[i]!, provenance: globalProvenance }
+  return { sym, value: all[i]!, provenance: globalEntry.provenance }
 }
 
 function DrillHeading({ sym, value }: { sym: string; value: number }) {
@@ -84,7 +80,7 @@ function DrillHeading({ sym, value }: { sym: string; value: number }) {
   )
 }
 
-/** Терминальная панель границы графа (шаг 12, ∂L/∂x) — Copywriting Contract. */
+/** Терминальная панель границы графа (∂L/∂x) — Copywriting Contract. */
 function TerminalPanel({ resolved }: { resolved: ResolvedNumber }) {
   return (
     <div data-testid="drill-terminal" className="terminal-panel">
@@ -95,10 +91,10 @@ function TerminalPanel({ resolved }: { resolved: ResolvedNumber }) {
         <SubscriptText text={TERMINAL_BODY} />
       </p>
       <div className="flex flex-wrap items-baseline gap-x-4">
-        <button type="button" className="value-btn num text-neutral-900" onClick={() => player.openDrill('∂L/∂W1[0]')}>
+        <button type="button" className="value-btn num text-neutral-900" onClick={() => run.openDrill('∂L/∂W1[0]')}>
           <SubscriptText text="∂L/∂W1" />
         </button>
-        <button type="button" className="value-btn num text-neutral-900" onClick={() => player.openDrill('∂L/∂b1[0]')}>
+        <button type="button" className="value-btn num text-neutral-900" onClick={() => run.openDrill('∂L/∂b1[0]')}>
           <SubscriptText text="∂L/∂b1" />
         </button>
       </div>
@@ -110,22 +106,22 @@ function TerminalPanel({ resolved }: { resolved: ResolvedNumber }) {
   )
 }
 
-export default function NumberDrilldown({ step, drill }: { step: TraceStep; drill: Drill }) {
-  const resolved = resolveRef(step, drill.ref)
+export default function NumberDrilldown({ record, drill }: { record: StepRecord; drill: Drill }) {
+  const resolved = resolveRef(record, drill.ref)
   const terminal = resolved !== null && resolved.sym === '∂L/∂x'
-  const isBackward = step.phase === 'backward'
+  const isBackward = record.phase === 'backward'
 
   return (
     <div
       data-testid="drill-panel"
       className="flex h-full flex-col gap-4 overflow-auto rounded-lg border border-neutral-200 bg-neutral-50 p-4"
     >
-      <button type="button" data-testid="drill-back" className="btn btn-secondary ui-label self-start" onClick={player.closeDrill}>
+      <button type="button" data-testid="drill-back" className="btn btn-secondary ui-label self-start" onClick={() => run.closeDrill()}>
         ← к шагу
       </button>
 
       {resolved === null ? (
-        <p className="ui-text text-neutral-500">Число не найдено в трейсе.</p>
+        <p className="ui-text text-neutral-500">Число не найдено в текущей операции прогона.</p>
       ) : terminal ? (
         <TerminalPanel resolved={resolved} />
       ) : (
@@ -140,7 +136,7 @@ export default function NumberDrilldown({ step, drill }: { step: TraceStep; dril
           <div className="flex flex-col gap-1">
             <span className="ui-label text-neutral-500">формула</span>
             <p data-testid="drill-formula" className="num text-neutral-900">
-              <SubscriptText text={step.formula} />
+              <SubscriptText text={record.formula} />
             </p>
           </div>
 
@@ -151,7 +147,7 @@ export default function NumberDrilldown({ step, drill }: { step: TraceStep; dril
           {isBackward && (
             <div data-testid="drill-chain" className="flex flex-col gap-1">
               <span className="ui-label text-neutral-500">цепное правило — уровень выше</span>
-              {step.inputs.map((input) => (
+              {record.inputs.map((input) => (
                 <p key={input.sym} className="num text-neutral-500">
                   <SubscriptText text={input.sym} /> = {flatten(input.values).map(formatKey).join(', ')}
                 </p>

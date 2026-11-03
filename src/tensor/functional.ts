@@ -4,13 +4,23 @@
  */
 
 import { bceForward, bceGradP } from './ops'
-import { Tensor } from './tensor'
+import { accumulate, Tensor } from './tensor'
 
 export const F = {
   /** L = −[y·ln ŷ + (1−y)·ln(1−ŷ)]; backward: ∂L/∂ŷ = (ŷ−y)/(ŷ(1−ŷ)). */
-  bce(_pred: Tensor, _target: Tensor): Tensor {
-    void bceForward
-    void bceGradP
-    throw new Error('F.bce: не реализовано (RED)')
+  bce(pred: Tensor, target: Tensor): Tensor {
+    if (pred.shape.length !== 1 || pred.shape[0] !== 1 || target.shape.length !== 1 || target.shape[0] !== 1) {
+      throw new Error('F.bce: ожидаются скаляры [1]')
+    }
+    const out = new Tensor(bceForward(pred.data, target.data), [1], {
+      op: 'bce',
+      parents: [pred, target],
+      requiresGrad: pred.requiresGrad || target.requiresGrad,
+    })
+    Tensor.defineBackward(out, () => {
+      if (out.grad === null) return
+      accumulate(pred, bceGradP(pred.data, target.data))
+    })
+    return out
   },
 }
