@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: "01.1"
 current_phase_name: Архитектурный рефакторинг R1–R5
 status: executing
-stopped_at: Completed 01.1-01-PLAN.md (живой движок + forward-only прогон + эталон-мостик + границы)
-last_updated: "2026-11-03T14:03:33.524Z"
+stopped_at: Completed 01.1-02-PLAN.md (экспандеры drill-down + нейминг R2)
+last_updated: "2026-11-03T17:10:11.936Z"
 last_activity: 2026-11-03
 last_activity_desc: Phase 01.1 execution started
-state_head: 6eb0b4497c8047534e2764cc3eff1a742a3b3c33
+state_head: 723de4c861d77e102c7193e528482c6c06fd5770
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 9
-  completed_plans: 3
+  completed_plans: 5
   percent: 0
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-02)
 ## Current Position
 
 Phase: 01.1 (Архитектурный рефакторинг R1–R5) — EXECUTING
-Plan: 2 of 5
+Plan: 3 of 5
 Status: Ready to execute
 Last activity: 2026-11-03 — Phase 01.1 execution started
 
@@ -60,6 +60,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P02 | 19 min | 2 tasks | 13 files |
 | Phase 01 P03 | 14 min | 2 tasks | 11 files |
 | Phase 01.1 P01 | 35 min | 2 tasks | 30 files |
+| Phase 01.1 P02 | 171 min | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -87,6 +88,9 @@ Recent decisions affecting current work:
 - [Phase 01.1]: [01.1-01] Эталон-мостик NFR-02: контрольные константы 13 оп сэмпла 1 захардкожены в tests/tensor/etalon-constants.ts (plain-TS без тест-раннеров, источник не упоминается — гейт NO-JSON-REFS 01.1-05); etalon-тест сверяет через buildStepRecord — тот же путь, что рендерит UI
 - [Phase 01.1]: [01.1-01] Граница src/tensor/ в oxlint: regex-паттерны без lookahead (Rust regex их не поддерживает — проверено эмпирически) — deep-импорты закрыты group-глобами с negation '!./tensor/*' для тест-хелперов, внутренняя изоляция — парой '^[^.]' и '^\.\./'
 - [Phase 01.1]: [01.1-01] zeroGrad на границе сэмплов (в конструкторе SampleCursor), а не в sgd-опе: градиенты остаются живыми после update-опы — запись шага sgd читает ∂L/∂W2[0,0] честно
+- [Phase 01.1]: [01.1-02] Экспандеры drill-down — view-слой над снапшотами чисел: expandScalar((операция, операнды, индекс)) строит Value-цепочку только по требованию (getter-кэш); порядок суммирования зеркалит ops.ts, инвариант «drill-down = движок» per-op в CI (допуск 1e-12)
+- [Phase 01.1]: [01.1-02] value.ts — порт gen_mock_trace.py (+div для bce-grad, op-метка '-' для рендера); строки формул drill-down — только из чисел сценария (T-01.1-03), 4 значащие цифры, display-минус
+- [Phase 01.1]: [01.1-02] R2: testid «step-panel» не синхронизируется с именем компонента (селектор описывает содержимое экрана); UI-строки, e2e-спека, aria-label — 0 правок при переименовании OperationPanel/operationRows
 
 ### Pending Todos
 
@@ -110,6 +114,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-11-03T14:03:33.502Z
-Stopped at: Completed 01.1-01-PLAN.md (живой движок + forward-only прогон + эталон-мостик + границы)
+Last session: 2026-11-03T17:10:11.912Z
+Stopped at: Completed 01.1-02-PLAN.md (экспандеры drill-down + нейминг R2)
 Resume file: None

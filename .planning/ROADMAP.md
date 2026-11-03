@@ -51,14 +51,14 @@ Plans:
 **Goal:** Живой тензорный движок (src/tensor/, PyTorch-имена, эталоны NFR-02 на юнит-константах) заменяет JSON-трейс; forward-only UX с бесконечными эпохами, fast-forward и историей обучения (график лосса + таблица весов); решения R1–R5 применены, Python-конвейер удалён
 **Requirements**: UX-05, UX-06
 **Depends on:** Phase 1
-**Plans:** 1/5 plans executed
+**Plans:** 2/5 plans executed
 
 Plans:
 **Wave 1**
 - [x] 01.1-01-PLAN.md — Трейсер: тензорная библиотека src/tensor/ (R1) + живой корень прогона src/run/ (R4) + UI на числах движка; forward-only контролы; эталон-константы NFR-02 сняты с xor-trace.json и захардкожены; инварианты «пошагово = FF», детерминизм; границы библиотеки (oxlint + CI)
 
 **Wave 2** *(blocked on Wave 1 completion)*
-- [ ] 01.1-02-PLAN.md — Скалярные экспандеры drill-down (value.ts + expanders.ts) с инвариантом «drill-down = движок» per-op; нейминг R2 (OperationPanel/operationRows, чистка словаря, 0 правок UI-строк и e2e-селекторов)
+- [x] 01.1-02-PLAN.md — Скалярные экспандеры drill-down (value.ts + expanders.ts) с инвариантом «drill-down = движок» per-op; нейминг R2 (OperationPanel/operationRows, чистка словаря, 0 правок UI-строк и e2e-селекторов)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 - [ ] 01.1-03-PLAN.md — Эпохи R3: fast-forward «Запустить эпоху», экран завершения эпохи, бесконечные эпохи; история UX-05 (график лосса) + UX-06 (таблица весов по эпохам); полная e2e (6 проверок) + скриншот-self-check 28
