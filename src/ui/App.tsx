@@ -3,6 +3,7 @@ import { XOR_SCENARIO } from '../run/scenario'
 import { parseHash, toHash } from '../run/url'
 import type { Phase } from '../tensor'
 import ArchitectureDiagram from './ArchitectureDiagram'
+import EpochSummary from './EpochSummary'
 import NarrativeLine from './NarrativeLine'
 import NumberDrilldown from './NumberDrilldown'
 import OperationPanel from './OperationPanel'
@@ -13,7 +14,8 @@ import StepControls from './StepControls'
  * header 56px (заголовок «XOR — backprop по шагам» слева; справа индикатор
  * «Эпоха N · пример K · шаг M» + бейдж фазы + toggle «Лекционный режим»),
  * main 55% слот диаграммы / 45% OperationPanel (панель операции — уровень
- * иерархии DOCS-02, словарь R2), gap 32px, bottom bar 72px
+ * иерархии DOCS-02, словарь R2; на границе эпохи слот занимает экран
+ * завершения эпохи EpochSummary), gap 32px, bottom bar 72px
  * (контролы слева, нарратив справа). Слоты фиксированы (проекторная
  * стабильность). Лекционный режим — класс .lecture на корне (CSS-переменные).
  *
@@ -50,6 +52,7 @@ export default function App() {
   const sampleNumber = useRunSlice((r) => r.sampleIndex + 1)
   const stepNumber = useRunSlice((r) => r.stepInSample)
   const mode = useRunSlice((r) => r.mode)
+  const screen = useRunSlice((r) => r.screen)
   const record = useRunSlice((r) => r.currentRecord)
   const drill = useRunSlice((r) => r.drill)
   const phase = record?.phase ?? XOR_SCENARIO.opMeta[0]!.phase
@@ -93,7 +96,9 @@ export default function App() {
           <ArchitectureDiagram record={record} />
         </section>
         <section aria-label="Панель шага" className="w-[45%]">
-          {drill !== null && record !== null ? (
+          {screen === 'epoch-end' ? (
+            <EpochSummary />
+          ) : drill !== null && record !== null ? (
             <NumberDrilldown record={record} drill={drill} />
           ) : (
             <OperationPanel record={record} />

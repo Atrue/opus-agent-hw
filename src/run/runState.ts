@@ -12,7 +12,7 @@
  */
 
 import { useSyncExternalStore } from 'react'
-import { gradIo, MLP, SampleCursor, tensorIo, type Phase, type StepRecord, type Tensor, type TensorIo } from '../tensor'
+import { gradIo, MLP, OPS_PER_SAMPLE, SampleCursor, tensorIo, type Phase, type StepRecord, type Tensor, type TensorIo } from '../tensor'
 import { SAMPLE_COUNT, XOR_SCENARIO } from './scenario'
 
 export type Mode = 'default' | 'lecture'
@@ -57,6 +57,11 @@ function scalarIo(sym: string, values: readonly number[], provenance?: string): 
 function gradVec(t: Tensor): number[] {
   if (t.grad === null) throw new Error(`gradVec: у тензора [${t.shape.join(',')}] нет градиента`)
   return Array.from(t.grad)
+}
+
+/** Плоские 13 весов модели в порядке снапшота: W1 (6), b1 (3), W2 (3), b2 (1). */
+function flatWeights(m: MLP): number[] {
+  return [...Array.from(m.W1.data), ...Array.from(m.b1.data), ...Array.from(m.W2.data), ...Array.from(m.b2.data)]
 }
 
 /**
@@ -238,16 +243,20 @@ export class TrainingRun {
   /** Снапшоты плоских 13 весов: [0] = стартовые константы, далее границы эпох. */
   weightSnapshots: readonly number[][] = []
   private cursor: SampleCursor
+  /** Recorder-флаг (R1): onOp-колбэк курсора пишет StepRecord только в true. */
+  private recording = true
   private readonly listeners = new Set<Listener>()
 
   constructor() {
     this.model = new MLP(XOR_SCENARIO.startWeights)
     this.cursor = this.newCursor(0)
+    this.weightSnapshots = [flatWeights(this.model)] // эпоха 0 = стартовые константы
   }
 
-  /** Номер следующей операции в сэмпле, 1-based (курсор индикатора R3). */
+  /** Номер следующей операции в сэмпле, 1-based (курсор индикатора R3);
+   *  на завершённом сэмпле (экран эпохи) — 13, без «шага 14». */
   get stepInSample(): number {
-    return this.cursor.opIndex + 1
+    return Math.min(this.cursor.opIndex + 1, OPS_PER_SAMPLE)
   }
 
   /** Курсор активного сэмпла — живые входы/метка для drill-down. */
@@ -255,26 +264,96 @@ export class TrainingRun {
     return this.cursor
   }
 
-  /** Исполняет следующую операцию движка (record:true) и кладёт StepRecord. */
-  advance(): void {
+  /** Исполняет следующую операцию движка; record:true пишет StepRecord
+   *  (пошаговый режим), record:false — пакетный fast-forward. Код исполнения
+   *  один (cursor.advance()) — числа идентичны в обоих режимах (R3). */
+  private execOp(record: boolean): void {
     const cursor = this.cursor
-    cursor.advance() // onOp-рекордер внутри пишет currentRecord
-    this.drill = null
-    if (cursor.done) {
-      this.sampleIndex += 1
-      if (this.sampleIndex >= SAMPLE_COUNT) {
-        this.sampleIndex = 0
-        this.epoch += 1 // эпохи бесконечны (R3)
-      }
-      this.cursor = this.newCursor(this.sampleIndex)
+    const op = cursor.opIndex
+    this.recording = record
+    cursor.advance() // onOp-рекордер пишет currentRecord только при recording
+    if (op === 6) {
+      // лосс-точка сэмпла пишется на его bce-опе — в любом режиме (R3)
+      this.epochLossPoints = [...this.epochLossPoints, cursor.tensors.L!.data[0]!]
+      const yhat = cursor.tensors.yhat!.data[0]!
+      const y = cursor.y.data[0]!
+      this.epochCorrect = [...this.epochCorrect, (yhat >= 0.5) === (y >= 0.5)]
     }
+  }
+
+  /** Исполняет следующую операцию (record:true); на границе сэмплов меняет
+   *  курсор, на границе эпохи открывает экран завершения эпохи (R3). */
+  advance(): void {
+    if (this.screen === 'epoch-end') {
+      this.startNextEpoch()
+      return
+    }
+    this.execOp(true)
+    this.drill = null
+    this.afterOpBoundary()
     this.version += 1
     this.emit()
   }
 
-  /** Fast-forward «Запустить эпоху ⏩» (R3): весь остаток эпохи пакетно, record:false. */
+  /** Fast-forward «Запустить эпоху ⏩»: весь остаток эпохи пакетно с
+   *  record:false (тот же код исполнения, что advance()) и экран эпохи. */
   runEpoch(): void {
-    throw new Error('runEpoch: не реализовано (RED)')
+    if (this.screen === 'epoch-end') return
+    while (!this.cursor.done) this.execOp(false)
+    while (this.sampleIndex + 1 < SAMPLE_COUNT) {
+      this.sampleIndex += 1
+      this.cursor = this.newCursor(this.sampleIndex)
+      while (!this.cursor.done) this.execOp(false)
+    }
+    this.recording = true
+    this.drill = null
+    this.finalizeEpoch()
+    this.version += 1
+    this.emit()
+  }
+
+  /** Граница сэмпла/эпохи после исполнения операции пошагово. */
+  private afterOpBoundary(): void {
+    if (!this.cursor.done) return
+    const next = this.sampleIndex + 1
+    if (next >= SAMPLE_COUNT) {
+      this.finalizeEpoch() // экран завершения эпохи — продолжение по advance()
+    } else {
+      this.sampleIndex = next
+      this.cursor = this.newCursor(next)
+    }
+  }
+
+  /** Сводка эпохи + снапшот весов на границе + переход на экран эпохи. */
+  private finalizeEpoch(): void {
+    const points = this.epochLossPoints
+    const correct = this.epochCorrect.filter((c) => c).length
+    this.completedEpochs = [
+      ...this.completedEpochs,
+      {
+        epoch: this.epoch,
+        lossBefore: points[0]!,
+        lossAfter: points[points.length - 1]!,
+        accuracy: correct / this.epochCorrect.length,
+        correct,
+      },
+    ]
+    this.weightSnapshots = [...this.weightSnapshots, flatWeights(this.model)]
+    this.screen = 'epoch-end'
+  }
+
+  /** Экран эпохи → следующая эпоха: счётчик +1, курсор на первой операции. */
+  private startNextEpoch(): void {
+    this.epoch += 1
+    this.sampleIndex = 0
+    this.cursor = this.newCursor(0)
+    this.screen = 'walkthrough'
+    this.epochLossPoints = []
+    this.epochCorrect = []
+    this.currentRecord = null
+    this.drill = null
+    this.version += 1
+    this.emit()
   }
 
   /** Детерминированный старт: модель из констант сценария, курсор на шаге 1. */
@@ -288,7 +367,7 @@ export class TrainingRun {
     this.epochLossPoints = []
     this.epochCorrect = []
     this.completedEpochs = []
-    this.weightSnapshots = []
+    this.weightSnapshots = [flatWeights(this.model)]
     this.drill = null
     this.version += 1
     this.emit()
@@ -326,7 +405,7 @@ export class TrainingRun {
   private newCursor(sampleIndex: number): SampleCursor {
     const sample = XOR_SCENARIO.samples[sampleIndex]!
     return new SampleCursor(this.model, sample.x, sample.y, XOR_SCENARIO.lr, (cursor, op) => {
-      this.currentRecord = buildStepRecord(cursor, op)
+      if (this.recording) this.currentRecord = buildStepRecord(cursor, op)
     })
   }
 }

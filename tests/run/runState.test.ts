@@ -169,18 +169,16 @@ describe('TrainingRun: эпохи и fast-forward (R3)', () => {
   })
 
   it('FF с середины эпохи досчитывает только остаток: результат идентичен чистому прогону', () => {
-    // сэмпл 1 полностью + 5 операций сэмпла 2 пошагово
+    // чистая пошаговая эпоха 1 — эталон весов
+    for (let i = 0; i < SAMPLE_COUNT * OPS_PER_SAMPLE; i++) run.advance()
+    const stepwiseWeights = flatModelWeights()
+    // смешанный путь: сэмпл 1 полностью + 5 операций сэмпла 2 пошагово, остаток — FF
+    run.reset()
     for (let i = 0; i < OPS_PER_SAMPLE + 5; i++) run.advance()
     expect(run.stepInSample).toBe(6)
     run.runEpoch()
     expect(run.screen).toBe('epoch-end')
     expect(run.epochLossPoints).toHaveLength(SAMPLE_COUNT)
-    // смешанный путь (пошагово + FF) === полностью пошаговая эпоха
-    for (let i = 0; i < SAMPLE_COUNT * OPS_PER_SAMPLE; i++) run.advance()
-    const stepwiseWeights = flatModelWeights()
-    run.reset()
-    for (let i = 0; i < OPS_PER_SAMPLE + 5; i++) run.advance()
-    run.runEpoch()
     expect(flatModelWeights()).toEqual(stepwiseWeights)
   })
 })
