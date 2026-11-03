@@ -176,7 +176,7 @@ describe('инвариант «drill-down = движок» per-op (backward-гр
   it('sgd: W2[i] после = W2[i] − η·∂L/∂W2[i] (снапшоты «до» + градиенты)', () => {
     const { model, cursor } = engineTo(12) // sgd ещё не исполнена
     const wBefore = snapOp('W2', tensorValuesOf(model.W2) as number[][])
-    const g = snapOp('∂L/∂W2', tensorValuesOf(model.W2) as number[][])
+    const g = snapOp('∂L/∂W2', Array.from(model.W2.grad!))
     const wBeforeValues = Array.from(model.W2.data)
     cursor.advance() // оп 12: sgd мутирует веса
     for (let i = 0; i < 3; i++) {
@@ -214,21 +214,21 @@ describe('формулы с подстановкой чисел (данные т
     const w = snapOp('W1', tensorValuesOf(model.W1) as number[][])
     const x = snapOp('x', Array.from(cursor.x.data))
     const exp = expandScalar({ kind: 'matvec', w: w.op, x: x.op, row: 1 })
-    expect(exp.formula).toBe('W1[1,0]·x[0] + W1[1,1]·x[1] = −0.9229·1 + 0.3924·0 = −0.9229')
+    expect(exp.formula).toBe('W1[1,0]·x[0] + W1[1,1]·x[1] = −0.7121·1 + −0.07494·0 = −0.7121')
   })
 
   it('градиент matvec: цепочка «∂L/∂W1[j,i] = ∂L/∂z1[j] · x[i]» с числами', () => {
     const { cursor } = engineTo(12)
     const gOut = snapOp('∂L/∂z1', Array.from(cursor.tensors.z1!.grad!))
     const x = snapOp('x', Array.from(cursor.x.data))
-    const exp = expandScalar({ kind: 'matvec-grad-w', gOut: gOut.op, x: x.op, row: 1, col: 0 })
-    expect(exp.formula).toBe('∂L/∂z1[1]·x[0] = 0.02814·1 = 0.02814')
+    const exp = expandScalar({ kind: 'matvec-grad-w', gOut: gOut.op, x: x.op, row: 0, col: 0 })
+    expect(exp.formula).toBe('∂L/∂z1[0]·x[0] = 0.02814·1 = 0.02814')
   })
 
   it('sgd: W = W − η·∂L/∂W с числами (η = 0.5)', () => {
     const { model } = engineTo(12)
     const w = snapOp('W2', tensorValuesOf(model.W2) as number[][])
-    const g = snapOp('∂L/∂W2', tensorValuesOf(model.W2) as number[][])
+    const g = snapOp('∂L/∂W2', Array.from(model.W2.grad!))
     const exp = expandScalar({ kind: 'sgd', w: w.op, g: g.op, lr: 0.5, index: 0 })
     expect(exp.formula).toBe('W2[0] − η·∂L/∂W2[0] = −0.1352 − 0.5·0.3905 = −0.3305')
   })
