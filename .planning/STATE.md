@@ -2,12 +2,12 @@
 gsd_state_version: "1.0"
 current_phase: "01.1"
 current_phase_name: Архитектурный рефакторинг R1–R5
-status: "Inserted, not planned yet — next: /gsd-plan-phase 1.1"
-stopped_at: "Архитектурное ревью фазы 01 завершено: R1-R5 апрувнуты (.planning/reviews/01/DECISIONS.md). Далее: обновить корневые REQUIREMENTS (forward-only, эпохи, NFR-02 на юнит-константы, UX-01 удалить) → /gsd-phase --insert 1.1 рефакторинг → план/исполнение → H3 на новом UX. План 01-04 остаётся на human-checkpoint (интервью/юзабилити)"
-last_updated: "2026-11-03T12:57:44.991Z"
-last_activity: 2026-11-02
-last_activity_desc: Phase 1 execution started
-state_head: 27b87ecd191eb948ba158f8ad6c53c283b4746bc
+status: executing
+stopped_at: Completed 01.1-01-PLAN.md (живой движок + forward-only прогон + эталон-мостик + границы)
+last_updated: "2026-11-03T14:03:33.524Z"
+last_activity: 2026-11-03
+last_activity_desc: Phase 01.1 execution started
+state_head: 6eb0b4497c8047534e2764cc3eff1a742a3b3c33
 progress:
   total_phases: 5
   completed_phases: 0
@@ -23,14 +23,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-11-02)
 
 **Core value:** Пользователь сам пошагово исполняет forward/backward-pass готового сценария и видит каждый градиент числом — в браузере, без регистрации, по одной ссылке (первый шаг < 1 мин).
-**Current focus:** Phase 1 — Валидация H2/H3 — кликабельный прототип
+**Current focus:** Phase 01.1 — Архитектурный рефакторинг R1–R5
 
 ## Current Position
 
-Phase: 01.1 (Архитектурный рефакторинг R1–R5) — READY TO EXECUTE
-Plan: 4 of 4
-Status: Inserted, not planned yet — next: /gsd-plan-phase 1.1
-Last activity: 2026-11-02 — Phase 1 execution started
+Phase: 01.1 (Архитектурный рефакторинг R1–R5) — EXECUTING
+Plan: 2 of 5
+Status: Ready to execute
+Last activity: 2026-11-03 — Phase 01.1 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -59,6 +59,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P01 | 11 min | 2 tasks | 21 files |
 | Phase 01 P02 | 19 min | 2 tasks | 13 files |
 | Phase 01 P03 | 14 min | 2 tasks | 11 files |
+| Phase 01.1 P01 | 35 min | 2 tasks | 30 files |
 
 ## Accumulated Context
 
@@ -81,6 +82,11 @@ Recent decisions affecting current work:
 - [Phase 01]: Активная op на диаграмме: рёбра подсвечиваются оранжевым «кейсингом» (+3px) под знаковым цветом — UI-SPEC-подсветка без потери знакового кодирования (Pitfall 6); узлы — обводка #E69F00 3px + тинт 10%
 - [Phase 01]: 01-DESIGN-TOKENS.md зафиксирован (D-06, критерий 4 ROADMAP): все текстовые пары PASS WCAG AA; #E69F00 как нетекстовый акцент 2.25:1 — принятое исключение (не единственный носитель информации), пересмотр по итогам 01-04; тинт изменившегося 10% — единое значение; мобильный тир — Phase 3 numbers-first
 - [Phase 01]: ∂-фолбэк подтверждён измерением: ∂ в .num рендерится системным моно (15.81px ≠ advance JBM 19.20px ≠ notdef 38.41px); document.fonts.check даёт false-positive — не доверять
+- [Phase 01.1]: [01.1-01] «Шаг» = исполнение операции живого движка: SampleCursor.advance() исполняет по одной оп (backward — через runBackward-замыкания в topo-порядке); пакетный режим = тот же код без рекордера, идентичность доказана инвариант-тестом
+- [Phase 01.1]: [01.1-01] Индикатор «Эпоха N · пример K · шаг M»: шаг = номер следующей операции сэмпла (1..13); после 13-й оп курсор переходит к следующему сэмплу, после 4-го — к эпохе N+1 (бесконечно); панель до первого шага — вводная, без чисел
+- [Phase 01.1]: [01.1-01] Эталон-мостик NFR-02: контрольные константы 13 оп сэмпла 1 захардкожены в tests/tensor/etalon-constants.ts (plain-TS без тест-раннеров, источник не упоминается — гейт NO-JSON-REFS 01.1-05); etalon-тест сверяет через buildStepRecord — тот же путь, что рендерит UI
+- [Phase 01.1]: [01.1-01] Граница src/tensor/ в oxlint: regex-паттерны без lookahead (Rust regex их не поддерживает — проверено эмпирически) — deep-импорты закрыты group-глобами с negation '!./tensor/*' для тест-хелперов, внутренняя изоляция — парой '^[^.]' и '^\.\./'
+- [Phase 01.1]: [01.1-01] zeroGrad на границе сэмплов (в конструкторе SampleCursor), а не в sgd-опе: градиенты остаются живыми после update-опы — запись шага sgd читает ∂L/∂W2[0,0] честно
 
 ### Pending Todos
 
@@ -104,6 +110,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-11-03T11:31:52.385Z
-Stopped at: Архитектурное ревью фазы 01 завершено: R1-R5 апрувнуты (.planning/reviews/01/DECISIONS.md). Далее: обновить корневые REQUIREMENTS (forward-only, эпохи, NFR-02 на юнит-константы, UX-01 удалить) → /gsd-phase --insert 1.1 рефакторинг → план/исполнение → H3 на новом UX. План 01-04 остаётся на human-checkpoint (интервью/юзабилити)
-Resume file: .planning/reviews/01/DECISIONS.md
+Last session: 2026-11-03T14:03:33.502Z
+Stopped at: Completed 01.1-01-PLAN.md (живой движок + forward-only прогон + эталон-мостик + границы)
+Resume file: None
