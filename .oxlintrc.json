@@ -9,8 +9,8 @@
       {
         "patterns": [
           {
-            "group": ["**/tensor/*", "!**/tensor/index", "!**/tensor/index.ts", "!./tensor/*"],
-            "message": "Граница src/tensor/ (R2): движок импортируется только через index.ts — используйте '../tensor'."
+            "group": ["**/tensor/*", "!**/tensor/index", "!**/tensor/index.ts", "!./tensor/*", "!**/etalon-constants"],
+            "message": "Граница src/tensor/ (R2): движок импортируется только через index.ts — используйте '../tensor'. Эталон-константы tests/tensor/etalon-constants.ts — plain-TS test-хелпер, разрешён (межраннеровая связь vitest/playwright)."
           }
         ]
       }
