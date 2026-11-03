@@ -3,11 +3,11 @@ gsd_state_version: "1.0"
 current_phase: 1
 current_phase_name: Валидация H2/H3 — кликабельный прототип
 status: executing
-stopped_at: Completed 01-03-PLAN.md
-last_updated: "2026-11-02T13:17:00.795Z"
+stopped_at: "Архитектурное ревью фазы 01 завершено: R1-R5 апрувнуты (.planning/reviews/01/DECISIONS.md). Далее: обновить корневые REQUIREMENTS (forward-only, эпохи, NFR-02 на юнит-константы, UX-01 удалить) → /gsd-phase --insert 1.1 рефакторинг → план/исполнение → H3 на новом UX. План 01-04 остаётся на human-checkpoint (интервью/юзабилити)"
+last_updated: "2026-11-03T11:31:52.404Z"
 last_activity: 2026-11-02
 last_activity_desc: Phase 1 execution started
-state_head: d88166921abdb0c5620adea66212ab1ebfbeff33
+state_head: 039dc8c955149877acb7ba8710ab4346d9446388
 progress:
   total_phases: 4
   completed_phases: 0
@@ -68,9 +68,10 @@ Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
 - D-18: H2/H3 валидация (5 интервью преподавателей + юзабилити кликабельного прототипа) ДО кода — это Phase 1; MVP R1 = DOCS-01+02 на XOR (Phase 2). Корневой STATE.md (стратегический пакет) это фиксирует.
-- Архитектурный курс (research/SUMMARY): deterministic replay — собственный float64-движок на TS, UI = чистый игрок над RunTrace; шаг назад, URL-состояние и лекционная детерминированность — следствия этого решения
-- NFR-02 (golden-фикстуры PyTorch float64, ≤ 1e-6, gradcheck) структурно с Phase 2 — не добавляется постфактум
-- Таблица-стейки распределены: UX-01/UX-02 → Phase 2, UX-03 → Phase 3, UX-04 → Phase 4
+- ~~Архитектурный курс (research/SUMMARY): deterministic replay — собственный float64-движок на TS, UI = чистый игрок над RunTrace; шаг назад, URL-состояние и лекционная детерминированность — следствия этого решения~~ → пересмотрен ревью фазы 01 (2026-11-02, `.planning/reviews/01/DECISIONS.md`): тензорная библиотека `src/tensor/` + живой прогон `src/run/`; forward-only (эпохи, fast-forward, сброс); «шаг назад» исключён; UI пересчитывает шаги движком, а не проигрывает JSON-трейс
+- ~~NFR-02 (golden-фикстуры PyTorch float64, ≤ 1e-6, gradcheck) структурно с Phase 2 — не добавляется постфактум~~ → пересмотрен: юнит-тесты эталонных констант per-op (значения сняты с xor-trace до удаления) + инварианты «drill-down = движок», «пошагово = fast-forward»; Python-конвейер (gen_mock_trace.py, xor-trace.json) удаляется
+- Таблица-стейки распределены: UX-02 → Phase 2, UX-03 → Phase 3, UX-04 → Phase 4; UX-01 удалён ревью R3; UX-05/UX-06 (история обучения) → Phase 1.1
+- [Ревью 01]: R4 — реактивность: один корень + селекторы (uSES), 0 deps; @reactive-декоратор — санкционированное расширение на будущее. R5 — Floating UI + CSS-анимации (бегущий пунктир потока), фреймворки анимации не добавляются
 - [Phase 01]: Store плеера — встроенные средства React (useSyncExternalStore + чистая transition), zustand исключён решением пользователя на checkpoint 01-01
 - [Phase 01]: d3-format без @types: локальная декларация src/d3-format.d.ts — пакеты вне утверждённого checkpoint-списка не ставятся
 - Постоянное правило (пользователь, 2026-11-02, checkpoint 01-01): store-библиотеки не вводить без явного вопроса пользователю с обоснованием (перед добавлением любой store-библиотеки в любом плане/фазе — вопрос с детальным обоснованием «зачем»)
@@ -99,6 +100,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-11-02T13:17:00.774Z
-Stopped at: Completed 01-03-PLAN.md
-Resume file: None
+Last session: 2026-11-03T11:31:52.385Z
+Stopped at: Архитектурное ревью фазы 01 завершено: R1-R5 апрувнуты (.planning/reviews/01/DECISIONS.md). Далее: обновить корневые REQUIREMENTS (forward-only, эпохи, NFR-02 на юнит-константы, UX-01 удалить) → /gsd-phase --insert 1.1 рефакторинг → план/исполнение → H3 на новом UX. План 01-04 остаётся на human-checkpoint (интервью/юзабилити)
+Resume file: .planning/reviews/01/DECISIONS.md
