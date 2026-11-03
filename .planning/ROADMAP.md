@@ -51,7 +51,7 @@ Plans:
 **Goal:** Живой тензорный движок (src/tensor/, PyTorch-имена, эталоны NFR-02 на юнит-константах) заменяет JSON-трейс; forward-only UX с бесконечными эпохами, fast-forward и историей обучения (график лосса + таблица весов); решения R1–R5 применены, Python-конвейер удалён
 **Requirements**: UX-05, UX-06
 **Depends on:** Phase 1
-**Plans:** 2/5 plans executed
+**Plans:** 3/5 plans executed
 
 Plans:
 **Wave 1**
@@ -61,7 +61,7 @@ Plans:
 - [x] 01.1-02-PLAN.md — Скалярные экспандеры drill-down (value.ts + expanders.ts) с инвариантом «drill-down = движок» per-op; нейминг R2 (OperationPanel/operationRows, чистка словаря, 0 правок UI-строк и e2e-селекторов)
 
 **Wave 3** *(blocked on Wave 2 completion)*
-- [ ] 01.1-03-PLAN.md — Эпохи R3: fast-forward «Запустить эпоху», экран завершения эпохи, бесконечные эпохи; история UX-05 (график лосса) + UX-06 (таблица весов по эпохам); полная e2e (6 проверок) + скриншот-self-check 28
+- [x] 01.1-03-PLAN.md — Эпохи R3: fast-forward «Запустить эпоху», экран завершения эпохи, бесконечные эпохи; история UX-05 (график лосса) + UX-06 (таблица весов по эпохам); полная e2e (6 проверок) + скриншот-self-check 28
 
 **Wave 4** *(blocked on Wave 3 completion)*
 - [ ] 01.1-04-PLAN.md — Интерактивность R5: бегущий пунктир потока forward/backward (CSS-only, data-flow), reduced-motion/print/lecture-гейты, e2e emulateMedia; тултипы @floating-ui/react (NumberHint, формула с подстановкой + градиент, a11y)

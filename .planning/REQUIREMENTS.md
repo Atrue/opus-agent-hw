@@ -33,8 +33,8 @@ Requirements for initial release (R1). Each maps to roadmap phases.
 
 ### Training History
 
-- [ ] **UX-05**: График лосса: по шагам внутри текущей эпохи и сводка по завершённым эпохам — прогресс обучения виден с первого шага
-- [ ] **UX-06**: Таблица весов: строки — веса (W₁, W₂, b₁, b₂), столбцы — эпохи; обновляется на завершении эпохи
+- [x] **UX-05**: График лосса: по шагам внутри текущей эпохи и сводка по завершённым эпохам — прогресс обучения виден с первого шага
+- [x] **UX-06**: Таблица весов: строки — веса (W₁, W₂, b₁, b₂), столбцы — эпохи; обновляется на завершении эпохи
 
 ### Understanding Measurement
 
@@ -102,8 +102,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | UX-02 | Phase 2 | Pending |
 | UX-03 | Phase 3 | Pending |
 | UX-04 | Phase 4 | Pending |
-| UX-05 | Phase 1.1 | Pending |
-| UX-06 | Phase 1.1 | Pending |
+| UX-05 | Phase 1.1 | Complete |
+| UX-06 | Phase 1.1 | Complete |
 
 **Coverage:**
 - v1 requirements: 11 total

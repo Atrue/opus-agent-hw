@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: "01.1"
 current_phase_name: Архитектурный рефакторинг R1–R5
 status: executing
-stopped_at: Completed 01.1-02-PLAN.md (экспандеры drill-down + нейминг R2)
-last_updated: "2026-11-03T17:10:11.936Z"
+stopped_at: Completed 01.1-03-PLAN.md (эпохи/FF/история R3)
+last_updated: "2026-11-03T17:36:22.701Z"
 last_activity: 2026-11-03
 last_activity_desc: Phase 01.1 execution started
-state_head: 723de4c861d77e102c7193e528482c6c06fd5770
+state_head: 1412ee7df018c45f77a25e3fad15782aa99212de
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 9
-  completed_plans: 5
+  completed_plans: 6
   percent: 0
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-02)
 ## Current Position
 
 Phase: 01.1 (Архитектурный рефакторинг R1–R5) — EXECUTING
-Plan: 3 of 5
+Plan: 4 of 5
 Status: Ready to execute
 Last activity: 2026-11-03 — Phase 01.1 execution started
 
@@ -61,6 +61,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P03 | 14 min | 2 tasks | 11 files |
 | Phase 01.1 P01 | 35 min | 2 tasks | 30 files |
 | Phase 01.1 P02 | 171 min | 2 tasks | 9 files |
+| Phase 01.1 P03 | 13 min | 3 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -91,6 +92,10 @@ Recent decisions affecting current work:
 - [Phase 01.1]: [01.1-02] Экспандеры drill-down — view-слой над снапшотами чисел: expandScalar((операция, операнды, индекс)) строит Value-цепочку только по требованию (getter-кэш); порядок суммирования зеркалит ops.ts, инвариант «drill-down = движок» per-op в CI (допуск 1e-12)
 - [Phase 01.1]: [01.1-02] value.ts — порт gen_mock_trace.py (+div для bce-grad, op-метка '-' для рендера); строки формул drill-down — только из чисел сценария (T-01.1-03), 4 значащие цифры, display-минус
 - [Phase 01.1]: [01.1-02] R2: testid «step-panel» не синхронизируется с именем компонента (селектор описывает содержимое экрана); UI-строки, e2e-спека, aria-label — 0 правок при переименовании OperationPanel/operationRows
+- [Phase 01.1]: [01.1-03] «Следующая эпоха» (btn-epoch-next) — primary-кнопка StepControls на экране эпохи; EpochSummary — чистый экран без дубль-кнопки: все контролы прогона в одной группе, «Шаг» никогда не disabled
+- [Phase 01.1]: [01.1-03] Лосс-точки, флаги верности и снапшоты весов — replace-массивы в TrainingRun (R4): снапшот эпохи 0 = стартовые константы, столбец на границу эпохи; история — чистые построители поверх стабильных ссылок
+- [Phase 01.1]: [01.1-03] График лосса на единой оси сэмплов (точки эпох на k·4, линия текущей эпохи правее); цвета — только ссылки на существующие токены, зона истории без перекраски дизайн-токенов
+- [Phase 01.1]: [01.1-03] oxlint negation '!**/etalon-constants': plain-TS эталон-модуль — не deep-импорт тензорной библиотеки; требуется планом для e2e, границы движка не сужаются
 
 ### Pending Todos
 
@@ -114,6 +119,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-11-03T17:10:11.912Z
-Stopped at: Completed 01.1-02-PLAN.md (экспандеры drill-down + нейминг R2)
+Last session: 2026-11-03T17:36:22.673Z
+Stopped at: Completed 01.1-03-PLAN.md (эпохи/FF/история R3)
 Resume file: None
