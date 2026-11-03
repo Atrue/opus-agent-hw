@@ -17,6 +17,22 @@ import { SAMPLE_COUNT, XOR_SCENARIO } from './scenario'
 
 export type Mode = 'default' | 'lecture'
 
+/** Экран прогона: walkthrough или экран завершения эпохи (R3). */
+export type RunScreen = 'walkthrough' | 'epoch-end'
+
+/** Сводка завершённой эпохи для экрана эпохи и истории обучения (UX-05/UX-06). */
+export interface EpochSummaryData {
+  epoch: number
+  /** L первого сэмпла эпохи («до»). */
+  lossBefore: number
+  /** L последнего сэмпла эпохи («после»). */
+  lossAfter: number
+  /** Доля верно классифицированных сэмплов (порог 0.5). */
+  accuracy: number
+  /** Число верно классифицированных сэмплов. */
+  correct: number
+}
+
 export interface Drill {
   kind: 'number'
   ref: string
@@ -211,8 +227,16 @@ export class TrainingRun {
   drill: Drill | null = null
   mode: Mode = 'default'
   currentRecord: StepRecord | null = null
-  /** Лосс-точки: по одной на bce-операцию (сэмпл × эпоха). */
-  readonly lossHistory: number[] = []
+  /** Экран прогона: после последней операции эпохи — 'epoch-end' (R3). */
+  screen: RunScreen = 'walkthrough'
+  /** Лосс-точки текущей эпохи (по одной на bce-опу сэмпла; replace — R4). */
+  epochLossPoints: readonly number[] = []
+  /** Признак верной классификации каждого сэмпла текущей эпохи (порог 0.5). */
+  epochCorrect: readonly boolean[] = []
+  /** Сводки завершённых эпох (L до/после, точность). */
+  completedEpochs: readonly EpochSummaryData[] = []
+  /** Снапшоты плоских 13 весов: [0] = стартовые константы, далее границы эпох. */
+  weightSnapshots: readonly number[][] = []
   private cursor: SampleCursor
   private readonly listeners = new Set<Listener>()
 
@@ -234,9 +258,7 @@ export class TrainingRun {
   /** Исполняет следующую операцию движка (record:true) и кладёт StepRecord. */
   advance(): void {
     const cursor = this.cursor
-    const op = cursor.opIndex
     cursor.advance() // onOp-рекордер внутри пишет currentRecord
-    if (op === 6) this.lossHistory.push(cursor.tensors.L!.data[0]!)
     this.drill = null
     if (cursor.done) {
       this.sampleIndex += 1
@@ -250,6 +272,11 @@ export class TrainingRun {
     this.emit()
   }
 
+  /** Fast-forward «Запустить эпоху ⏩» (R3): весь остаток эпохи пакетно, record:false. */
+  runEpoch(): void {
+    throw new Error('runEpoch: не реализовано (RED)')
+  }
+
   /** Детерминированный старт: модель из констант сценария, курсор на шаге 1. */
   reset(): void {
     this.model = new MLP(XOR_SCENARIO.startWeights)
@@ -257,7 +284,11 @@ export class TrainingRun {
     this.sampleIndex = 0
     this.cursor = this.newCursor(0)
     this.currentRecord = null
-    this.lossHistory.length = 0
+    this.screen = 'walkthrough'
+    this.epochLossPoints = []
+    this.epochCorrect = []
+    this.completedEpochs = []
+    this.weightSnapshots = []
     this.drill = null
     this.version += 1
     this.emit()

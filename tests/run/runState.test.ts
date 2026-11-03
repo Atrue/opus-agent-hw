@@ -1,13 +1,35 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { run } from '../../src/run/runState'
-import { XOR_SCENARIO } from '../../src/run/scenario'
+import { XOR_SCENARIO, SAMPLE_COUNT } from '../../src/run/scenario'
+import { OPS_PER_SAMPLE } from '../../src/tensor'
 
 /**
  * Корень прогона (R3/R4): курсор (эпоха/пример/шаг), границы сэмпла и эпохи,
  * детерминированный reset, сброс drill при смене операции, лосс-точки на bce.
+ *
+ * План 01.1-03: эпохи и fast-forward — runEpoch() исполняет остаток эпохи
+ * пакетно (record:false), экран завершения эпохи открывается после последней
+ * операции эпохи (в любом режиме) и продолжается следующей эпохой — бесконечно.
+ * Инвариант: advance()×N === runEpoch() (веса и лосс-точки идентичны).
  */
 
 const START_W1 = XOR_SCENARIO.startWeights.w1.flat()
+const START_FLAT = [
+  ...XOR_SCENARIO.startWeights.w1.flat(),
+  ...XOR_SCENARIO.startWeights.b1,
+  ...XOR_SCENARIO.startWeights.w2.flat(),
+  ...XOR_SCENARIO.startWeights.b2,
+]
+
+/** Плоские веса живой модели в порядке снапшота (W1, b1, W2, b2). */
+function flatModelWeights(): number[] {
+  return [
+    ...Array.from(run.model.W1.data),
+    ...Array.from(run.model.b1.data),
+    ...Array.from(run.model.W2.data),
+    ...Array.from(run.model.b2.data),
+  ]
+}
 
 beforeEach(() => {
   run.reset()
@@ -40,17 +62,6 @@ describe('TrainingRun: курсор прогона', () => {
     expect(run.currentRecord?.op).toBe('sgd')
   })
 
-  it('пересекает границу эпохи: 4 сэмпла × 13 операций → эпоха 2, пример 1, шаг 1', () => {
-    for (let i = 0; i < 4 * 13; i++) run.advance()
-    expect(run.epoch).toBe(2)
-    expect(run.sampleIndex).toBe(0)
-    expect(run.stepInSample).toBe(1)
-    // эпохи бесконечны: 52+1 операций не блокируются
-    run.advance()
-    expect(run.epoch).toBe(2)
-    expect(run.stepInSample).toBe(2)
-  })
-
   it('reset() возвращает детерминированный старт: стартовые веса, пустая история, шаг 1', () => {
     for (let i = 0; i < 20; i++) run.advance()
     run.reset()
@@ -58,7 +69,7 @@ describe('TrainingRun: курсор прогона', () => {
     expect(run.sampleIndex).toBe(0)
     expect(run.stepInSample).toBe(1)
     expect(run.currentRecord).toBeNull()
-    expect(run.lossHistory).toHaveLength(0)
+    expect(run.epochLossPoints).toHaveLength(0)
     expect(Array.from(run.model.W1.data)).toEqual(START_W1)
   })
 
@@ -72,10 +83,10 @@ describe('TrainingRun: курсор прогона', () => {
 
   it('лосс-точка добавляется на bce-опе (7-я операция сэмпла)', () => {
     for (let i = 0; i < 6; i++) run.advance()
-    expect(run.lossHistory).toHaveLength(0)
+    expect(run.epochLossPoints).toHaveLength(0)
     run.advance() // оп 6 — bce
-    expect(run.lossHistory).toHaveLength(1)
-    expect(run.lossHistory[0]).toBeCloseTo(0.7097208011495857, 15)
+    expect(run.epochLossPoints).toHaveLength(1)
+    expect(run.epochLossPoints[0]).toBeCloseTo(0.7097208011495857, 15)
   })
 
   it('подписка: advance() будит слушателей, отписка снимает', () => {
@@ -88,5 +99,88 @@ describe('TrainingRun: курсор прогона', () => {
     unsubscribe()
     run.advance()
     expect(fires).toBe(1)
+  })
+})
+
+describe('TrainingRun: эпохи и fast-forward (R3)', () => {
+  it('runEpoch() доводит прогон до экрана завершения эпохи и пишет лосс-точки всех сэмплов', () => {
+    run.runEpoch()
+    expect(run.screen).toBe('epoch-end')
+    expect(run.epoch).toBe(1)
+    expect(run.epochLossPoints).toHaveLength(SAMPLE_COUNT)
+    // первый сэмпл — эталонный bce вывода движка
+    expect(run.epochLossPoints[0]).toBeCloseTo(0.7097208011495857, 15)
+    // сводка эпохи: L до = первая точка, L после = последняя
+    expect(run.completedEpochs).toHaveLength(1)
+    const summary = run.completedEpochs[0]!
+    expect(summary.epoch).toBe(1)
+    expect(summary.lossBefore).toBe(run.epochLossPoints[0])
+    expect(summary.lossAfter).toBe(run.epochLossPoints[SAMPLE_COUNT - 1])
+    expect(summary.accuracy).toBeGreaterThanOrEqual(0)
+    expect(summary.accuracy).toBeLessThanOrEqual(1)
+  })
+
+  it('advance() после экрана эпохи открывает следующую эпоху (счётчик +1, курсор на первой операции)', () => {
+    run.runEpoch()
+    run.advance()
+    expect(run.screen).toBe('walkthrough')
+    expect(run.epoch).toBe(2)
+    expect(run.sampleIndex).toBe(0)
+    expect(run.stepInSample).toBe(1)
+    expect(run.epochLossPoints).toHaveLength(0)
+    run.advance() // обучение продолжается: эпохи бесконечны
+    expect(run.stepInSample).toBe(2)
+  })
+
+  it('инвариант: прогон эпохи по-операционно и runEpoch() дают идентичные веса и лосс-точки', () => {
+    for (let i = 0; i < SAMPLE_COUNT * OPS_PER_SAMPLE; i++) run.advance()
+    const stepwiseWeights = flatModelWeights()
+    const stepwisePoints = [...run.epochLossPoints]
+    const stepwiseSummary = run.completedEpochs[0]
+    const stepwiseSnapshot = run.weightSnapshots[1]
+
+    run.reset()
+    run.runEpoch()
+    expect(flatModelWeights()).toEqual(stepwiseWeights)
+    expect([...run.epochLossPoints]).toEqual(stepwisePoints)
+    expect(run.completedEpochs[0]).toEqual(stepwiseSummary)
+    expect(run.weightSnapshots[1]).toEqual(stepwiseSnapshot)
+  })
+
+  it('пошаговое завершение эпохи открывает экран: 4×13 операций, счётчик эпохи ещё не двинулся', () => {
+    for (let i = 0; i < SAMPLE_COUNT * OPS_PER_SAMPLE; i++) run.advance()
+    expect(run.screen).toBe('epoch-end')
+    expect(run.epoch).toBe(1)
+    expect(run.sampleIndex).toBe(SAMPLE_COUNT - 1)
+    expect(run.stepInSample).toBe(OPS_PER_SAMPLE)
+    expect(run.completedEpochs).toHaveLength(1)
+  })
+
+  it('reset() с экрана завершения эпохи возвращает стартовые константы и пустую историю', () => {
+    run.runEpoch()
+    expect(run.screen).toBe('epoch-end')
+    run.reset()
+    expect(run.screen).toBe('walkthrough')
+    expect(run.epoch).toBe(1)
+    expect(run.epochLossPoints).toHaveLength(0)
+    expect(run.completedEpochs).toHaveLength(0)
+    expect(run.weightSnapshots).toEqual([START_FLAT])
+    expect(flatModelWeights()).toEqual(START_FLAT)
+  })
+
+  it('FF с середины эпохи досчитывает только остаток: результат идентичен чистому прогону', () => {
+    // сэмпл 1 полностью + 5 операций сэмпла 2 пошагово
+    for (let i = 0; i < OPS_PER_SAMPLE + 5; i++) run.advance()
+    expect(run.stepInSample).toBe(6)
+    run.runEpoch()
+    expect(run.screen).toBe('epoch-end')
+    expect(run.epochLossPoints).toHaveLength(SAMPLE_COUNT)
+    // смешанный путь (пошагово + FF) === полностью пошаговая эпоха
+    for (let i = 0; i < SAMPLE_COUNT * OPS_PER_SAMPLE; i++) run.advance()
+    const stepwiseWeights = flatModelWeights()
+    run.reset()
+    for (let i = 0; i < OPS_PER_SAMPLE + 5; i++) run.advance()
+    run.runEpoch()
+    expect(flatModelWeights()).toEqual(stepwiseWeights)
   })
 })
