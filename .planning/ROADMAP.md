@@ -54,10 +54,19 @@ Plans:
 **Plans:** 5 plans
 
 Plans:
+**Wave 1**
 - [ ] 01.1-01-PLAN.md — Трейсер: тензорная библиотека src/tensor/ (R1) + живой корень прогона src/run/ (R4) + UI на числах движка; forward-only контролы; эталон-константы NFR-02 сняты с xor-trace.json и захардкожены; инварианты «пошагово = FF», детерминизм; границы библиотеки (oxlint + CI)
+
+**Wave 2** *(blocked on Wave 1 completion)*
 - [ ] 01.1-02-PLAN.md — Скалярные экспандеры drill-down (value.ts + expanders.ts) с инвариантом «drill-down = движок» per-op; нейминг R2 (OperationPanel/operationRows, чистка словаря, 0 правок UI-строк и e2e-селекторов)
+
+**Wave 3** *(blocked on Wave 2 completion)*
 - [ ] 01.1-03-PLAN.md — Эпохи R3: fast-forward «Запустить эпоху», экран завершения эпохи, бесконечные эпохи; история UX-05 (график лосса) + UX-06 (таблица весов по эпохам); полная e2e (6 проверок) + скриншот-self-check 28
+
+**Wave 4** *(blocked on Wave 3 completion)*
 - [ ] 01.1-04-PLAN.md — Интерактивность R5: бегущий пунктир потока forward/backward (CSS-only, data-flow), reduced-motion/print/lecture-гейты, e2e emulateMedia; тултипы @floating-ui/react (NumberHint, формула с подстановкой + градиент, a11y)
+
+**Wave 5** *(blocked on Wave 4 completion)*
 - [ ] 01.1-05-PLAN.md — Удаление Python-конвейера (после захвата эталонов); docs-sync: R1–R5 как D-19+ в корневом DECISIONS.md, STATE.md, глоссарий EN↔RU в PROJECT.md
 
 ### Phase 2: Движок и MVP-walkthrough на XOR

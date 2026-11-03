@@ -1,17 +1,17 @@
 ---
 gsd_state_version: "1.0"
-current_phase: 1
-current_phase_name: Валидация H2/H3 — кликабельный прототип
-status: executing
+current_phase: "01.1"
+current_phase_name: Архитектурный рефакторинг R1–R5
+status: "Inserted, not planned yet — next: /gsd-plan-phase 1.1"
 stopped_at: "Архитектурное ревью фазы 01 завершено: R1-R5 апрувнуты (.planning/reviews/01/DECISIONS.md). Далее: обновить корневые REQUIREMENTS (forward-only, эпохи, NFR-02 на юнит-константы, UX-01 удалить) → /gsd-phase --insert 1.1 рефакторинг → план/исполнение → H3 на новом UX. План 01-04 остаётся на human-checkpoint (интервью/юзабилити)"
-last_updated: "2026-11-03T11:31:52.404Z"
+last_updated: "2026-11-03T12:57:44.991Z"
 last_activity: 2026-11-02
 last_activity_desc: Phase 1 execution started
-state_head: 039dc8c955149877acb7ba8710ab4346d9446388
+state_head: 27b87ecd191eb948ba158f8ad6c53c283b4746bc
 progress:
-  total_phases: 4
+  total_phases: 5
   completed_phases: 0
-  total_plans: 4
+  total_plans: 9
   completed_plans: 3
   percent: 0
 ---
@@ -27,9 +27,9 @@ See: .planning/PROJECT.md (updated 2026-11-02)
 
 ## Current Position
 
-Phase: 1 (Валидация H2/H3 — кликабельный прототип) — EXECUTING
+Phase: 01.1 (Архитектурный рефакторинг R1–R5) — READY TO EXECUTE
 Plan: 4 of 4
-Status: Ready to execute
+Status: Inserted, not planned yet — next: /gsd-plan-phase 1.1
 Last activity: 2026-11-02 — Phase 1 execution started
 
 Progress: [░░░░░░░░░░] 0%
@@ -89,6 +89,10 @@ None yet.
 ### Blockers/Concerns
 
 None yet.
+
+### Roadmap Evolution
+
+- Phase 1.1 inserted after Phase 1: Архитектурный рефакторинг R1–R5 (URGENT)
 
 ## Deferred Items
 
