@@ -4,10 +4,12 @@ import { parseHash, toHash } from '../run/url'
 import type { Phase } from '../tensor'
 import ArchitectureDiagram from './ArchitectureDiagram'
 import EpochSummary from './EpochSummary'
+import LossChart from './LossChart'
 import NarrativeLine from './NarrativeLine'
 import NumberDrilldown from './NumberDrilldown'
 import OperationPanel from './OperationPanel'
 import StepControls from './StepControls'
+import WeightsTable from './WeightsTable'
 
 /**
  * Экран walkthrough на живом прогоне — layout-контракт UI-SPEC Rev 1.1:
@@ -105,6 +107,22 @@ export default function App() {
           )}
         </section>
       </main>
+
+      {/* История обучения (UX-05/UX-06): отдельная горизонтальная зона между
+          main и нижним баром (~200px) — потолок ≤30 чисел экрана шага её не
+          считает; график слева ~55%, таблица справа ~45%, внутренний скролл */}
+      <section
+        aria-label="История обучения"
+        data-testid="history-zone"
+        className="flex h-[200px] shrink-0 gap-8 px-6 pb-6"
+      >
+        <div className="w-[55%] rounded-lg border border-neutral-200 bg-neutral-50 p-2">
+          <LossChart />
+        </div>
+        <div className="w-[45%] rounded-lg border border-neutral-200 bg-neutral-50 p-2">
+          <WeightsTable />
+        </div>
+      </section>
 
       <footer className="flex h-[72px] shrink-0 items-center justify-between gap-8 border-t border-neutral-200 px-6">
         <StepControls />
