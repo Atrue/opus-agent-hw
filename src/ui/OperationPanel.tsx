@@ -3,6 +3,8 @@ import { run } from '../run/runState'
 import type { StepRecord } from '../tensor'
 import { formatKey } from '../format/numbers'
 import { buildOperationRows, type NumberRow } from './operationRows'
+import NumberHint from './NumberHint'
+import { buildHintData } from './hintData'
 import SubscriptText from './SubscriptText'
 
 /**
@@ -13,11 +15,11 @@ import SubscriptText from './SubscriptText'
  * не переименовывается. До первого «Шага» — вводная панель предстоящей
  * операции (числа появятся после исполнения). Изменившееся (changed) —
  * gray-900 + accent-тинт #E69F00 @10%, неизменившееся — gray-500. Клик по
- * числу → openDrill. Потолки чисел (≤7 ключевых / ≤30 на экране) — чистая
- * модель operationRows.
+ * числу → openDrill, hover/focus → тултип tier 1 (NumberHint, R5).
+ * Потолки чисел (≤7 ключевых / ≤30 на экране) — чистая модель operationRows.
  */
 
-function NumberRowView({ row, joiner }: { row: NumberRow; joiner: string }) {
+function NumberRowView({ row, joiner, record }: { row: NumberRow; joiner: string; record: StepRecord }) {
   const valueClass = row.kind === 'input' || !row.changed ? 'value-unchanged' : 'value-changed'
   return (
     <div className={`num flex flex-wrap items-baseline gap-x-2 ${row.changed ? 'text-neutral-900' : 'text-neutral-500'}`}>
@@ -27,14 +29,16 @@ function NumberRowView({ row, joiner }: { row: NumberRow; joiner: string }) {
       {row.values.map((v, i) => (
         <Fragment key={i}>
           {i > 0 && <span aria-hidden="true">{joiner}</span>}
-          <button
-            type="button"
-            className={`value-btn ${valueClass}`}
-            data-ref={`${row.sym}[${i}]`}
-            onClick={() => run.openDrill(`${row.sym}[${i}]`)}
-          >
-            {formatKey(v)}
-          </button>
+          <NumberHint hint={buildHintData(record, `${row.sym}[${i}]`)}>
+            <button
+              type="button"
+              className={`value-btn ${valueClass}`}
+              data-ref={`${row.sym}[${i}]`}
+              onClick={() => run.openDrill(`${row.sym}[${i}]`)}
+            >
+              {formatKey(v)}
+            </button>
+          </NumberHint>
         </Fragment>
       ))}
       {row.hidden > 0 && <span className="value-unchanged">+{row.hidden}</span>}
@@ -70,7 +74,7 @@ export default function OperationPanel({ record }: { record: StepRecord | null }
       </p>
       <div className="flex flex-col gap-2">
         {rows.map((row) => (
-          <NumberRowView key={`${row.kind}:${row.sym}`} row={row} joiner={joiner} />
+          <NumberRowView key={`${row.kind}:${row.sym}`} row={row} joiner={joiner} record={record} />
         ))}
       </div>
     </div>

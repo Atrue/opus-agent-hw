@@ -61,6 +61,22 @@ test('1) первый «Шаг» исполняет операцию движк�
     .first()
     .evaluate((el) => getComputedStyle(el).animationName)
   expect(flowAnimation, 'reduced-motion: бегущий пунктир погашен (animation-name === none)').toBe('none')
+
+  // R5 (01.1-04): tier-1 тултип — hover на первое число панели: значение +
+  // фрагмент формулы с подстановкой + aria-describedby; Escape закрывает;
+  // клик после тултипа по-прежнему открывает полный NumberDrilldown (tier 2)
+  const firstNumber = page.getByTestId('step-panel').locator('.value-btn').first()
+  await firstNumber.hover()
+  const hint = page.getByTestId('number-hint')
+  await expect(hint).toBeVisible()
+  await expect(hint).toContainText(formatKey(etalonOutput(0)))
+  await expect(hint, 'формула с подстановкой из экспандеров').toContainText('W1[0,0]')
+  const describedBy = await firstNumber.getAttribute('aria-describedby')
+  expect(describedBy, 'a11y: якорь связан с тултипом aria-describedby').toBeTruthy()
+  await page.keyboard.press('Escape')
+  await expect(hint).toBeHidden()
+  await firstNumber.click()
+  await expect(page.getByTestId('drill-panel')).toBeVisible()
 })
 
 test('2) полная эпоха 1 пошагово: без NaN, в конце — экран завершения эпохи', async ({ page }) => {

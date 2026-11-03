@@ -273,3 +273,21 @@ sub { /* подстрочные индексы (план Б §5.5: ASCII z1 + <s
   border: 1px dashed #6B7280;
   background: #F9FAFB;
 }
+
+/* Тултип tier 1 (R5, NumberHint): контент — .num/.ui-text, поэтому лекционный
+   режим масштабирует его автоматически через --num-size/--ui-size. Цвета —
+   только существующие нейтрали; portal + collision flip/shift от Floating UI. */
+.num-hint {
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: min(420px, calc(100vw - 32px));
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #D1D5DB;
+  background: #FFFFFF;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.08);
+  color: #111827;
+  overflow-wrap: break-word;
+}

@@ -1,6 +1,8 @@
 import { useRunSlice } from '../run/runState'
 import { buildWeightsTable } from '../run/history'
 import { formatKey } from '../format/numbers'
+import NumberHint from './NumberHint'
+import type { HintData } from './hintData'
 import SubscriptText from './SubscriptText'
 
 /**
@@ -9,12 +11,32 @@ import SubscriptText from './SubscriptText'
  * константы сценария. Значения formatKey, tabular-nums (класс num); колонка
  * добавляется в момент завершения эпохи. Горизонтальный скролл по эпохам;
  * последний столбец — accent-тинт изменившегося (существующий класс).
- * Подписка селектором снапшотов (стабильная ссылка, R4).
+ * Подписка селектором снапшотов (стабильная ссылка, R4). Hover на ячейку —
+ * тултип tier 1 (R5): значение эпохи + живое значение сейчас + градиент
+ * ∂L/∂w текущей записи при наличии (ячейка — span без tabIndex: таблица
+ * supplementary, полный a11y-путь — те же веса в панели/на диаграмме).
  */
+
+/** Градиентная строка записи для плоского индекса снапшота (0..12). */
+function gradRefOf(r: number): { sym: string; index: number } {
+  if (r < 6) return { sym: '∂L/∂W1', index: r }
+  if (r < 9) return { sym: '∂L/∂b1', index: r - 6 }
+  if (r < 12) return { sym: '∂L/∂W2', index: r - 9 }
+  return { sym: '∂L/∂b2', index: 0 }
+}
+
+function gradAt(values: number[] | number[][] | undefined, index: number): number | null {
+  if (values === undefined) return null
+  const flat = Array.isArray(values[0]) ? (values as number[][]).flat() : (values as number[])
+  return flat[Math.min(index, flat.length - 1)] ?? null
+}
+
 export default function WeightsTable() {
   const snapshots = useRunSlice((r) => r.weightSnapshots)
+  const record = useRunSlice((r) => r.currentRecord)
   const table = buildWeightsTable(snapshots)
   const last = table.epochs.length - 1
+  const live = snapshots[last] ?? []
 
   return (
     <div data-testid="weights-table" className="h-full overflow-x-auto" role="group" aria-label="Таблица весов по эпохам">
@@ -30,19 +52,31 @@ export default function WeightsTable() {
           </tr>
         </thead>
         <tbody>
-          {table.rows.map((row) => (
+          {table.rows.map((row, r) => (
             <tr key={row.label}>
               <th scope="row" className="num whitespace-nowrap px-2 py-0.5 font-normal text-neutral-900">
                 <SubscriptText text={row.label} />
               </th>
-              {row.values.map((v, e) => (
-                <td
-                  key={e}
-                  className={`num whitespace-nowrap px-2 py-0.5 text-right${e === last && last > 0 ? ' value-changed' : ' value-unchanged'}`}
-                >
-                  {formatKey(v)}
-                </td>
-              ))}
+              {row.values.map((v, e) => {
+                const g = gradRefOf(r)
+                const hint: HintData = {
+                  sym: row.label,
+                  value: v,
+                  formula: null,
+                  gradient: gradAt(record?.grads?.[g.sym], g.index),
+                  note: e === last ? null : `эпоха ${String(e)} · сейчас: ${formatKey(live[r] ?? v)}`,
+                }
+                return (
+                  <td
+                    key={e}
+                    className={`num whitespace-nowrap px-2 py-0.5 text-right${e === last && last > 0 ? ' value-changed' : ' value-unchanged'}`}
+                  >
+                    <NumberHint hint={hint}>
+                      <span>{formatKey(v)}</span>
+                    </NumberHint>
+                  </td>
+                )
+              })}
             </tr>
           ))}
         </tbody>

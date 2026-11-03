@@ -1,6 +1,7 @@
 import { run, type Drill } from '../run/runState'
-import type { StepRecord, TensorValues } from '../tensor'
+import type { StepRecord } from '../tensor'
 import { exactRepr, formatKey } from '../format/numbers'
+import { flattenTensorValues, resolveRef, type ResolvedNumber } from './hintData'
 import SubscriptText from './SubscriptText'
 
 /**
@@ -8,70 +9,15 @@ import SubscriptText from './SubscriptText'
  * операции (замещает содержимое) по клику на число в OperationPanel или
  * узел/ребро диаграммы. Состав: exact-repr + отформатированное значение +
  * формула + provenance; на backward-опах — раскрытие цепного правила на 1
- * уровень. resolveRef работает над ТЕКУЩЕЙ записи прогона + живыми
- * глобальными тензорами (веса модели, вход/метка активного сэмпла) — только
- * lookup, без вычислений. Граница графа (∂L/∂x) — терминальная панель, не
- * пустой экран. Закрытие: backlink «← к шагу», Esc, автосброс при смене
- * операции.
+ * уровень. resolveRef (переиспользуется tier-1 тултипами NumberHint, R5)
+ * работает над ТЕКУЩЕЙ записью прогона + живыми глобальными тензорами
+ * (веса модели, вход/метка активного сэмпла) — только lookup, без
+ * вычислений. Граница графа (∂L/∂x) — терминальная панель, не пустой
+ * экран. Закрытие: backlink «← к шагу», Esc, автосброс при смене операции.
  */
 
 const TERMINAL_BODY = 'Градиент дальше не распространяется: x — старт цепного правила. Смотри ∂L/∂W1 и ∂L/∂b1.'
 const GLOSSARY = '∂L/∂W — градиент L по W (в CS231n: dL/dW)'
-
-function flatten(values: TensorValues): number[] {
-  const first = values[0]
-  if (Array.isArray(first)) return (values as number[][]).flat()
-  return [...(values as number[])]
-}
-
-interface ResolvedNumber {
-  sym: string
-  value: number
-  provenance: string
-}
-
-const PROV_WEIGHT = 'вес модели (живое значение)'
-const PROV_INPUT = 'входные данные — граница графа'
-const PROV_TARGET = 'метка — граница графа'
-
-/** Живые глобальные тензоры прогона: веса модели + вход/метка активного сэмпла. */
-function globalTensors(): Record<string, { values: TensorValues; provenance: string }> {
-  const cursor = run.activeCursor
-  return {
-    W1: { values: Array.from(run.model.W1.data), provenance: PROV_WEIGHT },
-    b1: { values: Array.from(run.model.b1.data), provenance: PROV_WEIGHT },
-    W2: { values: Array.from(run.model.W2.data), provenance: PROV_WEIGHT },
-    b2: { values: Array.from(run.model.b2.data), provenance: PROV_WEIGHT },
-    x: { values: Array.from(cursor.x.data), provenance: PROV_INPUT },
-    y: { values: Array.from(cursor.y.data), provenance: PROV_TARGET },
-  }
-}
-
-/** Разрешение ref → число: текущая запись (grads → outputs → inputs), затем
- *  живые глобальные тензоры прогона. Только lookup, без вычислений. */
-function resolveRef(record: StepRecord, ref: string): ResolvedNumber | null {
-  const m = /^(.+)\[(\d+)\]$/.exec(ref)
-  const sym = m ? m[1]! : ref
-  const index = m ? Number(m[2]) : 0
-
-  const stepProvenance = `шаг ${record.index + 1} (${record.op})`
-  const local: { values: TensorValues; provenance: string }[] = []
-  if (record.grads !== null && sym in record.grads) local.push({ values: record.grads[sym]!, provenance: stepProvenance })
-  if (record.outputs.sym === sym) local.push({ values: record.outputs.values, provenance: stepProvenance })
-  const input = record.inputs.find((i) => i.sym === sym)
-  if (input !== undefined) local.push({ values: input.values, provenance: input.provenance ?? stepProvenance })
-
-  if (local.length > 0) {
-    const all = flatten(local[0]!.values)
-    const i = Math.min(Math.max(index, 0), all.length - 1)
-    return { sym, value: all[i]!, provenance: local[0]!.provenance }
-  }
-  const globalEntry = globalTensors()[sym]
-  if (globalEntry === undefined) return null
-  const all = flatten(globalEntry.values)
-  const i = Math.min(Math.max(index, 0), all.length - 1)
-  return { sym, value: all[i]!, provenance: globalEntry.provenance }
-}
 
 function DrillHeading({ sym, value }: { sym: string; value: number }) {
   return (
@@ -150,7 +96,7 @@ export default function NumberDrilldown({ record, drill }: { record: StepRecord;
               <span className="ui-label text-neutral-500">цепное правило — уровень выше</span>
               {record.inputs.map((input) => (
                 <p key={input.sym} className="num text-neutral-500">
-                  <SubscriptText text={input.sym} /> = {flatten(input.values).map(formatKey).join(', ')}
+                  <SubscriptText text={input.sym} /> = {flattenTensorValues(input.values).map(formatKey).join(', ')}
                 </p>
               ))}
             </div>

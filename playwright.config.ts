@@ -14,6 +14,11 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:4173',
     viewport: { width: 1280, height: 800 }, // десктоп ≥1024px — осознанный тир (A-6)
+    // DPR 2 — детерминизм растеризации: кнопки footer сидят на полупикселе
+    // (border-box 72px − 1px border → контент 71px → offset 15.5px), и Chrome
+    // растеризует AA скруглённых углов на .5-смещениях по-разному между
+    // загрузками страницы; на DPR 2 полупиксели становятся целыми device-px.
+    deviceScaleFactor: 2,
   },
   webServer: {
     command: 'pnpm build && pnpm preview --port 4173 --strictPort',

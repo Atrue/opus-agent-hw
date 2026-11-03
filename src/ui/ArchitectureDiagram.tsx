@@ -1,6 +1,8 @@
 import { run, useRunSlice } from '../run/runState'
 import type { StepRecord } from '../tensor'
 import { formatKey } from '../format/numbers'
+import NumberHint from './NumberHint'
+import { buildHintData } from './hintData'
 
 /**
  * SVG-диаграмма сети 2-3-1 (Interaction Contract): слои слева-направо
@@ -122,7 +124,7 @@ function SvgSubLabel({ text, x, y, className }: { text: string; x: number; y: nu
   )
 }
 
-function EdgeView({ edge, active, maxAbsW }: { edge: EdgeDef; active: boolean; maxAbsW: number }) {
+function EdgeView({ edge, active, maxAbsW, record }: { edge: EdgeDef; active: boolean; maxAbsW: number; record: StepRecord | null }) {
   const { from, to, w, ref } = edge
   const mx = (from.cx + to.cx) / 2
   const my = (from.cy + to.cy) / 2
@@ -166,25 +168,27 @@ function EdgeView({ edge, active, maxAbsW }: { edge: EdgeDef; active: boolean; m
       <text x={lx} y={ly} textAnchor="middle" className="diag-edge-label">
         {formatKey(w)}
       </text>
-      {/* широкая прозрачная мишень клика по ребру */}
-      <line
-        x1={from.cx + R}
-        y1={from.cy}
-        x2={to.cx - R}
-        y2={to.cy}
-        className="diag-hit"
-        style={{ stroke: 'transparent', strokeWidth: 16 }}
-        role="button"
-        tabIndex={0}
-        aria-label={`Вес ${ref} = ${formatKey(w)}`}
-        onClick={open}
-        onKeyDown={onKeyDown}
-      />
+      {/* широкая прозрачная мишень клика по ребру (hover/focus → тултип tier 1) */}
+      <NumberHint hint={buildHintData(record, ref)}>
+        <line
+          x1={from.cx + R}
+          y1={from.cy}
+          x2={to.cx - R}
+          y2={to.cy}
+          className="diag-hit"
+          style={{ stroke: 'transparent', strokeWidth: 16 }}
+          role="button"
+          tabIndex={0}
+          aria-label={`Вес ${ref} = ${formatKey(w)}`}
+          onClick={open}
+          onKeyDown={onKeyDown}
+        />
+      </NumberHint>
     </g>
   )
 }
 
-function NodeView({ node, active }: { node: NodeDef; active: boolean }) {
+function NodeView({ node, active, record }: { node: NodeDef; active: boolean; record: StepRecord | null }) {
   const open = (): void => run.openDrill(node.id)
   const onKeyDown = (event: React.KeyboardEvent): void => {
     if (event.key === 'Enter' || event.key === ' ') {
@@ -206,18 +210,21 @@ function NodeView({ node, active }: { node: NodeDef; active: boolean }) {
         }
       />
       <SvgSubLabel text={node.label} x={node.cx} y={node.cy + 5} className="diag-node-label" />
-      <circle
-        cx={node.cx}
-        cy={node.cy}
-        r={R + 6}
-        className="diag-hit diag-node-hit"
-        style={{ fill: 'transparent' }}
-        role="button"
-        tabIndex={0}
-        aria-label={`Узел ${node.label}`}
-        onClick={open}
-        onKeyDown={onKeyDown}
-      />
+      {/* hit-мишень узла (hover/focus → тултип tier 1) */}
+      <NumberHint hint={buildHintData(record, node.id)}>
+        <circle
+          cx={node.cx}
+          cy={node.cy}
+          r={R + 6}
+          className="diag-hit diag-node-hit"
+          style={{ fill: 'transparent' }}
+          role="button"
+          tabIndex={0}
+          aria-label={`Узел ${node.label}`}
+          onClick={open}
+          onKeyDown={onKeyDown}
+        />
+      </NumberHint>
     </g>
   )
 }
@@ -271,15 +278,15 @@ export default function ArchitectureDiagram({ record }: { record: StepRecord | n
       aria-label="Диаграмма сети 2-3-1: входы x, скрытый слой a1, выход ŷ; рёбра — живые веса"
     >
       {edges.map((edge) => (
-        <EdgeView key={edge.ref} edge={edge} active={active.edges.has(edge.ref)} maxAbsW={maxAbsW} />
+        <EdgeView key={edge.ref} edge={edge} active={active.edges.has(edge.ref)} maxAbsW={maxAbsW} record={record} />
       ))}
       {X_NODES.map((n) => (
-        <NodeView key={n.id} node={n} active={active.nodes.has(n.id)} />
+        <NodeView key={n.id} node={n} active={active.nodes.has(n.id)} record={record} />
       ))}
       {H_NODES.map((n) => (
-        <NodeView key={n.id} node={n} active={active.nodes.has(n.id)} />
+        <NodeView key={n.id} node={n} active={active.nodes.has(n.id)} record={record} />
       ))}
-      <NodeView node={Y_NODE} active={active.nodes.has(Y_NODE.id)} />
+      <NodeView node={Y_NODE} active={active.nodes.has(Y_NODE.id)} record={record} />
     </svg>
   )
 }
