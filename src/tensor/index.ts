@@ -8,6 +8,14 @@ export { Tensor, type OpName, type TensorInit } from './tensor'
 export { F } from './functional'
 export { SGD } from './optim'
 export { MLP, type MlpStartWeights, type MlpForward } from './model'
+export { Value, type ScalarOp, type ValueInit } from './value'
+export {
+  expandScalar,
+  type ExpandRequest,
+  type LazyExpansion,
+  type Operand,
+  type TensorSnapshot,
+} from './expanders'
 export {
   SampleCursor,
   OPS_PER_SAMPLE,
