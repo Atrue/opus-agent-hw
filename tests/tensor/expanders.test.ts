@@ -234,7 +234,7 @@ describe('формулы с подстановкой чисел (данные т
   })
 })
 
-describe('скалярное ядро Value (порт gen_mock_trace.py, micrograd-механика)', () => {
+describe('скалярное ядро Value (micrograd-механика)', () => {
   it('backward топологически раскручивает граф; повторное использование узла даёт сумму путей', () => {
     const a = new Value(2, { label: 'a' })
     const b = new Value(-3, { label: 'b' })

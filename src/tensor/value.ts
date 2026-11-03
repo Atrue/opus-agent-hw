@@ -1,6 +1,6 @@
 /**
- * Скалярное ядро (R1, порт gen_mock_trace.py): Value с data/grad/op/parents
- * и topo-backward механикой micrograd. Используется ТОЛЬКО ленивыми
+ * Скалярное ядро (R1, micrograd-механика): Value с data/grad/op/parents
+ * и topo-backward. Используется ТОЛЬКО ленивыми
  * экспандерами drill-down (expanders.ts) — A-математика по требованию,
  * view-слой над снапшотами чисел; гранулярность ИСПОЛНЕНИЯ walkthrough
  * остаётся op-level (решение R1: чистый micrograd-порт как движок отвергнут).
