@@ -46,6 +46,20 @@ Plans:
 - [ ] 01-04-PLAN.md — H2/H3-инструментарий человека: Mom Test-гайд интервью + скрининг, юзабилити-протокол с порогами, шаблоны EVIDENCE.md, go/no-go сводка (D-07), фиксация вердикта
 **UI hint**: yes
 
+### Phase 01.1: Архитектурный рефакторинг R1–R5 (INSERTED)
+
+**Goal:** Живой тензорный движок (src/tensor/, PyTorch-имена, эталоны NFR-02 на юнит-константах) заменяет JSON-трейс; forward-only UX с бесконечными эпохами, fast-forward и историей обучения (график лосса + таблица весов); решения R1–R5 применены, Python-конвейер удалён
+**Requirements**: UX-05, UX-06
+**Depends on:** Phase 1
+**Plans:** 5 plans
+
+Plans:
+- [ ] 01.1-01-PLAN.md — Трейсер: тензорная библиотека src/tensor/ (R1) + живой корень прогона src/run/ (R4) + UI на числах движка; forward-only контролы; эталон-константы NFR-02 сняты с xor-trace.json и захардкожены; инварианты «пошагово = FF», детерминизм; границы библиотеки (oxlint + CI)
+- [ ] 01.1-02-PLAN.md — Скалярные экспандеры drill-down (value.ts + expanders.ts) с инвариантом «drill-down = движок» per-op; нейминг R2 (OperationPanel/operationRows, чистка словаря, 0 правок UI-строк и e2e-селекторов)
+- [ ] 01.1-03-PLAN.md — Эпохи R3: fast-forward «Запустить эпоху», экран завершения эпохи, бесконечные эпохи; история UX-05 (график лосса) + UX-06 (таблица весов по эпохам); полная e2e (6 проверок) + скриншот-self-check 28
+- [ ] 01.1-04-PLAN.md — Интерактивность R5: бегущий пунктир потока forward/backward (CSS-only, data-flow), reduced-motion/print/lecture-гейты, e2e emulateMedia; тултипы @floating-ui/react (NumberHint, формула с подстановкой + градиент, a11y)
+- [ ] 01.1-05-PLAN.md — Удаление Python-конвейера (после захвата эталонов); docs-sync: R1–R5 как D-19+ в корневом DECISIONS.md, STATE.md, глоссарий EN↔RU в PROJECT.md
+
 ### Phase 2: Движок и MVP-walkthrough на XOR
 **Goal**: Пользователь сам проходит полный walkthrough XOR-сценария на MLP — исполняет каждый шаг forward/backward-pass, видит каждое число и Drill-down до формулы — на движке, чья корректность доказана тестами (MVP R1 по D-18)
 **Mode:** mvp
