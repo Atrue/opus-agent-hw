@@ -12,7 +12,7 @@
  */
 
 import { useSyncExternalStore } from 'react'
-import { gradIo, MLP, SampleCursor, tensorIo, type Phase, type StepRecord, type Tensor, type TensorIo, type TensorValues } from '../tensor'
+import { gradIo, MLP, SampleCursor, tensorIo, type Phase, type StepRecord, type Tensor, type TensorIo } from '../tensor'
 import { SAMPLE_COUNT, XOR_SCENARIO } from './scenario'
 
 export type Mode = 'default' | 'lecture'
@@ -315,5 +315,3 @@ if (typeof window !== 'undefined') window.__run = run
 export function useRunSlice<T>(sel: (r: TrainingRun) => T): T {
   return useSyncExternalStore(run.subscribe, () => sel(run))
 }
-
-export type { TensorValues }

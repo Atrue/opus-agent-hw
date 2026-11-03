@@ -3,6 +3,39 @@
   "plugins": ["react", "typescript", "oxc"],
   "rules": {
     "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
+    "react/only-export-components": ["warn", { "allowConstantExport": true }],
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "group": ["**/tensor/*", "!**/tensor/index", "!**/tensor/index.ts", "!./tensor/*"],
+            "message": "Граница src/tensor/ (R2): движок импортируется только через index.ts — используйте '../tensor'."
+          }
+        ]
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["src/tensor/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^[^.]",
+                "message": "Внутри src/tensor/ разрешены только внутренние импорты './…' — библиотека изолирована от приложения и react (R2)."
+              },
+              {
+                "regex": "^\\.\\./",
+                "message": "Импорт из приложения внутрь src/tensor/ запрещён (R2): библиотека не зависит от приложения."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
 }
