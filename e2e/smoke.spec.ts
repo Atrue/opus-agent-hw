@@ -21,11 +21,22 @@ import { ETALON_SAMPLE_1 } from '../tests/tensor/etalon-constants'
  * завершения эпохи (1) в режимах default и .lecture. Эталон-значения —
  * импортом констант из tests/tensor/etalon-constants.ts (plain-TS, общий
  * для vitest и playwright — без чтения JSON и без vitest-зависимости).
+ *
+ * R5 (план 01.1-04): ВСЕ тесты идут под emulateMedia({ reducedMotion:
+ * 'reduce' }) — единый рычаг детерминизма скриншотов (финальный кадр,
+ * флаков ноль) и одновременно живая проверка того, что reduced-motion-путь
+ * реально работает: computed animation-name активного .diag-flow === 'none'.
+ * Направление потока по фазе: data-flow корня svg (forward → backward →
+ * отсутствует на update-опе).
  */
 
 // Baseline скриншотов регенерируем: pnpm e2e пересоздаёт весь набор (28)
 rmSync('e2e/screenshots', { recursive: true, force: true })
 mkdirSync('e2e/screenshots', { recursive: true })
+
+test.beforeEach(async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+})
 
 /** Текст экрана эпохи пошагового прохода — носитель для проверки (3). */
 let stepwiseEpochText: string | null = null
@@ -35,17 +46,35 @@ const etalonOutput = (op: number): number => (ETALON_SAMPLE_1[op]!.outputs as nu
 test('1) первый «Шаг» исполняет операцию движка: z1[0] = −0.9229', async ({ page }) => {
   await page.goto('/')
   await expect(page.getByTestId('step-indicator')).toHaveText('Эпоха 1 · пример 1 · шаг 1')
+  await expect(page.getByTestId('architecture-diagram'), 'до первого шага потока нет').not.toHaveAttribute('data-flow')
   await page.getByTestId('btn-next').click()
   await expect(page.getByTestId('step-indicator')).toHaveText('Эпоха 1 · пример 1 · шаг 2')
   const panel = await page.getByTestId('step-panel').textContent()
   expect(panel, 'в панели — контрольное число движка (display-минус U+2212)').toContain(formatKey(etalonOutput(0)))
   expect(panel).not.toContain('NaN')
+  await expect(page.getByTestId('architecture-diagram'), 'forward-фаза — поток к выходу').toHaveAttribute(
+    'data-flow',
+    'forward',
+  )
+  const flowAnimation = await page
+    .locator('.diag-edge-g.active .diag-flow')
+    .first()
+    .evaluate((el) => getComputedStyle(el).animationName)
+  expect(flowAnimation, 'reduced-motion: бегущий пунктир погашен (animation-name === none)').toBe('none')
 })
 
 test('2) полная эпоха 1 пошагово: без NaN, в конце — экран завершения эпохи', async ({ page }) => {
   await page.goto('/')
   for (let i = 1; i <= 4 * 13; i++) {
     await page.getByTestId('btn-next').click()
+    if (i === 8) {
+      // 8-й клик исполнил op 7 (bce-grad) — старт backward: поток разворачивается
+      await expect(page.getByTestId('architecture-diagram')).toHaveAttribute('data-flow', 'backward')
+    }
+    if (i === 13) {
+      // op 12 (sgd) — update-фаза: потока нет
+      await expect(page.getByTestId('architecture-diagram')).not.toHaveAttribute('data-flow')
+    }
     if (i <= 13) {
       // baseline: операции сэмпла 1, default-режим (13 из 28)
       await page.screenshot({ path: `e2e/screenshots/op-${String(i).padStart(2, '0')}.png` })

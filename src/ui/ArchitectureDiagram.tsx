@@ -11,6 +11,8 @@ import { formatKey } from '../format/numbers'
  * цифр»). Активная op записи: обводка #E69F00 3px + тинт 10%. Клик по
  * узлу/ребру → openDrill(ref). Layout детерминированный, hand-rolled.
  * Подписка на version — веса мутируются в Float64Array на месте (R4 §6.2).
+ * Поток вычислений (R5): активные рёбра несут слой .diag-flow («бегущий
+ * пунктир»), направление по фазе шага задаёт data-flow этого svg-корня.
  */
 
 const VIEW_W = 640
@@ -139,25 +141,28 @@ function EdgeView({ edge, active, maxAbsW }: { edge: EdgeDef; active: boolean; m
     }
   }
   return (
-    <g className={`diag-edge-g${active ? ' active' : ''}`}>
-      {active && (
-        <line
-          x1={from.cx + R}
-          y1={from.cy}
-          x2={to.cx - R}
-          y2={to.cy}
-          className="diag-edge-casing"
-          style={{ stroke: 'var(--color-attention)' }}
-        />
-      )}
+    // --w на ГРУППЕ: толщину видят и ребро, и кейсинг, и слой потока (наследуется)
+    <g className={`diag-edge-g${active ? ' active' : ''}`} style={{ ['--w' as string]: edgeWidth(w, maxAbsW) }}>
+      {/* R5: кейсинг активного ребра рендерится ПОСТОЯННО, видимость — классом
+          (условный монтирование не анимируется transition'ом) */}
+      <line
+        x1={from.cx + R}
+        y1={from.cy}
+        x2={to.cx - R}
+        y2={to.cy}
+        className="diag-edge-casing"
+        style={{ stroke: 'var(--color-attention)' }}
+      />
       <line
         x1={from.cx + R}
         y1={from.cy}
         x2={to.cx - R}
         y2={to.cy}
         className="diag-edge"
-        style={{ stroke: sign, ['--w' as string]: edgeWidth(w, maxAbsW) }}
+        style={{ stroke: sign }}
       />
+      {/* R5: «бегущий пунктир» потока — направлением управляет data-flow корня */}
+      <line x1={from.cx + R} y1={from.cy} x2={to.cx - R} y2={to.cy} className="diag-flow" />
       <text x={lx} y={ly} textAnchor="middle" className="diag-edge-label">
         {formatKey(w)}
       </text>
@@ -234,6 +239,22 @@ function buildEdges(): { edges: EdgeDef[]; maxAbsW: number } {
   return { edges, maxAbsW }
 }
 
+/** Направление потока вычислений по фазе текущего шага (R5): forward-фазы —
+ *  прямое (x→h→ŷ), backward — обратное; update-фазы — без потока (undefined,
+ *  атрибут не монтируется). Один data-атрибут на корне svg + один CSS-селектор. */
+function flowOf(record: StepRecord | null): 'forward' | 'backward' | undefined {
+  if (record === null) return undefined
+  switch (record.phase) {
+    case 'forward':
+    case 'loss':
+      return 'forward'
+    case 'backward':
+      return 'backward'
+    default:
+      return undefined
+  }
+}
+
 export default function ArchitectureDiagram({ record }: { record: StepRecord | null }) {
   // версия прогона: перерисовка на каждую операцию (веса мутируются на месте)
   const version = useRunSlice((r) => r.version)
@@ -243,6 +264,7 @@ export default function ArchitectureDiagram({ record }: { record: StepRecord | n
     <svg
       data-testid="architecture-diagram"
       data-version={version}
+      data-flow={flowOf(record)}
       viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
       className="h-full w-full"
       role="img"

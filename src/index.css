@@ -183,6 +183,74 @@ sub { /* подстрочные индексы (план Б §5.5: ASCII z1 + <s
   outline-offset: 2px;
 }
 
+/*
+ * R5: поток вычислений + transitions подсветки (A-8 rev: анимация — чисто
+ * презентационный слой поверх УЖЕ отрисованного финального состояния шага,
+ * никогда не гейтит числа). «Бегущий пунктир» .diag-flow: отрицательный
+ * stroke-dashoffset двигает штрихи по направлению пути (рёбра нарисованы
+ * from→to: x→h→ŷ — forward); для градиентной фазы направление разворачивает
+ * ОДИН селектор по data-flow-атрибуту корня svg. CSS-only, 0 зависимостей.
+ */
+.diag-node,
+.diag-edge,
+.diag-edge-casing,
+.diag-flow,
+.diag-edge-label {
+  transition:
+    stroke 180ms,
+    fill 180ms,
+    opacity 180ms,
+    stroke-width 180ms;
+}
+.diag-edge-casing {
+  /* постоянный рендер кейсинга: условный mount не анимируется transition'ом —
+     видимость переключается классом active (R5 §3a) */
+  opacity: 0;
+}
+.diag-edge-g.active .diag-edge-casing {
+  opacity: 1;
+}
+.diag-flow {
+  stroke: #FFFFFF; /* Dominant-токен: белые штрихи поверх знаково-окрашенного ребра */
+  stroke-linecap: round;
+  stroke-dasharray: 8 6;
+  stroke-width: calc(var(--w) * var(--edge-scale, 1));
+  opacity: 0;
+  pointer-events: none;
+}
+.diag-edge-g.active .diag-flow {
+  opacity: 1;
+  animation: diag-flow-run 0.9s linear infinite;
+}
+[data-flow="backward"] .diag-edge-g.active .diag-flow {
+  animation-direction: reverse; /* градиент течёт к входу: ŷ → h → x */
+}
+@keyframes diag-flow-run {
+  to {
+    stroke-dashoffset: -14; /* период штриха 8+6 — бесшовный бесконечный цикл */
+  }
+}
+
+/*
+ * Гейты (R5 §4.2): prefers-reduced-motion гасит анимации и переходы ГЛОБАЛЬНО
+ * (e2e проверяет computed animation-name активного .diag-flow === 'none');
+ * @media print останавливает пунктир — статичный кадр. .lecture поток НЕ
+ * выключает: направление вычисления — дидактический контент, а не украшение.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+@media print {
+  .diag-edge-g.active .diag-flow {
+    animation: none;
+  }
+}
+
 /* Exact-repr в NumberDrilldown: отдельная строка с горизонтальным скроллом
    внутри панели (UI Considerations: overflow). */
 .exact-row {
