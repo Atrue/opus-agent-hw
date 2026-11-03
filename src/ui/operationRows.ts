@@ -1,12 +1,13 @@
 import type { StepRecord, TensorValues } from '../tensor'
 
 /**
- * Чистая модель дефолтного вида шага (без React): какие числа показать,
- * что скрыть до drill-down. Жёсткие потолки UI-SPEC (анти-«стена цифр»):
- * ≤7 ключевых чисел в дефолтном виде, ≤30 на всём экране.
+ * Чистая модель дефолтного вида ОПЕРАЦИИ (без React): какие числа показать,
+ * что скрыть до drill-down. «Шаг» — позиция в маршруте, «операция» —
+ * содержание шага (словарь R2); жёсткие потолки UI-SPEC (анти-«стена
+ * цифр»): ≤7 ключевых чисел в дефолтном виде, ≤30 на всём экране.
  */
 
-const KEY_NUMBER_CAP = 7 // жёсткий потолок ключевых чисел на шаг
+const KEY_NUMBER_CAP = 7 // жёсткий потолок ключевых чисел на операцию
 const PER_TENSOR_CAP = 3 // значений тензора в дефолтном виде; остальное — drill-down
 
 export interface NumberRow {
@@ -34,7 +35,7 @@ function flatten(values: TensorValues): number[] {
 }
 
 /** Выходы + градиенты (без дублей) в пределах бюджета ключевых чисел, затем входы. */
-export function buildStepRows(step: StepRecord): NumberRow[] {
+export function buildOperationRows(step: StepRecord): NumberRow[] {
   const rows: NumberRow[] = []
   let budget = KEY_NUMBER_CAP
 

@@ -5,14 +5,15 @@ import type { Phase } from '../tensor'
 import ArchitectureDiagram from './ArchitectureDiagram'
 import NarrativeLine from './NarrativeLine'
 import NumberDrilldown from './NumberDrilldown'
+import OperationPanel from './OperationPanel'
 import StepControls from './StepControls'
-import StepPanel from './StepPanel'
 
 /**
  * Экран walkthrough на живом прогоне — layout-контракт UI-SPEC Rev 1.1:
  * header 56px (заголовок «XOR — backprop по шагам» слева; справа индикатор
  * «Эпоха N · пример K · шаг M» + бейдж фазы + toggle «Лекционный режим»),
- * main 55% слот диаграммы / 45% StepPanel, gap 32px, bottom bar 72px
+ * main 55% слот диаграммы / 45% OperationPanel (панель операции — уровень
+ * иерархии DOCS-02, словарь R2), gap 32px, bottom bar 72px
  * (контролы слева, нарратив справа). Слоты фиксированы (проекторная
  * стабильность). Лекционный режим — класс .lecture на корне (CSS-переменные).
  *
@@ -95,7 +96,7 @@ export default function App() {
           {drill !== null && record !== null ? (
             <NumberDrilldown record={record} drill={drill} />
           ) : (
-            <StepPanel record={record} />
+            <OperationPanel record={record} />
           )}
         </section>
       </main>

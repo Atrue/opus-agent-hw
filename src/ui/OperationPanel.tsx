@@ -2,16 +2,19 @@ import { Fragment } from 'react'
 import { run } from '../run/runState'
 import type { StepRecord } from '../tensor'
 import { formatKey } from '../format/numbers'
-import { buildStepRows, type NumberRow } from './stepRows'
+import { buildOperationRows, type NumberRow } from './operationRows'
 import SubscriptText from './SubscriptText'
 
 /**
- * Панель шага — дефолтный вид: формула + входы/выходы/градиенты операции,
+ * Панель операции — дефолтный вид: формула + входы/выходы/градиенты операции,
  * ИСПОЛНЕННОЙ живым движком (числа — вывод движка, не предвычисленный JSON).
- * До первого «Шага» — вводная панель предстоящей операции (числа появятся
- * после исполнения). Изменившееся (changed) — gray-900 + accent-тинт
- * #E69F00 @10%, неизменившееся — gray-500. Клик по числу → openDrill.
- * Потолки чисел (≤7 ключевых / ≤30 на экране) — чистая модель stepRows.
+ * Показывает уровень «операция» иерархии DOCS-02; testid «step-panel» —
+ * контракт e2e на содержимое экрана, не на имя компонента (правило R2), и
+ * не переименовывается. До первого «Шага» — вводная панель предстоящей
+ * операции (числа появятся после исполнения). Изменившееся (changed) —
+ * gray-900 + accent-тинт #E69F00 @10%, неизменившееся — gray-500. Клик по
+ * числу → openDrill. Потолки чисел (≤7 ключевых / ≤30 на экране) — чистая
+ * модель operationRows.
  */
 
 function NumberRowView({ row, joiner }: { row: NumberRow; joiner: string }) {
@@ -39,7 +42,7 @@ function NumberRowView({ row, joiner }: { row: NumberRow; joiner: string }) {
   )
 }
 
-export default function StepPanel({ record }: { record: StepRecord | null }) {
+export default function OperationPanel({ record }: { record: StepRecord | null }) {
   // До первого шага: предстоящая операция — без чисел (они появятся после «Шага»)
   if (record === null) {
     return (
@@ -54,7 +57,7 @@ export default function StepPanel({ record }: { record: StepRecord | null }) {
       </div>
     )
   }
-  const rows = buildStepRows(record)
+  const rows = buildOperationRows(record)
   // update: массив значений — «до -> после»
   const joiner = record.phase === 'update' ? '->' : ','
   return (

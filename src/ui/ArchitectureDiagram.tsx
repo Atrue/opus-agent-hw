@@ -37,7 +37,7 @@ const H_NODES: NodeDef[] = H_CY.map((cy, j) => ({ id: `a1[${j}]`, label: `a1[${j
 const Y_NODE: NodeDef = { id: 'ŷ', label: 'ŷ', cx: Y_CX, cy: Y_CY }
 
 interface EdgeDef {
-  ref: string // W1[k] / W2[k] — flat-индекс совпадает со stepRows (row-major)
+  ref: string // W1[k] / W2[k] — flat-индекс совпадает со operationRows (row-major)
   w: number
   from: NodeDef
   to: NodeDef
