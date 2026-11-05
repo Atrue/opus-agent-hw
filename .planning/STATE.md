@@ -1,10 +1,12 @@
 ---
 gsd_state_version: "1.0"
-current_phase: 2
-current_phase_name: Движок и MVP-walkthrough на XOR
-status: executing
-stopped_at: Redesign UI под DESIGN.md complete (D-25); Phase 2 execution continues
-last_updated: "2026-11-05T11:30:00.000Z"
+current_phase: "01.2"
+current_phase_name: Формула-хребет и история звена (INSERTED)
+status: planning → ready to execute (01.2-01..03 plans defined; model approved by owner)
+stopped_at: Вставка 01.2 «формула-хребет»: модель утверждена владельцем, планы 01.2-01/01.2-02/01.2-03 созданы; фаза 2 не тронута (Plans: TBD); ожидается /gsd-execute-phase
+last_updated: "2026-11-05T16:30:00.000Z"
+last_activity: 2026-11-05
+last_activity_desc: gsd-quick (research): 9 пунктов ТЗ → вставленная фаза 01.2 «формула-хребет» (3 плана); фаза 2 возвращена в нетронутое состояние для отдельного старта
 last_activity: 2026-11-05
 last_activity_desc: gsd-quick: редизайн UI под DESIGN.md (D-25) — тёмная тема, workbench 4/5/3, лента шагов, статус-бар
 state_head: 2beedcfed0edaad89121ea188f0f2f7125ad2cae
@@ -23,14 +25,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-11-03)
 
 **Core value:** Пользователь сам пошагово исполняет forward/backward-pass готового сценария и видит каждый градиент числом — в браузере, без регистрации, по одной ссылке (первый шаг < 1 мин).
-**Current focus:** Phase 2 — Движок и MVP-walkthrough на XOR
+**Current focus:** Phase 01.2 — Формула-хребет и история звена (вставка перед фазой 2)
 
 ## Current Position
 
-Phase: 2 (Движок и MVP-walkthrough на XOR) — EXECUTING
-Plan: 1 of ?
-Status: Executing Phase 2 (UI переведён на DESIGN.md, D-25)
-Last activity: 2026-11-05 — gsd-quick: редизайн UI под DESIGN.md
+Phase: 01.2 (Формула-хребет и история звена, INSERTED) — READY TO EXECUTE
+Plan: 3 плана (01.2-01, 01.2-02, 01.2-03) — модель утверждена владельцем, ожидает исполнения
+Status: Ready to execute — /gsd-execute-phase (wave 1: 01.2-01)
+Last activity: 2026-11-05 — gsd-quick (research): модель утверждена, фаза 01.2 вставлена; фаза 2 нетронута
 
 Progress: [████░░░░░░] 40%
 
@@ -106,6 +108,7 @@ Recent decisions affecting current work:
 - [Phase 01.1]: [01.1-05] Док-комментарии живого кода (value.ts, expanders.test.ts) переформулированы без имени удалённого генератора — must_have «ни одной ссылки на конвейер в src/tests»; глоссарий PROJECT.md сверен с фактическими идентификаторами кода (TrainingRun/StepRecord/useRunSlice)
 - [Phase 01 → закрытие]: D-24 (владелец, 2026-11-05): сбор данных H2/H3 (Task 3 плана 01-04) и фиксация вердикта (Task 4) отложены до завершения разработки; H2/H3-задачи НЕ включаются в планы фаз 2–4 без явного запроса владельца — todo deferred-h2-h3-validation; до вердикта закрыты прайс и масштабный аутрич/пилоты; критерий 4 фазы (токены/нотация) верифицирован, фаза закрыта с дескоупом (01-VERIFICATION.md)
 - [Quick 2026-11-05]: D-25 — редизайн UI под DESIGN.md: тёмная «приборная» тема (суперсессия D-06), токен-контракт = DESIGN.md + index.css @theme; шрифты Space Grotesk/Geist/Material Symbols (fontsource, OFL), Inter удалён; знак числа Okabe-Ito сохранён ролью (§2.1, AA на тёмном §2.2); каркас workbench 4/5/3 + лента шагов (индикатор, forward-only) + статус-бар 48px; лекционный режим и reduced-motion гейты сохранены; e2e/юниты/линт зелёные, скрин-baseline 28 регенерирован, артефакт редизайна в artifacts/ (003)
+- [2026-11-05, утверждено владельцем]: модель «формула-хребет» для 9 пунктов ТЗ — формула-строка с полной формулой сети сверху, клик по символу выбирает звено цепи (x→z1→a1→z2→ŷ→L→W): подсветка геометрии на диаграмме (primary, отличимо от амбера активной op) + панель звена; история звена per-sample (гранулярность утверждена) вместо таблицы весов UX-06; reset = перезапуск прогона (runId), история сессии живёт до reload; все примеры выборки — в блоке «Примеры и результат» (бывшая зона результата, переименована владельцем); лента шагов — горизонтально вверх, автоскролл к активной; реализация — вставленной фазой 01.2, планами 01.2-01…03 (журнализация D-26 — в 01.2-03); фаза 2 не смешивается с этими правками и стартует отдельно после 01.2
 
 ### Pending Todos
 
@@ -118,6 +121,7 @@ None yet.
 ### Roadmap Evolution
 
 - Phase 1.1 inserted after Phase 1: Архитектурный рефакторинг R1–R5 (URGENT)
+- Phase 01.2 inserted after Phase 01.1 (2026-11-05): Формула-хребет и история звена — UI-правки по ТЗ владельца (9 пунктов), чтобы не смешивать с фазой 2; фаза 2 стартует отдельно после закрытия 01.2
 
 ## Deferred Items
 
@@ -129,6 +133,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-11-05T11:30:00Z
-Stopped at: gsd-quick «редизайн UI под DESIGN.md» завершён (D-25); Phase 2 execution continues
+Last session: 2026-11-05T16:30:00Z
+Stopped at: Вставка 01.2 «формула-хребет» готова к исполнению (/gsd-execute-phase, wave 1 = 01.2-01); фаза 2 нетронута
 Resume file: None
