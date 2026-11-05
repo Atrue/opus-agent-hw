@@ -1,19 +1,19 @@
 ---
 gsd_state_version: "1.0"
-current_phase: 1
-current_phase_name: Валидация H2/H3 — кликабельный прототип
+current_phase: 2
+current_phase_name: Движок и MVP-walkthrough на XOR
 status: executing
-stopped_at: Phase 01.1 complete, ready to execute Phase 1
-last_updated: "2026-11-03T19:10:01.910Z"
-last_activity: 2026-11-03
-last_activity_desc: Phase 01.1 complete, transitioned to Phase 1
-state_head: ae477130843ece4a671065b00e620314b675517c
+stopped_at: Phase 01 complete, ready to verify Phase 01.1
+last_updated: "2026-11-05T06:15:35.692Z"
+last_activity: 2026-11-05
+last_activity_desc: Phase 2 execution started
+state_head: 2beedcfed0edaad89121ea188f0f2f7125ad2cae
 progress:
   total_phases: 5
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 9
-  completed_plans: 8
-  percent: 20
+  completed_plans: 9
+  percent: 40
 ---
 
 # Project State
@@ -23,21 +23,21 @@ progress:
 See: .planning/PROJECT.md (updated 2026-11-03)
 
 **Core value:** Пользователь сам пошагово исполняет forward/backward-pass готового сценария и видит каждый градиент числом — в браузере, без регистрации, по одной ссылке (первый шаг < 1 мин).
-**Current focus:** Phase 1 — Валидация H2/H3 (остался план 01-04: юзабилити-тест + H2-интервью)
+**Current focus:** Phase 2 — Движок и MVP-walkthrough на XOR
 
 ## Current Position
 
-Phase: 1 — Валидация H2/H3 — кликабельный прототип
-Plan: 4
-Status: Ready to execute
-Last activity: 2026-11-03 — Phase 01.1 complete, transitioned to Phase 1
+Phase: 2 (Движок и MVP-walkthrough на XOR) — EXECUTING
+Plan: 1 of ?
+Status: Executing Phase 2
+Last activity: 2026-11-05 — Phase 2 execution started
 
-Progress: [██░░░░░░░░] 20%
+Progress: [████░░░░░░] 40%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5
+- Total plans completed: 9
 - Average duration: -
 - Total execution time: -
 
@@ -46,6 +46,7 @@ Progress: [██░░░░░░░░] 20%
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01.1 | 5 | - | - |
+| 01 | 4 | - | - |
 
 **Recent Trend:**
 - Last 5 plans: -
@@ -103,10 +104,11 @@ Recent decisions affecting current work:
 - [Phase 01.1]: [01.1-04] e2e-детерминизм — два рычага: emulateMedia reducedMotion reduce (гасит анимации) + deviceScaleFactor 2 (полупиксельные скругления кнопок footer растеризуются недетерминированно между загрузками; DPR 2 делает полупиксели целыми) — двойные прогоны бит-идентичны — плановая ручная сверка «e2e дважды» поймала дрожание AA на y=744.5 (h-[72px] border-box с border-t → контент 71px); фикс в тест-инфраструктуре, layout приложения не тронут
 - [Phase 01.1]: [01.1-05] Порядок «захват → удаление» соблюдён: precondition-гейт подтвердил зелёность эталон-теста (3/3) и 0 ссылок на JSON до git rm; повторная сверка с Python после удаления невозможна by design (R3) — самосогласованность держат инварианты
 - [Phase 01.1]: [01.1-05] Док-комментарии живого кода (value.ts, expanders.test.ts) переформулированы без имени удалённого генератора — must_have «ни одной ссылки на конвейер в src/tests»; глоссарий PROJECT.md сверен с фактическими идентификаторами кода (TrainingRun/StepRecord/useRunSlice)
+- [Phase 01 → закрытие]: D-24 (владелец, 2026-11-05): сбор данных H2/H3 (Task 3 плана 01-04) и фиксация вердикта (Task 4) отложены до завершения разработки; H2/H3-задачи НЕ включаются в планы фаз 2–4 без явного запроса владельца — todo deferred-h2-h3-validation; до вердикта закрыты прайс и масштабный аутрич/пилоты; критерий 4 фазы (токены/нотация) верифицирован, фаза закрыта с дескоупом (01-VERIFICATION.md)
 
 ### Pending Todos
 
-None yet.
+- `.planning/todos/pending/deferred-h2-h3-validation.md` — отложенный этап H2/H3 (сбор данных + вердикт). **Активация: только явный запрос владельца, после завершения разработки; в планы фаз не включать** (D-24).
 
 ### Blockers/Concerns
 
@@ -120,12 +122,12 @@ None yet.
 
 | Category | Item | Status | Deferred At | Milestone |
 |----------|------|--------|-------------|-----------|
-| *(none)* | | | | |
+| validation | H2/H3: 5 проблем-интервью + 5–8 юзабилити-сессий, агрегаты EVIDENCE.md, go/no-go-вердикт (бывш. Tasks 3–4 плана 01-04), фиксация в STATE/DECISIONS | Отложено решением владельца (D-24); инструменты готовы, пороги зафиксированы; активация — только явный запрос, после фаз 2–4 | 2026-11-05 | post-development (до пилотов) |
 
 (v2-требования — CONSTR-01..03, GROWTH-01, B2B-01 — трекаются в REQUIREMENTS.md § v2, вне roadmap.)
 
 ## Session Continuity
 
-Last session: 2026-11-03T22:12:00Z
-Stopped at: Phase 01.1 complete (UAT 2/2 pass, security verified), ready to execute Phase 1 (plan 01-04 remains)
+Last session: 2026-11-05T06:20:00Z
+Stopped at: Phase 01 closed with H2/H3 deferral (D-24); Phase 2 (Движок и MVP-walkthrough на XOR) ready to plan — /gsd-plan-phase 2
 Resume file: None
