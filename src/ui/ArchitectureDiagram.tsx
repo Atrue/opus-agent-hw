@@ -41,6 +41,15 @@ const X_NODES: NodeDef[] = X_CY.map((cy, i) => ({ id: `x[${i}]`, label: `x[${i}]
 const H_NODES: NodeDef[] = H_CY.map((cy, j) => ({ id: `a1[${j}]`, label: `a1[${j}]`, cx: H_CX, cy }))
 const Y_NODE: NodeDef = { id: 'ŷ', label: 'ŷ', cx: Y_CX, cy: Y_CY }
 
+/** Все id сущностей диаграммы (контракт подсветки звеньев, 01.2-01):
+ *  узлы (x, a1, ŷ, y, L) · рёбра (W1×6, W2×3) · плашки (tanh, σ) · биасы. */
+export const GEOMETRY_IDS = {
+  nodes: [],
+  edges: [],
+  plates: [],
+  biases: [],
+}
+
 interface EdgeDef {
   ref: string // W1[k] / W2[k] — flat-индекс совпадает со operationRows (row-major)
   w: number

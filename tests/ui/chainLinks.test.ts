@@ -8,6 +8,7 @@
 
 import { describe, expect, it } from 'vitest'
 import { SEGMENTS, geometryOf, symbolToSegment, type SegmentGeometry } from '../../src/ui/chainLinks'
+import { GEOMETRY_IDS } from '../../src/ui/ArchitectureDiagram'
 import { XOR_SCENARIO } from '../../src/run/scenario'
 
 /** Полный словарь символов формулы-строки (must_haves плана). */
@@ -77,5 +78,49 @@ describe('chainLinks: звенья формулы-хребта', () => {
     expect(geometryOf('z1', 'b1').biases).toEqual(new Set(['b1[0]', 'b1[1]', 'b1[2]']))
     expect(geometryOf('a1', 'tanh').plates).toEqual(new Set(['tanh']))
     expect(geometryOf('a1', 'tanh').nodes).toEqual(new Set(['a1[0]', 'a1[1]', 'a1[2]']))
+  })
+})
+
+describe('chainLinks ↔ ArchitectureDiagram: согласование геометрии (01.2-01)', () => {
+  it('GEOMETRY_IDS описывает диаграмму 2-3-1 со всеми буквами формулы: 8 узлов, 9 рёбер, 2 плашки, 4 биаса', () => {
+    expect(GEOMETRY_IDS.nodes).toHaveLength(8) // x×2, a1×3, ŷ, y, L
+    expect(GEOMETRY_IDS.edges).toHaveLength(9) // W1×6 + W2×3
+    expect(GEOMETRY_IDS.plates).toHaveLength(2) // tanh, σ
+    expect(GEOMETRY_IDS.biases).toHaveLength(4) // b1×3 + b2×1
+    expect(new Set(GEOMETRY_IDS.nodes)).toEqual(new Set(['x[0]', 'x[1]', 'a1[0]', 'a1[1]', 'a1[2]', 'ŷ', 'y', 'L']))
+    expect(new Set(GEOMETRY_IDS.plates)).toEqual(new Set(['tanh', 'σ']))
+  })
+
+  it('вся геометрия звеньев (geometryOf seg и sym) ссылается только на существующие id диаграммы', () => {
+    const ids = {
+      nodes: new Set(GEOMETRY_IDS.nodes),
+      edges: new Set(GEOMETRY_IDS.edges),
+      plates: new Set(GEOMETRY_IDS.plates),
+      biases: new Set(GEOMETRY_IDS.biases),
+    }
+    for (const s of SEGMENTS) {
+      const geometries = [geometryOf(s.id), ...s.symbols.map((sym) => geometryOf(s.id, sym))]
+      for (const g of geometries) {
+        for (const n of g.nodes) expect(ids.nodes.has(n), `узел «${n}» есть на диаграмме`).toBe(true)
+        for (const e of g.edges) expect(ids.edges.has(e), `ребро «${e}» есть на диаграмме`).toBe(true)
+        for (const p of g.plates) expect(ids.plates.has(p), `плашка «${p}» есть на диаграмме`).toBe(true)
+        for (const b of g.biases) expect(ids.biases.has(b), `биас «${b}» есть на диаграмме`).toBe(true)
+      }
+    }
+  })
+
+  it('каждая сущность диаграммы покрыта хотя бы одним звеном (подсвечиваема выбором)', () => {
+    const covered = { nodes: new Set<string>(), edges: new Set<string>(), plates: new Set<string>(), biases: new Set<string>() }
+    for (const s of SEGMENTS) {
+      const g = geometryOf(s.id)
+      g.nodes.forEach((n) => covered.nodes.add(n))
+      g.edges.forEach((e) => covered.edges.add(e))
+      g.plates.forEach((p) => covered.plates.add(p))
+      g.biases.forEach((b) => covered.biases.add(b))
+    }
+    expect([...covered.nodes].sort()).toEqual([...GEOMETRY_IDS.nodes].sort())
+    expect([...covered.edges].sort()).toEqual([...GEOMETRY_IDS.edges].sort())
+    expect([...covered.plates].sort()).toEqual([...GEOMETRY_IDS.plates].sort())
+    expect([...covered.biases].sort()).toEqual([...GEOMETRY_IDS.biases].sort())
   })
 })
