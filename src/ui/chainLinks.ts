@@ -69,6 +69,14 @@ export const symbolToSegment: Readonly<Record<string, SegmentId>> = Object.fromE
   SEGMENTS.flatMap((s) => s.symbols.map((sym) => [sym, s.id])),
 )
 
+/** Скелет контракта станций (RED 01.2-04): наполняется цепью станций в GREEN. */
+export const CHAIN_GEOMETRY_IDS = {
+  nodes: [] as string[],
+  edges: [] as string[],
+  plates: [] as PlateId[],
+  biases: [] as string[],
+}
+
 /** Символы живых чисел панели звена (значения — живые тензоры прогона). */
 export const SEGMENT_NUMBER_SYMS: Record<SegmentId, readonly string[]> = {
   x: ['x'],
