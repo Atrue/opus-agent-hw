@@ -1,44 +1,74 @@
 @import "tailwindcss";
-@import "@fontsource-variable/inter";
+@import "@fontsource-variable/space-grotesk";
+@import "@fontsource-variable/geist";
 @import "@fontsource-variable/jetbrains-mono";
+@import "@fontsource/material-symbols-outlined/400.css";
 
 /*
- * Дизайн-токены (D-06) — единственный источник цветов/кеглей (Tailwind 4 CSS-first,
- * без tailwind.config.js). Человекочитаемый контракт поверх — 01-DESIGN-TOKENS.md
- * (deliverable плана 01-03). Токены фиксируются надолго: «фазы 2–3 не перекрашивают».
+ * Дизайн-токены DESIGN.md «Backprop без магии» (D-25, суперсессия D-06):
+ * тёмная «приборная» тема — панель измерительного прибора. Единственный
+ * источник цветов/кеглей (Tailwind 4 CSS-first). Правило 60-30-10:
+ * поверхности 60% / текст-структура 30% / акценты 10%.
  *
- * Палитра Okabe-Ito (colorblind-safe): чистые цвета — SVG-заливки/точки бейджей;
- * затемнённые *-text — AA-варианты цвета текста чисел на белом (UI-SPEC A-4).
- * Знак числа никогда не кодируется только цветом: минус U+2212 + цвет (Pitfall 6).
+ * Знак числа — Okabe-Ito (colorblind-safe), роль «знак числа» зафиксирована
+ * в DESIGN.md §Знак числа: чистые цвета — SVG-заливки/рёбра (≥3:1 на тёмном),
+ * светлые *-text — текст чисел (AA ≥4.5:1 на всех поверхностях, проверено).
+ * Знак никогда не кодируется только цветом: минус U+2212 + цвет (Pitfall 6).
+ *
+ * Space Grotesk не содержит кириллицу: RU-заголовки рендерятся стеком
+ * SG → Geist (близкие гротески); латиница/греч. подписи узлов — чистый SG.
  */
 @theme {
-  --font-sans: "Inter Variable", system-ui, sans-serif;
+  --font-sans: "Geist Variable", system-ui, sans-serif;
+  --font-display: "Space Grotesk Variable", "Geist Variable", system-ui, sans-serif;
   --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
 
-  /* Okabe-Ito: заливки/SVG/точки фазных бейджей */
-  --color-neg: #D55E00;        /* Vermillion — отрицательные значения/градиенты */
-  --color-pos: #009E73;        /* Bluish Green — положительные */
-  --color-attention: #E69F00;  /* Orange — подсветка изменившегося числа, primary CTA */
+  /* 60% — поверхности */
+  --color-background: #0f131c;
+  --color-surface: #0f131c;
+  --color-surface-container-lowest: #0a0e16; /* «экран»: SVG-канвас, код, инпуты */
+  --color-surface-container-low: #181c24;    /* база карточек */
+  --color-surface-container: #1c2028;        /* ячейки, вкладки, вложенные блоки */
+  --color-surface-container-high: #262a33;   /* hover, активные ячейки */
+  --color-surface-container-highest: #31353e;
 
-  /* AA-варианты текста чисел на белом (контраст ≥ 4.5:1, UI-SPEC A-4) */
-  --color-neg-text: #C24A00;
-  --color-pos-text: #007A56;
+  /* 30% — текст/структура */
+  --color-on-surface: #dfe2ee;
+  --color-on-surface-variant: #bbcabf;
+  --color-outline: #86948a;
+  --color-outline-variant: #3c4a42;
 
-  /* Фазные бейджи (A-5): точка чистого цвета + текст gray-900 на тинте 12% */
-  --color-phase-fwd: #0072B2;  /* Blue */
-  --color-phase-loss: #E69F00; /* Orange (hue совпадает с accent — принято в UI-SPEC) */
-  --color-phase-bwd: #CC79A7;  /* Reddish Purple */
-  --color-phase-upd: #56B4E9;  /* Sky Blue */
-  --color-phase-summary: #6B7280; /* gray-500 */
+  /* 10% — акценты; семантика фиксирована: мята=forward/успех,
+   * циан=градиент/интерактив, амбер=backward/текущий шаг, error=расхождение */
+  --color-primary: #4edea3;
+  --color-secondary: #4cd7f6;
+  --color-tertiary: #ffb95f;
+  --color-error: #ffb4ab;
+  --color-primary-container: #10b981;
+  --color-on-primary-container: #00422b;
+  --color-tertiary-container: #e29100;
+  --color-on-tertiary-container: #523200;
 
-  /* Кегли: default-шкала 14/16/20. Лекционный режим меняет ТОЛЬКО переменные. */
+  /* Фазная семантика (D-25): fwd=мята, loss=error, bwd=амбер, upd=циан */
+  --color-phase-fwd: var(--color-primary);
+  --color-phase-loss: var(--color-error);
+  --color-phase-bwd: var(--color-tertiary);
+  --color-phase-upd: var(--color-secondary);
+
+  /* Знак числа — Okabe-Ito: чистые — SVG/заливки; светлые — текст (AA на тёмном) */
+  --color-neg: #D55E00;   /* Vermillion — отрицательные значения/градиенты */
+  --color-pos: #009E73;   /* Bluish Green — положительные */
+  --color-neg-text: #FF8A50;
+  --color-pos-text: #00C489;
+
+  /* Кегли: лекционный режим меняет ТОЛЬКО переменные (D-06 сохранён) */
   --num-size: 16px;   /* числа/формулы → 32px в .lecture */
   --ui-size: 16px;    /* UI-текст/контролы → 20px в .lecture */
-  --diag-scale: 1;    /* масштаб подписей диаграммы → 1.25 в .lecture (план 01-03) */
+  --diag-scale: 1;    /* масштаб подписей диаграммы → 1.25 в .lecture */
 }
 
 /* Лекционный режим (D-06): класс на корне, без JS-пересчёта layout.
-   --edge-scale ×2 — толщина SVG-рёбер; --diag-scale 1.25 — подписи диаграммы. */
+   --edge-scale ×2 — толщина SVG-рёбер. Хром (степпер/статус-бар) не масштабируется. */
 .lecture {
   --num-size: 32px;
   --ui-size: 20px;
@@ -46,48 +76,111 @@
   --edge-scale: 2;
 }
 
+body {
+  background: var(--color-background);
+  color: var(--color-on-surface);
+}
+
 /*
- * Типографика экрана шага (UI-SPEC Typography): ровно 2 веса, числа всегда
- * weight 400 — акцент через фон-тинт и цвет, не через вес.
+ * Типографика (DESIGN.md §3): числовой слой продукта моноширинный;
+ * числа всегда weight 400 — акцент через фон-тинт и цвет, не через вес.
  */
-.num { /* числа/формулы — главный контент; JetBrains Mono + табличные цифры */
+.num { /* числа/формулы — JetBrains Mono + табличные цифры, leading-tight */
   font-family: var(--font-mono);
   font-size: var(--num-size);
   font-weight: 400;
-  line-height: 1.5;
-  font-variant-numeric: tabular-nums; /* A-5: табличные цифры на всех числах */
+  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
 }
-.ui-text { /* нарратив, подписи */
+.ui-text { /* нарратив, пояснения — body, Geist */
   font-size: var(--ui-size);
   font-weight: 400;
   line-height: 1.5;
 }
-.ui-label { /* кнопки, бейджи, «Шаг N из 14» */
-  font-size: var(--ui-size);
+.ui-label { /* кнопки, бейджи, метки — label-sm (12px → 15px в .lecture) */
+  font-size: calc(var(--ui-size) * 0.75);
   font-weight: 600;
   line-height: 1.2;
 }
-.app-heading { /* заголовок сценария (1 на экран): 20px → 24px в .lecture */
+.app-heading { /* заголовок сценария (1 на экран) — Space Grotesk */
+  font-family: var(--font-display);
   font-size: calc(var(--ui-size) + 4px);
   font-weight: 600;
   line-height: 1.2;
+}
+.micro-label { /* микрорубрика над блоком данных: uppercase + tracking-wider */
+  font-size: calc(var(--ui-size) * 0.75);
+  font-weight: 600;
+  line-height: 1.2;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-on-surface-variant);
 }
 
 sub { /* подстрочные индексы (план Б §5.5: ASCII z1 + <sub>-рендер) */
   line-height: 0;
 }
 
-/* Фазный бейдж (A-5): тинт 12% + точка чистого цвета + текст gray-900.
+/* Иконки — Material Symbols Outlined (ligatures), только 400 */
+.icon {
+  font-family: "Material Symbols Outlined";
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1;
+  font-size: 20px;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  color: var(--color-outline);
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+/* Карточка (DESIGN.md §5): container-low, radius 2, паддинг 16, шапка с иконкой */
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  padding: 16px;
+  border-radius: 2px;
+  background: var(--color-surface-container-low);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.35);
+}
+.card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card-title { /* заголовок карточки — headline-sm, Space Grotesk */
+  font-family: var(--font-display);
+  font-size: calc(var(--ui-size) + 2px);
+  font-weight: 600;
+  line-height: 1.2;
+}
+.card-meta { /* правый мета-бейдж шапки */
+  margin-left: auto;
+  color: var(--color-on-surface-variant);
+}
+.screen { /* «экран» внутри карточки: SVG-канвас, код — container-lowest */
+  border-radius: 2px;
+  background: var(--color-surface-container-lowest);
+}
+
+/* Фазный бейдж: тинт 14% по фазному токену + точка чистого цвета + on-surface.
    min-width гарантирует, что смена фазы не сдвигает соседние элементы. */
 .phase-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;              /* xs */
-  min-width: 124px;      /* «backward» в .lecture (20px) без сдвига кластера */
-  padding: 2px 8px;      /* инлайн-паддинг бейджа: xs/sm */
+  gap: 4px;
+  min-width: 124px;
+  padding: 2px 8px;
   border-radius: 9999px;
-  color: #111827;        /* gray-900 */
+  color: var(--color-on-surface);
 }
 .phase-dot {
   width: 8px;
@@ -96,35 +189,49 @@ sub { /* подстрочные индексы (план Б §5.5: ASCII z1 + <s
   flex: none;
 }
 
-/* Контролы: минимальная высота 40px; focus-ring 2px #0072B2 offset 2px. */
+/* Кнопки (DESIGN.md §5): primary = container-заливка, label-sm uppercase,
+   radius 4; ghost = container-high с hover-инверсией текста; disabled 60%. */
 .btn {
   min-height: 40px;
-  padding: 8px 16px;     /* sm/md */
-  border-radius: 8px;
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 4px;
   cursor: pointer;
-  background: #FFFFFF;
+  background: var(--color-surface-container-high);
+  color: var(--color-on-surface-variant);
+  text-transform: uppercase;
+  transition: background-color 150ms ease-out, color 150ms ease-out;
+}
+.btn-secondary { /* ghost */
+  background: var(--color-surface-container-high);
+  color: var(--color-on-surface-variant);
+}
+.btn-secondary:hover:not(:disabled) {
+  background: var(--color-surface-container-highest);
+  color: var(--color-on-surface); /* hover-инверсия текста */
+}
+.btn-primary { /* primary CTA «Шаг»: primary-container, hover → primary */
+  background: var(--color-primary-container);
+  color: var(--color-on-primary-container);
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--color-primary);
+  color: var(--color-on-primary-container);
 }
 .btn:disabled {
-  opacity: 50%;
+  opacity: 60%;
   cursor: not-allowed;
 }
-.btn-secondary {
-  border: 1px solid #D1D5DB; /* gray-300 */
-  color: #111827;
-}
-.btn-primary { /* primary CTA «Шаг»: рамка 2px #E69F00, фон белый, текст gray-900 */
-  border: 2px solid var(--color-attention);
-  color: #111827;
-}
 .btn[aria-pressed="true"] { /* активный toggle «Лекционный режим» */
-  background: #E5E7EB;
+  background: var(--color-surface-container-highest);
+  color: var(--color-on-surface);
 }
 :is(button, a, [tabindex]):focus-visible {
-  outline: 2px solid var(--color-phase-fwd); /* #0072B2 */
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 
-/* Кликабельные числа (drill-down — план 01-03): подсветка кликабельности. */
+/* Кликабельные числа (drill-down): подсветка кликабельности. */
 .value-btn {
   border: 0;
   margin: 0;
@@ -137,12 +244,92 @@ sub { /* подстрочные индексы (план Б §5.5: ASCII z1 + <s
   text-decoration: underline dotted;
   text-underline-offset: 4px;
 }
-.value-changed { /* изменившееся: gray-900 + accent-тинт #E69F00 @ 10% */
-  background: color-mix(in srgb, var(--color-attention) 10%, transparent);
-  color: #111827;
+.value-changed { /* изменившееся: on-surface + tertiary-тинт 10% (D-25) */
+  background: color-mix(in srgb, var(--color-tertiary) 10%, transparent);
+  color: var(--color-on-surface);
 }
-.value-unchanged { /* неизменившееся: gray-500 */
-  color: #6B7280;
+.value-unchanged { /* неизменившееся: вторичный текст */
+  color: var(--color-on-surface-variant);
+}
+
+/* Лента шагов (DESIGN.md §5/§9): пилюлы done/active(pulse)/future, 2→4→8
+   колонок по брейкпоинтам. Индикатор, не навигация: forward-only — клика
+   назад нет (AGENTS.md; конфликт с DESIGN.md §7 зафиксирован в D-25). */
+.step-band {
+  display: grid;
+  gap: 4px;
+}
+.step-pill {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: var(--color-surface-container);
+  overflow: hidden;
+}
+.step-pill-dot {
+  align-self: center;
+  width: 4px;
+  height: 4px;
+  border-radius: 9999px;
+  flex: none;
+}
+.step-pill-label { /* моно-лейбл LHS формулы: z1, ŷ, ∂L/∂W1… */
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.2;
+  color: var(--color-on-surface-variant);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.step-pill-value { /* mono-значение шага — табличные цифры */
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-on-surface);
+  white-space: nowrap;
+}
+.step-pill-done { opacity: 80%; }
+.step-pill-future { opacity: 60%; }
+.step-pill-active {
+  background: var(--color-surface-container-high);
+  box-shadow: inset 0 0 0 1px var(--color-primary); /* ring-1 primary */
+}
+.step-pill-active::after { /* оверлей primary/10, пульс 2 s */
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  animation: step-pill-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  pointer-events: none;
+}
+@keyframes step-pill-pulse {
+  50% { opacity: 0.4; }
+}
+
+/* Статус-бар (DESIGN.md §4): фиксированный футер 48px,LOSS/LR/EPOCH + hotkeys;
+   backdrop-blur разрешён только хрому. */
+.status-bar {
+  border-top: 1px solid var(--color-outline-variant);
+  background: color-mix(in srgb, var(--color-background) 85%, transparent);
+  backdrop-filter: blur(8px);
+}
+.kbd {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.2;
+  padding: 1px 5px;
+  border: 1px solid var(--color-outline-variant);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: var(--color-surface-container);
+  color: var(--color-on-surface);
 }
 
 /* SVG-диаграмма 2-3-1 (Interaction Contract). Толщина ребра 1.5–4px ∝ |w|
@@ -152,43 +339,51 @@ sub { /* подстрочные индексы (план Б §5.5: ASCII z1 + <s
   stroke-linecap: round;
   stroke-width: calc(var(--w) * var(--edge-scale, 1));
 }
-.diag-edge-casing { /* обводка активной op: #E69F00, +3px к толщине ребра */
+.diag-edge-casing { /* обводка активной op: tertiary (амбер = текущий шаг), +3px */
   stroke-linecap: round;
   stroke-width: calc((var(--w) + 3) * var(--edge-scale, 1));
 }
-.diag-edge-label { /* подпись веса: скрыта по умолчанию, видна на активной op и hover */
+.diag-edge-label { /* подпись веса: скрыта по умолчанию, видна на активной op и hover;
+    гало — цвет «экрана» (container-lowest), не белый */
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: calc(14px * var(--diag-scale)); /* Diagram label: 14px → 17.5px в .lecture */
-  fill: #111827;
+  font-size: calc(14px * var(--diag-scale));
+  fill: var(--color-on-surface);
   opacity: 0;
   paint-order: stroke;
-  stroke: #FFFFFF;
+  stroke: var(--color-surface-container-lowest);
   stroke-width: 3px;
 }
 .diag-edge-g.active .diag-edge-label,
 .diag-edge-g:hover .diag-edge-label {
   opacity: 1;
 }
-.diag-node-label {
-  font-family: var(--font-mono);
+.diag-node-label { /* подписи узлов (x₁, h₁, ŷ) — Space Grotesk (DESIGN.md §3) */
+  font-family: var(--font-display);
   font-size: calc(14px * var(--diag-scale));
-  fill: #111827;
+  fill: var(--color-on-surface);
+}
+.chart-label { /* числовые оси графика лосса — моно, вторичный текст */
+  font-family: var(--font-mono);
+  font-size: 11px;
+  fill: var(--color-on-surface-variant);
+}
+.diag-node-active { /* glow разрешён ТОЛЬКО на активном узле (DESIGN.md §10) */
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--color-tertiary) 55%, transparent));
 }
 .diag-hit {
   cursor: pointer;
 }
 .diag-hit:focus-visible {
-  outline: 2px solid var(--color-phase-fwd);
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 
 /*
- * R5: поток вычислений + transitions подсветки (A-8 rev: анимация — чисто
- * презентационный слой поверх УЖЕ отрисованного финального состояния шага,
- * никогда не гейтит числа). «Бегущий пунктир» .diag-flow: отрицательный
- * stroke-dashoffset двигает штрихи по направлению пути (рёбра нарисованы
- * from→to: x→h→ŷ — forward); для градиентной фазы направление разворачивает
+ * R5: поток вычислений + transitions подсветки: презентационный слой поверх
+ * УЖЕ отрисованного финального состояния шага, никогда не гейтит числа.
+ * «Бегущий пунктир» .diag-flow: forward — мята (прямой проход), backward —
+ * амбер (градиентная волна, DESIGN.md §7/§8); направление разворачивает
  * ОДИН селектор по data-flow-атрибуту корня svg. CSS-only, 0 зависимостей.
  */
 .diag-node,
@@ -211,7 +406,7 @@ sub { /* подстрочные индексы (план Б §5.5: ASCII z1 + <s
   opacity: 1;
 }
 .diag-flow {
-  stroke: #FFFFFF; /* Dominant-токен: белые штрихи поверх знаково-окрашенного ребра */
+  stroke: var(--color-primary); /* forward: поток к выходу — мята */
   stroke-linecap: round;
   stroke-dasharray: 8 6;
   stroke-width: calc(var(--w) * var(--edge-scale, 1));
@@ -220,10 +415,11 @@ sub { /* подстрочные индексы (план Б §5.5: ASCII z1 + <s
 }
 .diag-edge-g.active .diag-flow {
   opacity: 1;
-  animation: diag-flow-run 0.9s linear infinite;
+  animation: diag-flow-run 1.2s linear infinite;
 }
 [data-flow="backward"] .diag-edge-g.active .diag-flow {
-  animation-direction: reverse; /* градиент течёт к входу: ŷ → h → x */
+  stroke: var(--color-tertiary); /* градиентная волна амбер: ŷ → h → x */
+  animation-direction: reverse;
 }
 @keyframes diag-flow-run {
   to {
@@ -234,8 +430,8 @@ sub { /* подстрочные индексы (план Б §5.5: ASCII z1 + <s
 /*
  * Гейты (R5 §4.2): prefers-reduced-motion гасит анимации и переходы ГЛОБАЛЬНО
  * (e2e проверяет computed animation-name активного .diag-flow === 'none');
- * @media print останавливает пунктир — статичный кадр. .lecture поток НЕ
- * выключает: направление вычисления — дидактический контент, а не украшение.
+ * @media print останавливает пунктир и пульс — статичный кадр. .lecture поток
+ * НЕ выключает: направление вычисления — дидактический контент.
  */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -246,7 +442,8 @@ sub { /* подстрочные индексы (план Б §5.5: ASCII z1 + <s
   }
 }
 @media print {
-  .diag-edge-g.active .diag-flow {
+  .diag-edge-g.active .diag-flow,
+  .step-pill-active::after {
     animation: none;
   }
 }
@@ -262,21 +459,20 @@ sub { /* подстрочные индексы (план Б §5.5: ASCII z1 + <s
 .exact-value {
   overflow-x: auto;
   white-space: nowrap;
-  color: #111827;
+  color: var(--color-on-surface);
 }
 .terminal-panel { /* граница графа (шаг 12, ∂L/∂x) — терминальная панель, не пустой экран */
   display: flex;
   flex-direction: column;
   gap: 16px;
   padding: 16px;
-  border-radius: 8px;
-  border: 1px dashed #6B7280;
-  background: #F9FAFB;
+  border-radius: 2px;
+  border: 1px dashed var(--color-outline);
+  background: var(--color-surface-container-lowest);
 }
 
-/* Тултип tier 1 (R5, NumberHint): контент — .num/.ui-text, поэтому лекционный
-   режим масштабирует его автоматически через --num-size/--ui-size. Цвета —
-   только существующие нейтрали; portal + collision flip/shift от Floating UI. */
+/* Тултип tier 1 (R5, NumberHint): контент — .num/.ui-text, лекционный режим
+   масштабирует через --num-size/--ui-size; portal + collision flip/shift. */
 .num-hint {
   z-index: 50;
   display: flex;
@@ -284,10 +480,10 @@ sub { /* подстрочные индексы (план Б §5.5: ASCII z1 + <s
   gap: 4px;
   max-width: min(420px, calc(100vw - 32px));
   padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid #D1D5DB;
-  background: #FFFFFF;
-  box-shadow: 0 4px 12px rgb(0 0 0 / 0.08);
-  color: #111827;
+  border-radius: 4px;
+  border: 1px solid var(--color-outline-variant);
+  background: var(--color-surface-container-high);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.5);
+  color: var(--color-on-surface);
   overflow-wrap: break-word;
 }

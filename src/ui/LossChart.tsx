@@ -47,16 +47,16 @@ export default function LossChart() {
       preserveAspectRatio="xMidYMid meet"
     >
       {!hasData ? (
-        <text x={VIEW_W / 2} y={VIEW_H / 2} textAnchor="middle" className="diag-node-label">
+        <text x={VIEW_W / 2} y={VIEW_H / 2} textAnchor="middle" className="chart-label">
           Лосс появится после первой операции loss (L) текущего сэмпла
         </text>
       ) : (
         <>
           {/* ось Y: подписи отформатированными числами (UX-05) */}
-          <text x={0} y={PAD_T + 4} className="diag-node-label">
+          <text x={0} y={PAD_T + 4} className="chart-label">
             {formatKey(chart.yMax)}
           </text>
-          <text x={0} y={VIEW_H - PAD_B} className="diag-node-label">
+          <text x={0} y={VIEW_H - PAD_B} className="chart-label">
             {formatKey(chart.yMin)}
           </text>
           {/* линия текущей эпохи */}
@@ -76,7 +76,7 @@ export default function LossChart() {
                 cy={py(p.y)}
                 r={3.5}
               />
-              <text x={px(p.x)} y={VIEW_H - PAD_B + 14} textAnchor="middle" className="diag-node-label">
+              <text x={px(p.x)} y={VIEW_H - PAD_B + 14} textAnchor="middle" className="chart-label">
                 {String(k + 1)}
               </text>
             </g>

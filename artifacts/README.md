@@ -20,3 +20,9 @@
 |---|---|
 | `20261105-stitch-reference.html` | Исходный Stitch-прототип тренажёра (одностраничник, до фаз 01/01.1) — дизайн-референс, из которого вырос живой UI (`src/ui/`). Перенесён из корня репозитория. |
 | `20261105-first-ui.png` | Первый скриншот живого UI: e2e-прогон (`e2e/screenshots/op-01.png`), экран после первого шага forward-pass; 1280×800 @DPR 2 (2560×1600). |
+| `20261105-redesign-dark-before-op01.png` | «Как было» (светлая тема D-06): первый шаг forward-pass, e2e-скрин до редизайна — пара к `…-after-op01.png` (D-25). |
+| `20261105-redesign-dark-before-op08.png` | «Как было»: 8-й шаг (старт backward), до редизайна — пара к `…-after-op08.png`. |
+| `20261105-redesign-dark-before-epoch-end.png` | «Как было»: экран завершения эпохи до редизайна — пара к `…-after-epoch-end.png`. |
+| `20261105-redesign-dark-after-op01.png` | «Как стало» (тёмная тема DESIGN.md, D-25): workbench 4/5/3 + лента шагов + статус-бар, первый шаг forward-pass. |
+| `20261105-redesign-dark-after-op08.png` | «Как стало»: 8-й шаг — backward, градиентная волна амбер на DAG, фазный бейдж backward. |
+| `20261105-redesign-dark-after-epoch-end.png` | «Как стало»: экран завершения эпохи в новых карточках, статус-бар с LOSS/LR. |

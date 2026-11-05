@@ -220,6 +220,15 @@ export function currentPhase(record: StepRecord | null): Phase {
   return record?.phase ?? XOR_SCENARIO.opMeta[0]!.phase
 }
 
+/** Ключевое число операции для ленты шагов (D-25): первый элемент выхода
+ *  (sgd — последний: значение после update-опы). */
+function firstOpValue(record: StepRecord): number {
+  const flat = Array.isArray(record.outputs.values[0])
+    ? (record.outputs.values as number[][]).flat()
+    : (record.outputs.values as number[])
+  return record.op === 'sgd' ? flat[flat.length - 1]! : flat[0]!
+}
+
 type Listener = () => void
 
 export class TrainingRun {
@@ -236,6 +245,10 @@ export class TrainingRun {
   screen: RunScreen = 'walkthrough'
   /** Лосс-точки текущей эпохи (по одной на bce-опу сэмпла; replace — R4). */
   epochLossPoints: readonly number[] = []
+  /** Ключевые числа операций текущего сэмпла (лента шагов, D-25; replace — R4).
+   *  Пишутся в обоих режимах — после fast-forward лента завершённого сэмпла
+   *  заполнена теми же числами, что и после пошагового прохода. */
+  sampleOpValues: readonly number[] = []
   /** Признак верной классификации каждого сэмпла текущей эпохи (порог 0.5). */
   epochCorrect: readonly boolean[] = []
   /** Сводки завершённых эпох (L до/после, точность). */
@@ -321,6 +334,7 @@ export class TrainingRun {
     } else {
       this.sampleIndex = next
       this.cursor = this.newCursor(next)
+      this.sampleOpValues = []
     }
   }
 
@@ -351,6 +365,7 @@ export class TrainingRun {
     this.epochLossPoints = []
     this.epochCorrect = []
     this.currentRecord = null
+    this.sampleOpValues = []
     this.drill = null
     this.version += 1
     this.emit()
@@ -367,6 +382,7 @@ export class TrainingRun {
     this.epochLossPoints = []
     this.epochCorrect = []
     this.completedEpochs = []
+    this.sampleOpValues = []
     this.weightSnapshots = [flatWeights(this.model)]
     this.drill = null
     this.version += 1
@@ -405,7 +421,15 @@ export class TrainingRun {
   private newCursor(sampleIndex: number): SampleCursor {
     const sample = XOR_SCENARIO.samples[sampleIndex]!
     return new SampleCursor(this.model, sample.x, sample.y, XOR_SCENARIO.lr, (cursor, op) => {
-      if (this.recording) this.currentRecord = buildStepRecord(cursor, op)
+      // Record строится всегда: ленте шагов нужно число операции в обоих
+      // режимах; полный StepRecord публикуется только в пошаговом (R1).
+      // Копии маленьких массивов — пренебрежимая цена против второго
+      // дублирования маппинга op→тензор.
+      const record = buildStepRecord(cursor, op)
+      const values = [...this.sampleOpValues]
+      values[op] = firstOpValue(record)
+      this.sampleOpValues = values
+      if (this.recording) this.currentRecord = record
     })
   }
 }

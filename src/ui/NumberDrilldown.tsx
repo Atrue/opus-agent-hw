@@ -21,7 +21,7 @@ const GLOSSARY = '∂L/∂W — градиент L по W (в CS231n: dL/dW)'
 
 function DrillHeading({ sym, value }: { sym: string; value: number }) {
   return (
-    <h2 data-testid="drill-heading" className="num text-neutral-900">
+    <h2 data-testid="drill-heading" className="num text-on-surface">
       <SubscriptText text={sym} /> — {formatKey(value)}
     </h2>
   )
@@ -31,22 +31,22 @@ function DrillHeading({ sym, value }: { sym: string; value: number }) {
 function TerminalPanel({ resolved }: { resolved: ResolvedNumber }) {
   return (
     <div data-testid="drill-terminal" className="terminal-panel">
-      <p className="num text-neutral-900">
+      <p className="num text-on-surface">
         <SubscriptText text="∂L/∂x" /> — входные данные
       </p>
-      <p className="ui-text text-neutral-900">
+      <p className="ui-text text-on-surface">
         <SubscriptText text={TERMINAL_BODY} />
       </p>
       <div className="flex flex-wrap items-baseline gap-x-4">
-        <button type="button" className="value-btn num text-neutral-900" onClick={() => run.openDrill('∂L/∂W1[0]')}>
+        <button type="button" className="value-btn num text-on-surface" onClick={() => run.openDrill('∂L/∂W1[0]')}>
           <SubscriptText text="∂L/∂W1" />
         </button>
-        <button type="button" className="value-btn num text-neutral-900" onClick={() => run.openDrill('∂L/∂b1[0]')}>
+        <button type="button" className="value-btn num text-on-surface" onClick={() => run.openDrill('∂L/∂b1[0]')}>
           <SubscriptText text="∂L/∂b1" />
         </button>
       </div>
       <div data-testid="drill-exact" className="exact-row num">
-        <span className="ui-label text-neutral-500">точное значение</span>
+        <span className="ui-label text-on-surface-variant">точное значение</span>
         <span className="exact-value">{exactRepr(resolved.value)}</span>
       </div>
     </div>
@@ -61,14 +61,18 @@ export default function NumberDrilldown({ record, drill }: { record: StepRecord;
   return (
     <div
       data-testid="drill-panel"
-      className="flex h-full flex-col gap-4 overflow-auto rounded-lg border border-neutral-200 bg-neutral-50 p-4"
+      className="card h-full overflow-auto"
     >
-      <button type="button" data-testid="drill-back" className="btn btn-secondary ui-label self-start" onClick={() => run.closeDrill()}>
-        ← к шагу
-      </button>
+      <div className="card-head">
+        <span className="icon" aria-hidden="true">edit_note</span>
+        <h2 className="card-title">Разбор числа</h2>
+        <button type="button" data-testid="drill-back" className="btn btn-secondary ui-label card-meta whitespace-nowrap" onClick={() => run.closeDrill()}>
+          ← к шагу
+        </button>
+      </div>
 
       {resolved === null ? (
-        <p className="ui-text text-neutral-500">Число не найдено в текущей операции прогона.</p>
+        <p className="ui-text text-on-surface-variant">Число не найдено в текущей операции прогона.</p>
       ) : terminal ? (
         <TerminalPanel resolved={resolved} />
       ) : (
@@ -76,26 +80,26 @@ export default function NumberDrilldown({ record, drill }: { record: StepRecord;
           <DrillHeading sym={resolved.sym} value={resolved.value} />
 
           <div data-testid="drill-exact" className="exact-row num">
-            <span className="ui-label text-neutral-500">точное значение</span>
+            <span className="ui-label text-on-surface-variant">точное значение</span>
             <span className="exact-value">{exactRepr(resolved.value)}</span>
           </div>
 
           <div className="flex flex-col gap-1">
-            <span className="ui-label text-neutral-500">формула</span>
-            <p data-testid="drill-formula" className="num text-neutral-900">
+            <span className="ui-label text-on-surface-variant">формула</span>
+            <p data-testid="drill-formula" className="num text-on-surface">
               <SubscriptText text={record.formula} />
             </p>
           </div>
 
-          <p data-testid="drill-provenance" className="ui-text text-neutral-900">
+          <p data-testid="drill-provenance" className="ui-text text-on-surface">
             источник: {resolved.provenance}
           </p>
 
           {isBackward && (
             <div data-testid="drill-chain" className="flex flex-col gap-1">
-              <span className="ui-label text-neutral-500">цепное правило — уровень выше</span>
+              <span className="ui-label text-on-surface-variant">цепное правило — уровень выше</span>
               {record.inputs.map((input) => (
-                <p key={input.sym} className="num text-neutral-500">
+                <p key={input.sym} className="num text-on-surface-variant">
                   <SubscriptText text={input.sym} /> = {flattenTensorValues(input.values).map(formatKey).join(', ')}
                 </p>
               ))}
@@ -103,7 +107,7 @@ export default function NumberDrilldown({ record, drill }: { record: StepRecord;
           )}
 
           {resolved.sym.includes('∂') && (
-            <p className="ui-text text-neutral-500">
+            <p className="ui-text text-on-surface-variant">
               <SubscriptText text={GLOSSARY} />
             </p>
           )}

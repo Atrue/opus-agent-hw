@@ -69,11 +69,11 @@ export default function NumberHint({ hint, children }: { hint: HintData | null; 
             className="num-hint"
             {...getFloatingProps()}
           >
-            <p className="num text-neutral-900">
+            <p className="num text-on-surface">
               <SubscriptText text={hint.sym} /> = {formatKey(hint.value)}
             </p>
             {hint.formula !== null && (
-              <p data-testid="hint-formula" className="num text-neutral-900">
+              <p data-testid="hint-formula" className="num text-on-surface">
                 <SubscriptText text={hint.formula} />
               </p>
             )}
@@ -85,7 +85,7 @@ export default function NumberHint({ hint, children }: { hint: HintData | null; 
                 <SubscriptText text={`${GRAD_PREFIX}${hint.sym}`} /> = {formatKey(hint.gradient)}
               </p>
             )}
-            {hint.note !== null && <p className="ui-text text-neutral-500">{hint.note}</p>}
+            {hint.note !== null && <p className="ui-text text-on-surface-variant">{hint.note}</p>}
           </div>,
           document.body,
         )}

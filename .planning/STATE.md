@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 current_phase: 2
 current_phase_name: Движок и MVP-walkthrough на XOR
 status: executing
-stopped_at: Phase 01 complete, ready to verify Phase 01.1
-last_updated: "2026-11-05T06:15:35.692Z"
+stopped_at: Redesign UI под DESIGN.md complete (D-25); Phase 2 execution continues
+last_updated: "2026-11-05T11:30:00.000Z"
 last_activity: 2026-11-05
-last_activity_desc: Phase 2 execution started
+last_activity_desc: gsd-quick: редизайн UI под DESIGN.md (D-25) — тёмная тема, workbench 4/5/3, лента шагов, статус-бар
 state_head: 2beedcfed0edaad89121ea188f0f2f7125ad2cae
 progress:
   total_phases: 5
@@ -29,8 +29,8 @@ See: .planning/PROJECT.md (updated 2026-11-03)
 
 Phase: 2 (Движок и MVP-walkthrough на XOR) — EXECUTING
 Plan: 1 of ?
-Status: Executing Phase 2
-Last activity: 2026-11-05 — Phase 2 execution started
+Status: Executing Phase 2 (UI переведён на DESIGN.md, D-25)
+Last activity: 2026-11-05 — gsd-quick: редизайн UI под DESIGN.md
 
 Progress: [████░░░░░░] 40%
 
@@ -105,6 +105,7 @@ Recent decisions affecting current work:
 - [Phase 01.1]: [01.1-05] Порядок «захват → удаление» соблюдён: precondition-гейт подтвердил зелёность эталон-теста (3/3) и 0 ссылок на JSON до git rm; повторная сверка с Python после удаления невозможна by design (R3) — самосогласованность держат инварианты
 - [Phase 01.1]: [01.1-05] Док-комментарии живого кода (value.ts, expanders.test.ts) переформулированы без имени удалённого генератора — must_have «ни одной ссылки на конвейер в src/tests»; глоссарий PROJECT.md сверен с фактическими идентификаторами кода (TrainingRun/StepRecord/useRunSlice)
 - [Phase 01 → закрытие]: D-24 (владелец, 2026-11-05): сбор данных H2/H3 (Task 3 плана 01-04) и фиксация вердикта (Task 4) отложены до завершения разработки; H2/H3-задачи НЕ включаются в планы фаз 2–4 без явного запроса владельца — todo deferred-h2-h3-validation; до вердикта закрыты прайс и масштабный аутрич/пилоты; критерий 4 фазы (токены/нотация) верифицирован, фаза закрыта с дескоупом (01-VERIFICATION.md)
+- [Quick 2026-11-05]: D-25 — редизайн UI под DESIGN.md: тёмная «приборная» тема (суперсессия D-06), токен-контракт = DESIGN.md + index.css @theme; шрифты Space Grotesk/Geist/Material Symbols (fontsource, OFL), Inter удалён; знак числа Okabe-Ito сохранён ролью (§2.1, AA на тёмном §2.2); каркас workbench 4/5/3 + лента шагов (индикатор, forward-only) + статус-бар 48px; лекционный режим и reduced-motion гейты сохранены; e2e/юниты/линт зелёные, скрин-baseline 28 регенерирован, артефакты «было/стало» в artifacts/
 
 ### Pending Todos
 
@@ -128,6 +129,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-11-05T06:20:00Z
-Stopped at: Phase 01 closed with H2/H3 deferral (D-24); Phase 2 (Движок и MVP-walkthrough на XOR) ready to plan — /gsd-plan-phase 2
+Last session: 2026-11-05T11:30:00Z
+Stopped at: gsd-quick «редизайн UI под DESIGN.md» завершён (D-25); Phase 2 execution continues
 Resume file: None

@@ -10,7 +10,8 @@ import { buildHintData } from './hintData'
  * W2 (3), биасы не рисуются. Цвет ребра — знак веса (neg/pos SVG-токены),
  * толщина 1.5–4px линейно ∝ |w| — пересчитывается после update-оп;
  * числовая подпись ребра видна на активной op и по hover (анти-«стена
- * цифр»). Активная op записи: обводка #E69F00 3px + тинт 10%. Клик по
+ * цифр»). Активная op записи: обводка tertiary (амбер) 3px + тинт 12% +
+ * glow только на активном узле (DESIGN.md §10). Клик по
  * узлу/ребру → openDrill(ref). Layout детерминированный, hand-rolled.
  * Подписка на version — веса мутируются в Float64Array на месте (R4 §6.2).
  * Поток вычислений (R5): активные рёбра несут слой .diag-flow («бегущий
@@ -146,14 +147,15 @@ function EdgeView({ edge, active, maxAbsW, record }: { edge: EdgeDef; active: bo
     // --w на ГРУППЕ: толщину видят и ребро, и кейсинг, и слой потока (наследуется)
     <g className={`diag-edge-g${active ? ' active' : ''}`} style={{ ['--w' as string]: edgeWidth(w, maxAbsW) }}>
       {/* R5: кейсинг активного ребра рендерится ПОСТОЯННО, видимость — классом
-          (условный монтирование не анимируется transition'ом) */}
+          (условный монтирование не анимируется transition'ом); амбер —
+          «текущий шаг» (D-25) */}
       <line
         x1={from.cx + R}
         y1={from.cy}
         x2={to.cx - R}
         y2={to.cy}
         className="diag-edge-casing"
-        style={{ stroke: 'var(--color-attention)' }}
+        style={{ stroke: 'var(--color-tertiary)' }}
       />
       <line
         x1={from.cx + R}
@@ -202,11 +204,15 @@ function NodeView({ node, active, record }: { node: NodeDef; active: boolean; re
         cx={node.cx}
         cy={node.cy}
         r={R}
-        className="diag-node"
+        className={`diag-node${active ? ' diag-node-active' : ''}`}
         style={
           active
-            ? { fill: 'color-mix(in srgb, var(--color-attention) 10%, white)', stroke: 'var(--color-attention)', strokeWidth: 3 }
-            : { fill: '#FFFFFF', stroke: '#E5E7EB', strokeWidth: 1.5 }
+            ? {
+                fill: 'color-mix(in srgb, var(--color-tertiary) 12%, var(--color-surface-container))',
+                stroke: 'var(--color-tertiary)',
+                strokeWidth: 3,
+              }
+            : { fill: 'var(--color-surface-container)', stroke: 'var(--color-outline-variant)', strokeWidth: 1.5 }
         }
       />
       <SvgSubLabel text={node.label} x={node.cx} y={node.cy + 5} className="diag-node-label" />

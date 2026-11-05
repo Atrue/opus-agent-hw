@@ -19,25 +19,28 @@ export default function EpochSummary() {
   if (summary === null) return null
 
   return (
-    <div
-      data-testid="epoch-summary"
-      className="flex h-full flex-col gap-4 overflow-auto rounded-lg border border-neutral-200 bg-neutral-50 p-4"
-    >
-      <h2 data-testid="epoch-title" className="ui-label text-neutral-900">
-        Эпоха {summary.epoch} завершена
-      </h2>
+    <div data-testid="epoch-summary" className="card h-full overflow-auto">
+      <div className="card-head">
+        <span className="icon" aria-hidden="true">
+          flag
+        </span>
+        <h2 data-testid="epoch-title" className="card-title">
+          Эпоха {summary.epoch} завершена
+        </h2>
+        <span className="card-meta ui-label">точность {formatKey(summary.accuracy)}</span>
+      </div>
       <div className="flex flex-col gap-2">
-        <p data-testid="epoch-loss-before" className="num text-neutral-900">
+        <p data-testid="epoch-loss-before" className="num text-on-surface">
           <SubscriptText text="L в начале эпохи" /> = {formatKey(summary.lossBefore)}
         </p>
-        <p data-testid="epoch-loss-after" className="num text-neutral-900">
+        <p data-testid="epoch-loss-after" className="num text-on-surface">
           <SubscriptText text="L в конце эпохи" /> = {formatKey(summary.lossAfter)}
         </p>
       </div>
-      <p data-testid="epoch-accuracy" className="num text-neutral-900">
+      <p data-testid="epoch-accuracy" className="num text-on-surface">
         Точность: {formatKey(summary.accuracy)} ({summary.correct} из {sampleCount} верно, порог 0.5)
       </p>
-      <p className="ui-text text-neutral-500">
+      <p className="ui-text text-on-surface-variant">
         «Следующая эпоха» продолжает обучение — эпохи не кончаются. Числа этой эпохи идентичны пошагово и после
         «Запустить эпоху ⏩».
       </p>

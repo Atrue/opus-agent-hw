@@ -39,13 +39,18 @@ export default function WeightsTable() {
   const live = snapshots[last] ?? []
 
   return (
-    <div data-testid="weights-table" className="h-full overflow-x-auto" role="group" aria-label="Таблица весов по эпохам">
+    <div
+      data-testid="weights-table"
+      className="min-h-0 flex-1 overflow-auto"
+      role="group"
+      aria-label="Таблица весов по эпохам"
+    >
       <table className="w-full border-collapse text-left">
         <thead>
           <tr>
-            <th className="ui-label whitespace-nowrap px-2 py-1 text-neutral-500">вес</th>
+            <th className="ui-label whitespace-nowrap px-2 py-1 text-on-surface-variant">вес</th>
             {table.epochs.map((e) => (
-              <th key={e} className="ui-label whitespace-nowrap px-2 py-1 text-right text-neutral-500">
+              <th key={e} className="ui-label whitespace-nowrap px-2 py-1 text-right text-on-surface-variant">
                 эпоха {e}
               </th>
             ))}
@@ -54,7 +59,7 @@ export default function WeightsTable() {
         <tbody>
           {table.rows.map((row, r) => (
             <tr key={row.label}>
-              <th scope="row" className="num whitespace-nowrap px-2 py-0.5 font-normal text-neutral-900">
+              <th scope="row" className="num whitespace-nowrap px-2 py-0.5 font-normal text-on-surface">
                 <SubscriptText text={row.label} />
               </th>
               {row.values.map((v, e) => {
