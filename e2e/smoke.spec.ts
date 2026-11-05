@@ -245,7 +245,10 @@ test('8) tanh подсвечивает скрытый слой (.diag-selected);
   ).toBeGreaterThanOrEqual(3)
   await expect(page.locator('g.diag-selected .diag-node'), 'три узла a1 несут .diag-selected').toHaveCount(3)
 
-  // клик по биас-узлу b1 на диаграмме — полный drill числа (tier 2)
+  // клик по биас-узлу b1 на диаграмме — полный drill числа (tier 2);
+  // drill-слот живёт в панели операции: до первого шага записи нет (by design),
+  // поэтому один «Шаг» — и разбор числа доступен
+  await page.getByTestId('btn-next').click()
   await page.getByRole('button', { name: /^Биас b1\[0\]/ }).click()
   await expect(page.getByTestId('drill-panel')).toBeVisible()
 })

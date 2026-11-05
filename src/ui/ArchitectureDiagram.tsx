@@ -237,7 +237,9 @@ function EdgeView({ edge, active, selected, maxAbsW, record }: { edge: EdgeDef; 
 function NodeView({ node, active, selected, record }: { node: NodeDef; active: boolean; selected: boolean; record: StepRecord | null }) {
   const open = (): void => run.openDrill(node.id)
   return (
-    <g>
+    // .diag-selected на группе узла — e2e-контракт 01.2-03 (геометрия звена
+    // единообразно маркируется классом; визуал узла — diag-node-selring)
+    <g className={selected ? 'diag-selected' : ''}>
       {/* 01.2-01: мятный ринг выбранного звена (сосуществует с амбером op) */}
       <circle cx={node.cx} cy={node.cy} r={R + 5} className={`diag-node-selring${selected ? ' on' : ''}`} />
       <circle
