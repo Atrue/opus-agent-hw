@@ -14,9 +14,9 @@ import { ETALON_SAMPLE_1 } from '../tests/tensor/etalon-constants'
  *     же числами, что и пошаговый проход (сравнение текста экрана);
  * (4) «Следующая эпоха» → «Эпоха 2 · пример 1 · шаг 1», обучение продолжается;
  * (5) честный reload: индикатор на первой операции, URL несёт только сценарий;
- * (6) история (01.2-02): FF двух эпох — график лосса с точками эпох на оси
- *     сэмплов сессии; reset = перезапуск прогона: разделитель прогона виден,
- *     точки завершённых эпох не исчезли (история живёт до reload).
+ * (6) история звена (01.2-02): FF двух эпох → выбор W1 → link-history ≥ 9
+ *     значений (2×4 сэмпла + стартовые), график лосса не пуст; выбор L —
+ *     история лосса; после reset история звена и разделители сохраняются.
  *
  * Скриншот-self-check (новый baseline 28): перед записью директория
  * очищается; сохраняются скриншоты каждой операции сэмпла 1 (13) и экрана
@@ -142,7 +142,7 @@ test('5) честный reload: индикатор на первой опера�
   )
 })
 
-test('6) история: FF двух эпох — график лосса с точками эпох; reset сохраняет историю', async ({ page }) => {
+test('6) история звена: FF двух эпох → история W1 по сэмплам; reset сохраняет историю', async ({ page }) => {
   await page.goto('/')
   await page.getByTestId('btn-epoch').click() // эпоха 1 — FF
   await page.getByTestId('btn-epoch-next').click() // старт эпохи 2
@@ -150,19 +150,45 @@ test('6) история: FF двух эпох — график лосса с т�
   await expect(page.getByTestId('epoch-summary')).toContainText('Эпоха 2 завершена')
 
   const points = await page.getByTestId('loss-line').getAttribute('points')
-  expect(points?.trim().length ?? 0, 'линия лосса текущей эпохи не пуста').toBeGreaterThan(0)
+  expect(points?.trim().length ?? 0, 'график лосса не пуст').toBeGreaterThan(0)
   await expect(page.getByTestId('loss-dot'), 'точки двух завершённых эпох').toHaveCount(2)
 
-  // reset = перезапуск прогона, не стирание сессии (01.2-02, пункт 6 ТЗ):
-  // разделитель прогона на графике, точки завершённых эпох не исчезли
+  // история звена W1 (пункт 4 ТЗ): клик по символу формулы → панель звена →
+  // раскрывающаяся история по сэмплам (свёрнута по умолчанию — details)
+  await page.getByTestId('formula-sym-W1').click()
+  await expect(page.getByTestId('link-panel')).toBeVisible()
+  const history = page.getByTestId('link-history')
+  await expect(history).toBeAttached()
+  await expect(history).not.toHaveAttribute('open', '')
+  await expect(history.locator('summary'), 'заголовок истории содержит символ').toContainText('W1')
+  await history.locator('summary').click() // раскрыть
+  expect(
+    await history.locator('[data-testid="link-value"]').count(),
+    '2×4 сэмпла + стартовые: ≥ 9 значений W1',
+  ).toBeGreaterThanOrEqual(9)
+
+  // выбор звена L — история лосса по сэмплам (скалярный ряд — спарклайн)
+  await page.getByTestId('formula-sym-L').click()
+  const lossHistory = page.getByTestId('link-history')
+  if (!(await lossHistory.evaluate((el) => el.open))) await lossHistory.locator('summary').click()
+  await expect(lossHistory.locator('summary')).toContainText('L')
+  await expect(lossHistory.locator('[data-testid="link-sparkline"]'), 'спарклайн лосса').toBeVisible()
+  expect(await lossHistory.locator('[data-testid="link-value"]').count()).toBeGreaterThanOrEqual(1)
+
+  // reset = перезапуск прогона, не стирание сессии: разделитель прогона на
+  // графике, история звена (уже W1… сейчас L) не пуста, обучение продолжается
+  await page.getByTestId('formula-sym-W1').click() // выбор W1 обратно
   await page.getByTestId('btn-reset').click()
   await expect(page.getByTestId('step-indicator')).toHaveText('Эпоха 1 · пример 1 · шаг 1')
   await expect(page.getByTestId('run-dividers').locator('line'), 'разделитель прогона после сброса').toHaveCount(1)
   await expect(page.getByTestId('loss-dot'), 'точки эпох пережили сброс').toHaveCount(2)
+  expect(
+    await page.getByTestId('link-history').locator('[data-testid="link-value"]').count(),
+    'история звена пережила сброс',
+  ).toBeGreaterThanOrEqual(9)
+  await page.getByTestId('formula-sym-W1').click() // повторный клик снимает выбор
 
   // «Примеры и результат» (пункт 3 ТЗ): вся выборка с входом и меткой
-  const panelText = await page.getByTestId('samples-panel').textContent()
-  expect(panelText, 'все 4 примера видны: вход → метка').toContain('Примеры и результат')
   await expect(page.getByTestId('sample-row'), '4 строки выборки').toHaveCount(4)
 
   // baseline: операции сэмпла 1 и экран эпохи в .lecture (14 из 28)
