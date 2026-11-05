@@ -10,7 +10,7 @@ import LinkPanel from './LinkPanel'
 import LossChart from './LossChart'
 import NumberDrilldown from './NumberDrilldown'
 import OperationPanel from './OperationPanel'
-import ResultZone from './ResultZone'
+import SamplesPanel from './SamplesPanel'
 import StepControls from './StepControls'
 import StepperBand from './StepperBand'
 import WeightsTable from './WeightsTable'
@@ -150,10 +150,11 @@ export default function App() {
           </div>
         </div>
 
-        {/* Правая колонка (xl — 4): результат сэмпла всегда на экране +
-            панель операции (операция / drill-down / экран эпохи) */}
+        {/* Правая колонка (xl — 4): «Примеры и результат» — вся выборка с
+            вердиктами + крупный блок текущего примера; панель операции
+            (операция / drill-down / экран эпохи) */}
         <div className="flex min-h-0 flex-col gap-4 md:col-span-1 xl:col-span-4">
-          <ResultZone />
+          <SamplesPanel />
           <section aria-label="Панель шага" className="flex min-h-0 flex-1 flex-col">
             {screen === 'epoch-end' ? (
               <EpochSummary />

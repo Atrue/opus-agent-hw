@@ -300,9 +300,6 @@ export class TrainingRun {
   epochCorrect: readonly boolean[] = []
   /** Сводки завершённых эпох (L до/после, точность). */
   completedEpochs: readonly EpochSummaryData[] = []
-  /** Снапшоты плоских 13 весов: [0] = стартовые константы, далее границы эпох
-   *  (удаляется в 01.2-02 GREEN — замещается per-sample историей). */
-  weightSnapshots: readonly number[][] = []
   /** Номер прогона (01.2-02): инкремент в reset() — история переживает сброс. */
   runId = 1
   /** История сессии (01.2-02): стартовые записи прогонов + SampleRecord на
@@ -316,7 +313,7 @@ export class TrainingRun {
   constructor() {
     this.model = new MLP(XOR_SCENARIO.startWeights)
     this.cursor = this.newCursor(0)
-    this.weightSnapshots = [flatWeights(this.model)] // эпоха 0 = стартовые константы
+    this.appendStartRecord() // стартовые константы — первая запись истории
   }
 
   /** Номер следующей операции в сэмпле, 1-based (курсор индикатора R3);
@@ -344,6 +341,29 @@ export class TrainingRun {
       const yhat = cursor.tensors.yhat!.data[0]!
       const y = cursor.y.data[0]!
       this.epochCorrect = [...this.epochCorrect, (yhat >= 0.5) === (y >= 0.5)]
+    }
+    if (op === OPS_PER_SAMPLE - 1) {
+      // граница сэмпла (sgd-опа, курсор done): запись истории — ЕДИНАЯ для
+      // пошагового и FF режимов (общий код исполнения → числа идентичны, R3)
+      const t = cursor.tensors
+      this.sampleHistory = [
+        ...this.sampleHistory,
+        {
+          kind: 'sample',
+          runId: this.runId,
+          epoch: this.epoch,
+          sampleIndex: this.sampleIndex,
+          x: Array.from(cursor.x.data),
+          y: cursor.y.data[0]!,
+          yhat: t.yhat!.data[0]!,
+          loss: t.L!.data[0]!,
+          correct: (t.yhat!.data[0]! >= 0.5) === (cursor.y.data[0]! >= 0.5),
+          a1: Array.from(t.a1!.data),
+          z1: Array.from(t.z1!.data),
+          z2: Array.from(t.z2!.data),
+          weights: flatWeights(this.model),
+        },
+      ]
     }
   }
 
@@ -391,7 +411,7 @@ export class TrainingRun {
     }
   }
 
-  /** Сводка эпохи + снапшот весов на границе + переход на экран эпохи. */
+  /** Сводка эпохи + переход на экран эпохи. */
   private finalizeEpoch(): void {
     const points = this.epochLossPoints
     const correct = this.epochCorrect.filter((c) => c).length
@@ -405,7 +425,6 @@ export class TrainingRun {
         correct,
       },
     ]
-    this.weightSnapshots = [...this.weightSnapshots, flatWeights(this.model)]
     this.screen = 'epoch-end'
   }
 
@@ -424,8 +443,12 @@ export class TrainingRun {
     this.emit()
   }
 
-  /** Детерминированный старт: модель из констант сценария, курсор на шаге 1. */
+  /** Перезапуск прогона (01.2-02, пункт 6 ТЗ): позиция/модель/текущая эпоха —
+   *  с чистого листа (стартовые константы, шаг 1), но история сессии
+   *  (sampleHistory, completedEpochs) живёт до reload; runId+1 разделяет
+   *  прогоны на графике лосса и в истории звена. */
   reset(): void {
+    this.runId += 1
     this.model = new MLP(XOR_SCENARIO.startWeights)
     this.epoch = 1
     this.sampleIndex = 0
@@ -434,12 +457,19 @@ export class TrainingRun {
     this.screen = 'walkthrough'
     this.epochLossPoints = []
     this.epochCorrect = []
-    this.completedEpochs = []
     this.sampleOpValues = []
-    this.weightSnapshots = [flatWeights(this.model)]
+    this.appendStartRecord()
     this.drill = null
     this.version += 1
     this.emit()
+  }
+
+  /** Стартовая запись прогона: плоские стартовые константы (без чисел сэмпла). */
+  private appendStartRecord(): void {
+    this.sampleHistory = [
+      ...this.sampleHistory,
+      { kind: 'start', runId: this.runId, epoch: this.epoch, weights: flatWeights(this.model) },
+    ]
   }
 
   openDrill(ref: string): void {

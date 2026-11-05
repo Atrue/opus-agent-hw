@@ -483,6 +483,43 @@ sub { /* подстрочные индексы (план Б §5.5: ASCII z1 + <s
   color: var(--color-on-surface-variant);
 }
 
+/* «Примеры и результат» (01.2-02, пункт 3 ТЗ): вся обучающая выборка —
+   вход x → метка y, у пройденных текущей эпохи ŷ + вердикт ✓/✗; текущий
+   пример подсвечен primary-тинтом и обводкой. Строки — индикаторы
+   (forward-only): не кнопки, клика назад нет. */
+.samples-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.sample-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 2px 8px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+}
+.sample-row-current {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+}
+.sample-io { /* вход → метка: моно, всегда видна */
+  white-space: nowrap;
+  color: var(--color-on-surface);
+}
+.sample-out { /* ŷ + вердикт пройденного примера текущей эпохи */
+  margin-left: auto;
+  white-space: nowrap;
+  color: var(--color-on-surface);
+}
+.sample-verdict-ok {
+  color: var(--color-primary);
+}
+.sample-verdict-miss {
+  color: var(--color-error);
+}
+
 /* SVG-диаграмма 2-3-1 (Interaction Contract). Толщина ребра 1.5–4px ∝ |w|
    задаётся инлайн-переменной --w; лекционный режим умножает её только
    CSS-переменной --edge-scale — без JS-пересчёта layout. */

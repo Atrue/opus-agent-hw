@@ -4,7 +4,8 @@ import { formatKey } from '../src/format/numbers'
 import { ETALON_SAMPLE_1 } from '../tests/tensor/etalon-constants'
 
 /**
- * Полная e2e фазы 01.1 (R3, план 01.1-03) — 6 проверок живого цикла:
+ * Полная e2e фаз 01.1–01.2 (R3, план 01.1-03; тест 6 — 01.2-02) — 6 проверок
+ * живого цикла:
  * (1) первый «Шаг»: числа движка в панели (эталон-константы сэмпла 1),
  *     индикатор «Эпоха 1 · пример 1 · шаг 2»;
  * (2) полная эпоха 1 пошагово (4 сэмпла × 13 оп): DOM без NaN/Infinity/
@@ -13,8 +14,9 @@ import { ETALON_SAMPLE_1 } from '../tests/tensor/etalon-constants'
  *     же числами, что и пошаговый проход (сравнение текста экрана);
  * (4) «Следующая эпоха» → «Эпоха 2 · пример 1 · шаг 1», обучение продолжается;
  * (5) честный reload: индикатор на первой операции, URL несёт только сценарий;
- * (6) история: после FF двух эпох таблица весов — столбцы эпох 0–2, график
- *     лосса не пуст.
+ * (6) история (01.2-02): FF двух эпох — график лосса с точками эпох на оси
+ *     сэмплов сессии; reset = перезапуск прогона: разделитель прогона виден,
+ *     точки завершённых эпох не исчезли (история живёт до reload).
  *
  * Скриншот-self-check (новый baseline 28): перед записью директория
  * очищается; сохраняются скриншоты каждой операции сэмпла 1 (13) и экрана
@@ -140,24 +142,30 @@ test('5) честный reload: индикатор на первой опера�
   )
 })
 
-test('6) история: FF двух эпох — столбцы весов 0–2, график лосса не пуст', async ({ page }) => {
+test('6) история: FF двух эпох — график лосса с точками эпох; reset сохраняет историю', async ({ page }) => {
   await page.goto('/')
   await page.getByTestId('btn-epoch').click() // эпоха 1 — FF
   await page.getByTestId('btn-epoch-next').click() // старт эпохи 2
   await page.getByTestId('btn-epoch').click() // эпоха 2 — FF
   await expect(page.getByTestId('epoch-summary')).toContainText('Эпоха 2 завершена')
 
-  const table = page.getByTestId('weights-table')
-  await expect(table).toContainText('эпоха 0')
-  await expect(table).toContainText('эпоха 1')
-  await expect(table).toContainText('эпоха 2')
-
   const points = await page.getByTestId('loss-line').getAttribute('points')
   expect(points?.trim().length ?? 0, 'линия лосса текущей эпохи не пуста').toBeGreaterThan(0)
   await expect(page.getByTestId('loss-dot'), 'точки двух завершённых эпох').toHaveCount(2)
 
-  // baseline: операции сэмпла 1 и экран эпохи в .lecture (14 из 28)
+  // reset = перезапуск прогона, не стирание сессии (01.2-02, пункт 6 ТЗ):
+  // разделитель прогона на графике, точки завершённых эпох не исчезли
   await page.getByTestId('btn-reset').click()
+  await expect(page.getByTestId('step-indicator')).toHaveText('Эпоха 1 · пример 1 · шаг 1')
+  await expect(page.getByTestId('run-dividers').locator('line'), 'разделитель прогона после сброса').toHaveCount(1)
+  await expect(page.getByTestId('loss-dot'), 'точки эпох пережили сброс').toHaveCount(2)
+
+  // «Примеры и результат» (пункт 3 ТЗ): вся выборка с входом и меткой
+  const panelText = await page.getByTestId('samples-panel').textContent()
+  expect(panelText, 'все 4 примера видны: вход → метка').toContain('Примеры и результат')
+  await expect(page.getByTestId('sample-row'), '4 строки выборки').toHaveCount(4)
+
+  // baseline: операции сэмпла 1 и экран эпохи в .lecture (14 из 28)
   await page.getByTestId('toggle-lecture').click()
   for (let i = 1; i <= 13; i++) {
     await page.getByTestId('btn-next').click()

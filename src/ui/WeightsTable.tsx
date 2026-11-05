@@ -1,5 +1,5 @@
 import { useRunSlice } from '../run/runState'
-import { buildWeightsTable } from '../run/history'
+import { epochWeightSnapshotsOf, WEIGHT_ROWS } from '../run/history'
 import { formatKey } from '../format/numbers'
 import NumberHint from './NumberHint'
 import type { HintData } from './hintData'
@@ -32,10 +32,14 @@ function gradAt(values: number[] | number[][] | undefined, index: number): numbe
 }
 
 export default function WeightsTable() {
-  const snapshots = useRunSlice((r) => r.weightSnapshots)
+  // 01.2-02: эпохальные снапшоты восстановлены из per-sample истории
+  // (мостик до Task 2 — таблица весов уступает место истории звена)
+  const history = useRunSlice((r) => r.sampleHistory)
   const record = useRunSlice((r) => r.currentRecord)
-  const table = buildWeightsTable(snapshots)
-  const last = table.epochs.length - 1
+  const snapshots = epochWeightSnapshotsOf(history)
+  const epochs = snapshots.map((_, i) => i)
+  const rows = WEIGHT_ROWS.map((label, r) => ({ label, values: snapshots.map((snap) => snap[r]!) }))
+  const last = epochs.length - 1
   const live = snapshots[last] ?? []
 
   return (
@@ -49,7 +53,7 @@ export default function WeightsTable() {
         <thead>
           <tr>
             <th className="ui-label whitespace-nowrap px-2 py-1 text-on-surface-variant">вес</th>
-            {table.epochs.map((e) => (
+            {epochs.map((e) => (
               <th key={e} className="ui-label whitespace-nowrap px-2 py-1 text-right text-on-surface-variant">
                 эпоха {e}
               </th>
@@ -57,7 +61,7 @@ export default function WeightsTable() {
           </tr>
         </thead>
         <tbody>
-          {table.rows.map((row, r) => (
+          {rows.map((row, r) => (
             <tr key={row.label}>
               <th scope="row" className="num whitespace-nowrap px-2 py-0.5 font-normal text-on-surface">
                 <SubscriptText text={row.label} />

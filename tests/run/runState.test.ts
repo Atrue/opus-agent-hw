@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { run, TrainingRun, isSampleRecord, type HistoryRecord, type SampleRecord, type StartRecord } from '../../src/run/runState'
+import { TrainingRun, isSampleRecord, type HistoryRecord, type SampleRecord, type StartRecord } from '../../src/run/runState'
 import { XOR_SCENARIO, SAMPLE_COUNT } from '../../src/run/scenario'
 import { OPS_PER_SAMPLE } from '../../src/tensor'
 
@@ -11,6 +11,10 @@ import { OPS_PER_SAMPLE } from '../../src/tensor'
  * пакетно (record:false), экран завершения эпохи открывается после последней
  * операции эпохи (в любом режиме) и продолжается следующей эпохой — бесконечно.
  * Инвариант: advance()×N === runEpoch() (веса и лосс-точки идентичны).
+ *
+ * 01.2-02: reset() — перезапуск прогона, а не стирание сессии: sampleHistory
+ * и completedEpochs живут до reload. Поэтому каждый тест работает с НОВЫМ
+ * экземпляром TrainingRun (reload = честный сброс), а не синглтоном.
  */
 
 const START_W1 = XOR_SCENARIO.startWeights.w1.flat()
@@ -20,6 +24,13 @@ const START_FLAT = [
   ...XOR_SCENARIO.startWeights.w2.flat(),
   ...XOR_SCENARIO.startWeights.b2,
 ]
+
+/** Свежий прогон на каждый тест — сессия без истории (семантика reload). */
+let run: TrainingRun
+
+beforeEach(() => {
+  run = new TrainingRun()
+})
 
 /** Плоские веса живой модели в порядке снапшота (W1, b1, W2, b2). */
 function flatModelWeights(): number[] {
@@ -42,10 +53,6 @@ function asStart(rec: HistoryRecord): StartRecord {
   if (isSampleRecord(rec)) throw new Error('ожидалась стартовая запись прогона')
   return rec
 }
-
-beforeEach(() => {
-  run.reset()
-})
 
 describe('TrainingRun: курсор прогона', () => {
   it('старт: эпоха 1, пример 1, шаг 1, записи ещё нет', () => {
@@ -74,7 +81,7 @@ describe('TrainingRun: курсор прогона', () => {
     expect(run.currentRecord?.op).toBe('sgd')
   })
 
-  it('reset() возвращает детерминированный старт: стартовые веса, пустая история, шаг 1', () => {
+  it('reset() возвращает детерминированный старт: стартовые веса, чистая текущая эпоха, шаг 1', () => {
     for (let i = 0; i < 20; i++) run.advance()
     run.reset()
     expect(run.epoch).toBe(1)
@@ -190,14 +197,15 @@ describe('TrainingRun: эпохи и fast-forward (R3)', () => {
     const stepwiseWeights = flatModelWeights()
     const stepwisePoints = [...run.epochLossPoints]
     const stepwiseSummary = run.completedEpochs[0]
-    const stepwiseSnapshot = run.weightSnapshots[1]
 
     run.reset()
     run.runEpoch()
     expect(flatModelWeights()).toEqual(stepwiseWeights)
     expect([...run.epochLossPoints]).toEqual(stepwisePoints)
-    expect(run.completedEpochs[0]).toEqual(stepwiseSummary)
-    expect(run.weightSnapshots[1]).toEqual(stepwiseSnapshot)
+    expect(run.completedEpochs.at(-1)).toEqual(stepwiseSummary)
+    // веса границы эпохи 1 = последняя запись сэмпла истории (per-sample срез)
+    const boundary = run.sampleHistory.filter(isSampleRecord).at(-1)!
+    expect([...boundary.weights]).toEqual(stepwiseWeights)
   })
 
   it('пошаговое завершение эпохи открывает экран: 4×13 операций, счётчик эпохи ещё не двинулся', () => {
@@ -209,15 +217,17 @@ describe('TrainingRun: эпохи и fast-forward (R3)', () => {
     expect(run.completedEpochs).toHaveLength(1)
   })
 
-  it('reset() с экрана завершения эпохи возвращает стартовые константы и пустую историю', () => {
+  it('reset() с экрана завершения эпохи: стартовые константы, текущая эпоха чиста, история сессии живёт', () => {
     run.runEpoch()
     expect(run.screen).toBe('epoch-end')
     run.reset()
     expect(run.screen).toBe('walkthrough')
     expect(run.epoch).toBe(1)
     expect(run.epochLossPoints).toHaveLength(0)
-    expect(run.completedEpochs).toHaveLength(0)
-    expect(run.weightSnapshots).toEqual([START_FLAT])
+    // перезапуск прогона, не стирание сессии (01.2-02, пункт 6 ТЗ)
+    expect(run.completedEpochs).toHaveLength(1)
+    expect(run.runId).toBe(2)
+    expect(run.sampleHistory).toHaveLength(1 + SAMPLE_COUNT + 1)
     expect(flatModelWeights()).toEqual(START_FLAT)
   })
 

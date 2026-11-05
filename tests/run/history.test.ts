@@ -6,7 +6,7 @@ import {
   WEIGHT_ROWS,
   type LinkSeries,
 } from '../../src/run/history'
-import { run, isSampleRecord, type SampleRecord } from '../../src/run/runState'
+import { TrainingRun, isSampleRecord, type SampleRecord } from '../../src/run/runState'
 import { XOR_SCENARIO, SAMPLE_COUNT } from '../../src/run/scenario'
 import { OPS_PER_SAMPLE } from '../../src/tensor'
 
@@ -15,7 +15,7 @@ import { OPS_PER_SAMPLE } from '../../src/tensor'
  * история сессии (SampleRecord на границе сэмпла, стартовые записи прогонов)
  * — источник графика лосса (ось — сэмплы сессии, разделители прогонов) и
  * истории звена цепи (linkHistoryOf). Сброс — перезапуск прогона: история
- * живёт до reload; все числа истории конечны.
+ * живёт до reload, поэтому каждый тест — свежий TrainingRun (семантика reload).
  */
 
 const START_FLAT = [
@@ -24,6 +24,13 @@ const START_FLAT = [
   ...XOR_SCENARIO.startWeights.w2.flat(),
   ...XOR_SCENARIO.startWeights.b2,
 ]
+
+/** Свежий прогон на каждый тест — сессия без истории (семантика reload). */
+let run: TrainingRun
+
+beforeEach(() => {
+  run = new TrainingRun()
+})
 
 /** Завершает две эпохи: FF эпохи 1 → следующая → FF эпохи 2. */
 function runTwoEpochs(): void {
@@ -36,10 +43,6 @@ function runTwoEpochs(): void {
 function sampleRecords(): SampleRecord[] {
   return run.sampleHistory.filter(isSampleRecord)
 }
-
-beforeEach(() => {
-  run.reset()
-})
 
 describe('История звена цепи: linkHistoryOf (01.2-02)', () => {
   it('весовой символ W1: 6 рядов — значения weights[индексы W1] по записям, включая стартовые', () => {
@@ -91,7 +94,8 @@ describe('История звена цепи: linkHistoryOf (01.2-02)', () => {
     expect(x.series[0]!.points.map((p) => p.value)).toEqual(samples.map((s) => s.x[0]!))
     const z1 = linkHistoryOf(run.sampleHistory, 'a1', 'tanh')
     expect(z1.series).toHaveLength(3)
-    expect(z1.series[0]!.points.map((p) => p.value)).toEqual(samples.map((s) => s.z1[0]!))
+    // плашка tanh показывает свой выход: ряд — активации a1
+    expect(z1.series[0]!.points.map((p) => p.value)).toEqual(samples.map((s) => s.a1[0]!))
     // звено W (SGD): судьба обновления — все 13 весов по сэмплам
     const w = linkHistoryOf(run.sampleHistory, 'W', 'η')
     expect(w.series).toHaveLength(13)
@@ -215,10 +219,10 @@ describe('История обучения: лосс и сводные эпох (
     const samples = sampleRecords()
     expect(samples).toHaveLength(SAMPLE_COUNT * 2)
     for (const rec of samples) {
-      expect(rec.loss).toBeFinite()
-      expect(rec.yhat).toBeFinite()
+      expect(Number.isFinite(rec.loss)).toBe(true)
+      expect(Number.isFinite(rec.yhat)).toBe(true)
       expect(rec.weights).toHaveLength(13)
-      for (const w of rec.weights) expect(w).toBeFinite()
+      for (const w of rec.weights) expect(Number.isFinite(w)).toBe(true)
     }
     // L до/после каждой эпохи — лосс первого/последнего сэмпла этой эпохи
     expect(samples[0]!.loss).toBe(run.completedEpochs[0]!.lossBefore)
