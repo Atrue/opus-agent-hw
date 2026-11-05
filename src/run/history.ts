@@ -6,8 +6,9 @@
  * (R1 §2.2: снапшоты на выходе для истории/таблицы весов).
  */
 
-import type { EpochSummaryData } from './runState'
+import type { EpochSummaryData, HistoryRecord, SampleRecord } from './runState'
 import { SAMPLE_COUNT } from './scenario'
+import type { SegmentId } from '../ui/chainLinks'
 
 /** Метки 13 строк таблицы весов — порядок плоского снапшота (row-major):
  *  W1 (6), b1 (3), W2 (3), b2 (1). */
@@ -77,4 +78,59 @@ export function buildWeightsTable(snapshots: readonly (readonly number[])[]): We
     values: snapshots.map((snap) => snap[r]!),
   }))
   return { epochs, rows }
+}
+
+/** Точка истории звена: значение на границе сэмпла с метаданными сессии. */
+export interface LinkHistoryPoint {
+  runId: number
+  epoch: number
+  /** −1 у стартовой записи прогона (до первого сэмпла). */
+  sampleIndex: number
+  value: number
+}
+
+/** Ряд истории одного числа звена (компоненты многомерных символов). */
+export interface LinkSeries {
+  label: string
+  points: readonly LinkHistoryPoint[]
+}
+
+/**
+ * История звена цепи по сэмплам (01.2-02): весовые символы (W1/b1/W2/b2) —
+ * компоненты плоских весов записей (включая стартовые), узловые (x, y, z1,
+ * a1, z2, ŷ, L) — поля записей сэмплов; звено W (SGD) — все 13 весов.
+ * (RED-скелет: заполнение рядов — в GREEN-коммите плана 01.2-02.)
+ */
+export function linkHistoryOf(
+  _history: readonly HistoryRecord[],
+  _segment: SegmentId,
+  _symbol?: string,
+): { series: readonly LinkSeries[] } {
+  return { series: [] }
+}
+
+/** Накопленная геометрия сессии для графика лосса (01.2-02). */
+export interface SessionGeometry {
+  /** Границы прогонов: накопленное число сэмплов до начала каждого прогона
+   *  (кроме первого) — вертикальные разделители на графике. */
+  runBounds: readonly number[]
+  /** x-позиция последнего сэмпла каждой завершённой эпохи (порядок сводок). */
+  epochEndXs: readonly number[]
+  /** Всего сэмплов сессии. */
+  samples: number
+  /** Сэмплов сессии до первого сэмпла текущей эпохи (база линии). */
+  samplesBefore: number
+}
+
+/**
+ * Геометрия сессии из sampleHistory: разделители прогонов, позиции концов
+ * завершённых эпох (полные группы сэмплов), база линии текущей эпохи.
+ * (RED-скелет: заполнение — в GREEN-коммите плана 01.2-02.)
+ */
+export function sessionGeometryOf(
+  _history: readonly HistoryRecord[],
+  _summaryCount: number,
+  _currentRun?: { runId: number; epoch: number },
+): SessionGeometry {
+  return { runBounds: [], epochEndXs: [], samples: 0, samplesBefore: 0 }
 }

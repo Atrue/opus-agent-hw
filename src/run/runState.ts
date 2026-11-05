@@ -45,6 +45,44 @@ export interface Drill {
   ref: string
 }
 
+/**
+ * Запись истории сессии на границе сэмпла (01.2-02): полный срез состояния
+ * прогона — вход/метка/узловые числа завершённого сэмпла + плоские 13 весов
+ * ПОСЛЕ его SGD-шага. Пишется в общем коде исполнения (инвариант «пошагово
+ * = FF» распространяется на историю автоматически).
+ */
+export interface SampleRecord {
+  kind: 'sample'
+  runId: number
+  epoch: number
+  sampleIndex: number
+  x: readonly number[]
+  y: number
+  yhat: number
+  loss: number
+  correct: boolean
+  a1: readonly number[]
+  z1: readonly number[]
+  z2: readonly number[]
+  weights: readonly number[]
+}
+
+/** Стартовая запись прогона: веса-константы на старте/сбросе, без чисел сэмпла. */
+export interface StartRecord {
+  kind: 'start'
+  runId: number
+  epoch: number
+  weights: readonly number[]
+}
+
+/** Запись истории сессии: стартовые константы прогона или граница сэмпла. */
+export type HistoryRecord = SampleRecord | StartRecord
+
+/** Type-guard записи сэмпла (стартовые записи чисел сэмпла не несут). */
+export function isSampleRecord(rec: HistoryRecord): rec is SampleRecord {
+  return rec.kind === 'sample'
+}
+
 const PROV_WEIGHT = 'вес модели (стартовые константы сценария)'
 const PROV_INPUT = 'входные данные — граница графа'
 const PROV_TARGET = 'метка — граница графа'
@@ -262,8 +300,14 @@ export class TrainingRun {
   epochCorrect: readonly boolean[] = []
   /** Сводки завершённых эпох (L до/после, точность). */
   completedEpochs: readonly EpochSummaryData[] = []
-  /** Снапшоты плоских 13 весов: [0] = стартовые константы, далее границы эпох. */
+  /** Снапшоты плоских 13 весов: [0] = стартовые константы, далее границы эпох
+   *  (удаляется в 01.2-02 GREEN — замещается per-sample историей). */
   weightSnapshots: readonly number[][] = []
+  /** Номер прогона (01.2-02): инкремент в reset() — история переживает сброс. */
+  runId = 1
+  /** История сессии (01.2-02): стартовые записи прогонов + SampleRecord на
+   *  каждой границе сэмпла; живёт до reload (reset не чистит, replace — R4). */
+  sampleHistory: readonly HistoryRecord[] = []
   private cursor: SampleCursor
   /** Recorder-флаг (R1): onOp-колбэк курсора пишет StepRecord только в true. */
   private recording = true

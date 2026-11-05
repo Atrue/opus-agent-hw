@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { run } from '../../src/run/runState'
+import { run, TrainingRun, isSampleRecord, type HistoryRecord, type SampleRecord, type StartRecord } from '../../src/run/runState'
 import { XOR_SCENARIO, SAMPLE_COUNT } from '../../src/run/scenario'
 import { OPS_PER_SAMPLE } from '../../src/tensor'
 
@@ -29,6 +29,18 @@ function flatModelWeights(): number[] {
     ...Array.from(run.model.W2.data),
     ...Array.from(run.model.b2.data),
   ]
+}
+
+/** Запись сэмпла или throw (type-narrowing для ассертов). */
+function asSample(rec: HistoryRecord): SampleRecord {
+  if (!isSampleRecord(rec)) throw new Error(`ожидалась запись сэмпла, получена ${rec.kind}`)
+  return rec
+}
+
+/** Стартовая запись или throw. */
+function asStart(rec: HistoryRecord): StartRecord {
+  if (isSampleRecord(rec)) throw new Error('ожидалась стартовая запись прогона')
+  return rec
 }
 
 beforeEach(() => {
@@ -221,5 +233,73 @@ describe('TrainingRun: эпохи и fast-forward (R3)', () => {
     expect(run.screen).toBe('epoch-end')
     expect(run.epochLossPoints).toHaveLength(SAMPLE_COUNT)
     expect(flatModelWeights()).toEqual(stepwiseWeights)
+  })
+})
+
+describe('TrainingRun: SampleRecord-история сессии (01.2-02)', () => {
+  it('(а) полная эпоха: стартовая запись + по одной записи на каждый сэмпл', () => {
+    run.runEpoch()
+    expect(run.sampleHistory).toHaveLength(1 + SAMPLE_COUNT)
+    const start = asStart(run.sampleHistory[0]!)
+    expect(start.runId).toBe(1)
+    expect(start.epoch).toBe(1)
+    expect(start.weights).toEqual(START_FLAT)
+    for (let i = 0; i < SAMPLE_COUNT; i++) {
+      const rec = asSample(run.sampleHistory[i + 1]!)
+      expect(rec.runId).toBe(1)
+      expect(rec.epoch).toBe(1)
+      expect(rec.sampleIndex).toBe(i)
+      expect([...rec.x]).toEqual([...XOR_SCENARIO.samples[i]!.x])
+      expect(rec.y).toBe(XOR_SCENARIO.samples[i]!.y)
+      expect(Number.isFinite(rec.yhat)).toBe(true)
+      expect(Number.isFinite(rec.loss)).toBe(true)
+      expect(rec.loss).toBe(run.epochLossPoints[i])
+      expect(rec.correct).toBe((rec.yhat >= 0.5) === (rec.y >= 0.5))
+      expect(rec.a1).toHaveLength(3)
+      expect(rec.z1).toHaveLength(3)
+      expect(rec.z2).toHaveLength(1)
+      expect(rec.weights).toHaveLength(13)
+      for (const w of rec.weights) expect(Number.isFinite(w)).toBe(true)
+    }
+    // первый сэмпл — эталонный bce движка; последний sgd сдвинул веса
+    expect(asSample(run.sampleHistory[1]!).loss).toBeCloseTo(0.7097208011495857, 15)
+    expect(asSample(run.sampleHistory[SAMPLE_COUNT]!).weights).not.toEqual(START_FLAT)
+  })
+
+  it('(б) reset — перезапуск прогона: история живёт, runId+1, стартовые константы, шаг 1', () => {
+    run.runEpoch()
+    run.reset()
+    expect(run.runId).toBe(2)
+    expect(run.screen).toBe('walkthrough')
+    expect(run.stepInSample).toBe(1)
+    expect(run.sampleIndex).toBe(0)
+    expect(run.currentRecord).toBeNull()
+    expect(run.epochLossPoints).toHaveLength(0)
+    expect(flatModelWeights()).toEqual(START_FLAT)
+    // сводки завершённых эпох и история сессии живут до reload (пункт 6 ТЗ)
+    expect(run.completedEpochs).toHaveLength(1)
+    expect(run.sampleHistory).toHaveLength(1 + SAMPLE_COUNT + 1)
+    const start2 = asStart(run.sampleHistory[1 + SAMPLE_COUNT]!)
+    expect(start2.runId).toBe(2)
+    expect(start2.epoch).toBe(1)
+    expect(start2.weights).toEqual(START_FLAT)
+    // обучение продолжает копить историю: эпоха 1 прогона 2 дописывается
+    run.runEpoch()
+    expect(run.sampleHistory).toHaveLength(1 + SAMPLE_COUNT * 2 + 1)
+    expect(run.completedEpochs).toHaveLength(2)
+  })
+
+  it('(в) инвариант R3 на истории: две эпохи пошагово и FF — идентичные sampleHistory', () => {
+    const stepwise = new TrainingRun()
+    for (let e = 0; e < 2; e++) {
+      for (let i = 0; i < SAMPLE_COUNT * OPS_PER_SAMPLE; i++) stepwise.advance()
+      stepwise.advance() // экран завершения эпохи → следующая эпоха
+    }
+    const ff = new TrainingRun()
+    for (let e = 0; e < 2; e++) {
+      ff.runEpoch()
+      ff.advance()
+    }
+    expect(ff.sampleHistory).toEqual(stepwise.sampleHistory)
   })
 })
