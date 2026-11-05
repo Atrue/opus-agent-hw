@@ -5,6 +5,7 @@ import { XOR_SCENARIO } from '../run/scenario'
 import type { Tensor } from '../tensor'
 import { formatKey } from '../format/numbers'
 import SubscriptText from './SubscriptText'
+import LinkHistory from './LinkHistory'
 
 /**
  * Панель звена (01.2-01): раскрывается под формульной строкой, когда выбран
@@ -13,7 +14,8 @@ import SubscriptText from './SubscriptText'
  * (инвариант «drill-down = движок»: числа курсора идентичны записи шага);
  * до вычисления в текущем сэмпле строка символа не показывается. Крестик +
  * Esc снимают выбор (Esc — capture-приоритет над закрытием drill: панель
- * звена закрывается первой). В 01.2-02 сюда добавится история звена.
+ * звена закрывается первой). Ниже чисел — раскрывающаяся история звена по
+ * сэмплам (LinkHistory, 01.2-02).
  */
 
 function tensorValues(t: Tensor | null): number[] | null {
@@ -21,8 +23,9 @@ function tensorValues(t: Tensor | null): number[] | null {
 }
 
 /** Живые значения по символу звена: веса/вход/метка/промежуточные тензоры
- *  курсора + η из сценария; градиент — после backward-опы (до — null). */
-function liveValues(sym: string): number[] | null {
+ *  курсора + η из сценария; градиент — после backward-опы (до — null).
+ *  Экспортируется для live-строки истории звена (LinkHistory, 01.2-02). */
+export function liveValues(sym: string): number[] | null {
   const t = run.activeCursor.tensors
   switch (sym) {
     case 'x':
@@ -117,6 +120,7 @@ export default function LinkPanel() {
           <LinkNumberRow key={sym} sym={sym} />
         ))}
       </div>
+      <LinkHistory segment={selection.segment} symbol={selection.symbol} />
     </section>
   )
 }

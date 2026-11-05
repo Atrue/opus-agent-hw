@@ -247,32 +247,15 @@ export function linkHistoryOf(
   return { series: [] }
 }
 
-/**
- * Временный мостик UX-06 (удаляется в Task 2 плана 01.2-02 вместе с
- * WeightsTable): плоские снапшоты весов на границах эпох, восстановленные
- * из per-sample истории — [0] = стартовые константы, далее границы полных эпох.
- */
-export function epochWeightSnapshotsOf(history: readonly HistoryRecord[]): readonly (readonly number[])[] {
-  const snapshots: (readonly number[])[] = []
-  const firstStart = history.find((rec) => !isSampleRecord(rec))
-  if (firstStart !== undefined) snapshots.push(firstStart.weights)
-  let groupRun: number | null = null
-  let groupEpoch = 0
-  let groupLen = 0
-  for (const rec of history) {
-    if (!isSampleRecord(rec)) {
-      // сброс — текущая группа (незавершённая эпоха) снапшота не даёт
-      groupRun = null
-      groupLen = 0
-      continue
-    }
-    if (rec.runId !== groupRun || rec.epoch !== groupEpoch) {
-      groupRun = rec.runId
-      groupEpoch = rec.epoch
-      groupLen = 0
-    }
-    groupLen += 1
-    if (groupLen === SAMPLE_COUNT) snapshots.push(rec.weights)
-  }
-  return snapshots
+/** Потолок отображения истории звена — последние ~40 точек (анти-«стена цифр», 01.2-02). */
+export const LINK_HISTORY_CAP = 40
+
+/** Последние cap точек ряда + сколько точек скрыто слева («+N раньше»). */
+export function capLinkHistory(
+  points: readonly LinkHistoryPoint[],
+  cap: number = LINK_HISTORY_CAP,
+): { shown: readonly LinkHistoryPoint[]; hidden: number } {
+  const hidden = Math.max(0, points.length - cap)
+  return { shown: points.slice(hidden), hidden }
 }
+

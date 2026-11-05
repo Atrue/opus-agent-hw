@@ -13,7 +13,6 @@ import OperationPanel from './OperationPanel'
 import SamplesPanel from './SamplesPanel'
 import StepControls from './StepControls'
 import StepperBand from './StepperBand'
-import WeightsTable from './WeightsTable'
 
 /**
  * Воркбенч walkthrough (01.2-01 «формула-хребет»): шапка-транспорт →
@@ -120,10 +119,13 @@ export default function App() {
               <ArchitectureDiagram record={record} />
             </div>
           </section>
+          {/* История обучения (01.2-02): график лосса на всю ширину полосы —
+              таблица весов уступила место истории звена в панели (LinkHistory);
+              место под будущие дашки. Ось — сэмплы сессии, прогоны разделены */}
           <div
             aria-label="История обучения"
             data-testid="history-zone"
-            className="grid min-h-0 grid-cols-1 gap-4 xl:h-60 xl:grid-cols-2"
+            className="grid min-h-0 grid-cols-1 gap-4 xl:h-60"
           >
             <div className="card min-h-[220px] xl:min-h-0">
               <div className="card-head">
@@ -131,21 +133,11 @@ export default function App() {
                   monitoring
                 </span>
                 <h2 className="card-title">Лосс по сэмплам</h2>
-                <span className="card-meta ui-label">эпоха {epoch}</span>
+                <span className="card-meta ui-label">сэмплы сессии</span>
               </div>
               <div className="screen min-h-0 flex-1">
                 <LossChart />
               </div>
-            </div>
-            <div className="card min-h-[220px] xl:min-h-0">
-              <div className="card-head">
-                <span className="icon" aria-hidden="true">
-                  grid_view
-                </span>
-                <h2 className="card-title">Веса по эпохам</h2>
-                <span className="card-meta ui-label">13 весов</span>
-              </div>
-              <WeightsTable />
             </div>
           </div>
         </div>

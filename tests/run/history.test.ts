@@ -1,9 +1,11 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
   buildLossChartData,
+  capLinkHistory,
   linkHistoryOf,
   sessionGeometryOf,
   WEIGHT_ROWS,
+  type LinkHistoryPoint,
   type LinkSeries,
 } from '../../src/run/history'
 import { TrainingRun, isSampleRecord, type SampleRecord } from '../../src/run/runState'
@@ -109,6 +111,19 @@ describe('История звена цепи: linkHistoryOf (01.2-02)', () => {
     expect(WEIGHT_ROWS[6]).toBe('b1[0]')
     expect(WEIGHT_ROWS[9]).toBe('W2[0,0]')
     expect(WEIGHT_ROWS[12]).toBe('b2[0]')
+  })
+
+  it('capLinkHistory: потолок ~40 точек — показаны последние, скрытое считается слева', () => {
+    const mk = (n: number): LinkHistoryPoint[] =>
+      Array.from({ length: n }, (_, i) => ({ runId: 1, epoch: 1, sampleIndex: i, value: i }))
+    const short = capLinkHistory(mk(9))
+    expect(short.shown).toHaveLength(9)
+    expect(short.hidden).toBe(0)
+    const long = capLinkHistory(mk(49)) // 12 эпох × 4 + старт
+    expect(long.shown).toHaveLength(40)
+    expect(long.hidden).toBe(9)
+    expect(long.shown[0]!.sampleIndex).toBe(9) // последние точки, не первые
+    expect(long.shown.at(-1)!.sampleIndex).toBe(48)
   })
 })
 
