@@ -5,6 +5,8 @@ import { formatKey } from '../format/numbers'
 import type { Phase } from '../tensor'
 import ArchitectureDiagram from './ArchitectureDiagram'
 import EpochSummary from './EpochSummary'
+import FormulaStrip from './FormulaStrip'
+import LinkPanel from './LinkPanel'
 import LossChart from './LossChart'
 import NumberDrilldown from './NumberDrilldown'
 import OperationPanel from './OperationPanel'
@@ -14,12 +16,12 @@ import StepperBand from './StepperBand'
 import WeightsTable from './WeightsTable'
 
 /**
- * Воркбенч walkthrough (redesign 2026-11-05, full): шапка-транспорт (заголовок,
- * бейдж фазы, контролы прогона, «Лекционный режим»), main — 12-колоночная
- * сетка xl: рельс шагов 2 (вертикальная лента пилюль) | сцена 6 (DAG +
- * история полосой: график лосса и таблица весов) | правая колонка 4 (зона
- * результата + панель операции); md — 2 колонки, mobile — одна. Статус-бар
- * 48px: LOSS/LR + индикатор позиции + hotkeys (backdrop-blur разрешён хрому).
+ * Воркбенч walkthrough (01.2-01 «формула-хребет»): шапка-транспорт →
+ * формула-строка на всю ширину (+панель звена при выборе) → горизонтальная
+ * лента шагов (одна строка с автоскроллом к активной пилюле) → main — сетка
+ * xl: сцена 8 (DAG + история полосой: график лосса и таблица весов) |
+ * правая колонка 4 (зона результата + панель операции); md — 2 колонки,
+ * mobile — одна. Статус-бар 48px: LOSS/LR + индикатор позиции + hotkeys.
  *
  * Транспорт в шапке: primary «Шаг» всегда в зоне досягаемости (удобство,
  * redesign); панель операции — уровень иерархии DOCS-02; на границе эпохи
@@ -89,20 +91,23 @@ export default function App() {
         </button>
       </header>
 
-      <main className="grid min-h-0 flex-1 grid-cols-1 gap-4 p-4 md:grid-cols-2 xl:grid-cols-12">
-        {/* Рельс шагов (xl — вертикальный, «стек отладчика»): 13 пилюль
-            done/active/future с mono-значениями; ниже xl — лента 2/4 колонок */}
-        <nav
-          aria-label="Лента шагов сэмпла"
-          className="card step-rail min-h-0 md:col-span-2 xl:col-span-2 xl:overflow-y-auto"
-        >
-          <StepperBand />
-        </nav>
+      {/* Формула-хребет (01.2-01): полная формула сети — навигационное ядро;
+          клик по символу выбирает звено (подсветка на диаграмме в 01.2-02+
+          панель звена под строкой) */}
+      <FormulaStrip />
+      <LinkPanel />
 
-        {/* Сцена (xl — 6 колонок): DAG 2-3-1 крупно — живые рёбра-веса,
+      {/* Лента шагов — одна горизонтальная строка над сценой (testid step-band
+          сохранён — e2e-контракт); автоскролл к активной пилюле */}
+      <nav aria-label="Лента шагов сэмпла" className="step-nav">
+        <StepperBand />
+      </nav>
+
+      <main className="grid min-h-0 flex-1 grid-cols-1 gap-4 p-4 md:grid-cols-2 xl:grid-cols-12">
+        {/* Сцена (xl — 8 колонок): DAG 2-3-1 крупно — живые рёбра-веса,
             активная op, клик → drill; ниже — история полосой (UX-05/UX-06).
-            Мобильный порядок: сцена первой — рельс не закапывает диаграмму */}
-        <div className="flex min-h-0 flex-col gap-4 max-xl:order-first md:col-span-1 xl:col-span-6 xl:order-none">
+            Мобильный порядок: сцена первой — лента не закапывает диаграмму */}
+        <div className="flex min-h-0 flex-col gap-4 max-xl:order-first md:col-span-1 xl:col-span-8 xl:order-none">
           <section aria-label="Слот диаграммы сети" data-testid="diagram-slot" className="card min-h-[320px] flex-1">
             <div className="card-head">
               <span className="icon" aria-hidden="true">

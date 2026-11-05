@@ -410,9 +410,20 @@ export class TrainingRun {
     this.emit()
   }
 
-  selectLink(_segment: SegmentId, _symbol: string): void {}
+  /** Выбор звена формулы-хребта (01.2-01); reset()/advance()/drill его
+   *  не трогают — навигация «формула ↔ схема» живёт независимо от шага. */
+  selectLink(segment: SegmentId, symbol: string): void {
+    this.selection = { segment, symbol }
+    this.version += 1
+    this.emit()
+  }
 
-  clearLink(): void {}
+  clearLink(): void {
+    if (this.selection === null) return
+    this.selection = null
+    this.version += 1
+    this.emit()
+  }
 
   toggleMode(): void {
     this.mode = this.mode === 'default' ? 'lecture' : 'default'

@@ -287,30 +287,24 @@ sub { /* подстрочные индексы (план Б §5.5: ASCII z1 + <s
   color: var(--color-on-surface-variant);
 }
 
-/* Рельс шагов (redesign; DESIGN.md §4/§9): xl — вертикальный «стек отладчика»
-   (1 колонка, полные строки: точка+формула+значение), ниже xl — лента
-   2→4 колонок. Пилюлы done/active(pulse)/future; индикатор, не навигация:
-   forward-only — клика назад нет (AGENTS.md; конфликт с DESIGN.md §7 в D-25).
-   Точка пилюли — фазный цвет (четвёртый канал фазы). Значения —
-   sampleOpValues прогона (заполняются и после fast-forward). */
-.step-rail {
-  padding: 8px;
-  gap: 4px;
+/* Лента шагов (01.2-01, пункт 5 ТЗ): ОДНА горизонтальная строка над сценой —
+   grid-auto-flow: column + overflow-x: auto, пилюли не переносятся (высота
+   полосы фиксирована), активная пилюля скроллится в центр (scrollIntoView в
+   StepperBand; reduced-motion → behavior auto). Пилюлы done/active(pulse)/
+   future; индикатор, не навигация: forward-only — клика назад нет
+   (AGENTS.md; конфликт с DESIGN.md §7 в D-25). Точка пилюли — фазный цвет
+   (четвёртый канал фазы). Значения — sampleOpValues (и после fast-forward). */
+.step-nav {
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--color-outline-variant);
 }
 .step-band {
   display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(108px, max-content);
   gap: 4px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-@media (min-width: 48rem) {
-  .step-band {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-}
-@media (min-width: 80rem) {
-  .step-band {
-    grid-template-columns: minmax(0, 1fr); /* xl: вертикальный рельс */
-  }
+  overflow-x: auto;
+  scrollbar-width: thin;
 }
 .step-pill {
   position: relative;
@@ -322,6 +316,7 @@ sub { /* подстрочные индексы (план Б §5.5: ASCII z1 + <s
   border-radius: 4px;
   background: var(--color-surface-container);
   overflow: hidden;
+  white-space: nowrap; /* одна строка: пилюли не переносятся */
 }
 .step-pill-dot {
   align-self: center;
@@ -365,6 +360,85 @@ sub { /* подстрочные индексы (план Б §5.5: ASCII z1 + <s
 }
 @keyframes step-pill-pulse {
   50% { opacity: 0.4; }
+}
+
+/* Формула-строка (01.2-01) — навигационное ядро: полная формула сети
+   (forward · лосс · update) полосой на всю ширину между шапкой и лентой.
+   Числовой слой продукта — моно; символы — кнопки выбора звена (aria-pressed
+   → primary-тинт 12%), скобки/операторы — текст; разделитель · несёт фазный
+   цвет токена (inline-стилем из компонента). Hand-rolled, без KaTeX. */
+.formula-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 20px;
+  row-gap: 4px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--color-outline-variant);
+  font-family: var(--font-mono);
+  font-size: var(--num-size);
+  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
+}
+.formula-seg {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+  white-space: nowrap;
+}
+.formula-sep {
+  font-weight: 700;
+}
+.formula-sym {
+  margin: 0;
+  padding: 0 1px;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline dotted;
+  text-underline-offset: 4px;
+  transition: background-color 150ms ease-out, color 150ms ease-out;
+}
+.formula-sym:hover {
+  color: var(--color-primary);
+}
+.formula-sym[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  color: var(--color-primary);
+}
+
+/* Панель звена (01.2-01): раскрывается под формульной строкой при выборе
+   символа — заголовок + формула звена (крупно) + живые числа звена;
+   крестик/Esc снимают выбор. Существующие токены, без новых цветов. */
+.link-panel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 24px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--color-outline-variant);
+  background: var(--color-surface-container-low);
+}
+.link-close { /* компактный крестик снятия выбора (меньше .btn-стандарта) */
+  min-height: 0;
+  padding: 4px;
+}
+.link-panel-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.link-formula { /* формула звена — крупно (паттерн result-value) */
+  font-size: calc(var(--num-size) * 1.25);
+}
+.link-numbers {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 24px;
 }
 
 /* Статус-бар (DESIGN.md §4): фиксированный футер 48px (sticky bottom —
