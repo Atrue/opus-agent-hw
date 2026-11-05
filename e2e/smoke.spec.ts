@@ -5,7 +5,7 @@ import { ETALON_SAMPLE_1 } from '../tests/tensor/etalon-constants'
 
 /**
  * Полная e2e фаз 01.1–01.2 (R3, план 01.1-03; тест 6 — 01.2-02; тесты 7–9 —
- * 01.2-03) — 9 проверок живого цикла:
+ * 01.2-03; тест 10 — 01.2-05) — 10 проверок живого цикла:
  * (1) первый «Шаг»: числа движка в панели (эталон-константы сэмпла 1),
  *     индикатор «Эпоха 1 · пример 1 · шаг 2»;
  * (2) полная эпоха 1 пошагово (4 сэмпла × 13 оп): DOM без NaN/Infinity/
@@ -24,7 +24,11 @@ import { ETALON_SAMPLE_1 } from '../tests/tensor/etalon-constants'
  *     несут ≥ 3 элемента геометрии, узлы a1 ×3); клик по биас-узлу b1 → drill;
  * (9) samples-panel: 4 строки примеров, текущий помечен; FF эпоха → все 4
  *     с вердиктами ✓/✗; reset → samples-panel сброшен к текущему=1, но
- *     link-history и разделители прогонов на графике лосса живы.
+ *     link-history и разделители прогонов на графике лосса живы;
+ * (10) result-zone (01.2-05): карточка «Результат» в правой колонке — все
+ *     входы текущего примера (x₁ = 1, x₂ = 0), метка y, ŷ и L после операций
+ *     6/7, LR = η; LOSS/LR ушли из футера (пункт 8 UAT), step-indicator —
+ *     первый элемент футера слева, текст-контракт не меняется.
  *
  * Скриншот-self-check (baseline 28): перед записью директория очищается;
  * сохраняются скриншоты каждой операции сэмпла 1 (13) и экрана завершения
@@ -300,4 +304,32 @@ test('9) samples-panel: текущий помечен; FF → 4 вердикта
     'история звена пережила reset (4 сэмпла + стартовые)',
   ).toBeGreaterThanOrEqual(5)
   await page.getByTestId('formula-sym-W1').click() // снимаем выбор
+})
+
+test('10) result-zone: все входы текущего примера + ŷ/L/LR; футер без LOSS/LR', async ({ page }) => {
+  await page.goto('/')
+  const zone = page.getByTestId('result-zone')
+  await expect(zone).toBeVisible()
+
+  // все входы текущего примера (сэмпл 1: x₁ = 1, x₂ = 0) + метка y = 1 —
+  // сабскрипты рендерятся x<sub>1</sub>, textContent несёт «x1 = 1»
+  await expect(zone).toContainText(/x1\s*=\s*1/)
+  await expect(zone).toContainText(/x2\s*=\s*0/)
+  await expect(zone).toContainText(/y\s*=\s*1/)
+  // ŷ/L/LOSS до вычисления — «н/д» (DESIGN §6); LR = η сценария уже на месте
+  await expect(zone).toContainText('н/д')
+  await expect(zone).toContainText('LR')
+  await expect(zone).toContainText('0.5')
+
+  // 7 кликов = операции 0–6 (matvec…bce): ŷ и L вычислены — эталон-числа
+  for (let i = 0; i < 7; i++) await page.getByTestId('btn-next').click()
+  await expect(zone).toContainText(formatKey(etalonOutput(5)))
+  await expect(zone).toContainText(formatKey(etalonOutput(6)))
+
+  // футер (пункт 8 UAT): LOSS/LR-метрик нет; слева — индикатор позиции
+  const footer = page.locator('footer')
+  await expect(footer).not.toContainText('LOSS')
+  await expect(footer).not.toContainText('LR')
+  await expect(page.locator('footer > *').first()).toHaveAttribute('data-testid', 'step-indicator')
+  await expect(page.getByTestId('step-indicator')).toHaveText('Эпоха 1 · пример 1 · шаг 8')
 })
