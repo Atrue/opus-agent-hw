@@ -51,7 +51,7 @@ Plans:
 **Goal:** Живой тензорный движок (src/tensor/, PyTorch-имена, эталоны NFR-02 на юнит-константах) заменяет JSON-трейс; forward-only UX с бесконечными эпохами, fast-forward и историей обучения (график лосса + таблица весов); решения R1–R5 применены, Python-конвейер удалён
 **Requirements**: UX-05, UX-06
 **Depends on:** Phase 1
-**Plans:** 5/5 plans executed
+**Plans:** 5/5 plans complete
 
 Plans:
 **Wave 1**
