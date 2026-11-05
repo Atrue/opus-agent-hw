@@ -4,8 +4,8 @@ import { formatKey } from '../src/format/numbers'
 import { ETALON_SAMPLE_1 } from '../tests/tensor/etalon-constants'
 
 /**
- * Полная e2e фаз 01.1–01.2 (R3, план 01.1-03; тест 6 — 01.2-02) — 6 проверок
- * живого цикла:
+ * Полная e2e фаз 01.1–01.2 (R3, план 01.1-03; тест 6 — 01.2-02; тесты 7–9 —
+ * 01.2-03) — 9 проверок живого цикла:
  * (1) первый «Шаг»: числа движка в панели (эталон-константы сэмпла 1),
  *     индикатор «Эпоха 1 · пример 1 · шаг 2»;
  * (2) полная эпоха 1 пошагово (4 сэмпла × 13 оп): DOM без NaN/Infinity/
@@ -16,11 +16,19 @@ import { ETALON_SAMPLE_1 } from '../tests/tensor/etalon-constants'
  * (5) честный reload: индикатор на первой операции, URL несёт только сценарий;
  * (6) история звена (01.2-02): FF двух эпох → выбор W1 → link-history ≥ 9
  *     значений (2×4 сэмпла + стартовые), график лосса не пуст; выбор L —
- *     история лосса; после reset история звена и разделители сохраняются.
+ *     история лосса; после reset история звена и разделители сохраняются;
+ * (7) формула-хребет (01.2-03): клик по символу W1 → aria-pressed на символе,
+ *     data-selection="z1" на svg, панель звена с формулой «z1 = W1·x + b1»;
+ *     повторный клик снимает выбор (панель скрыта, атрибут снят);
+ * (8) клик по tanh → primary-подсветка скрытого слоя (класс .diag-selected
+ *     несут ≥ 3 элемента геометрии, узлы a1 ×3); клик по биас-узлу b1 → drill;
+ * (9) samples-panel: 4 строки примеров, текущий помечен; FF эпоха → все 4
+ *     с вердиктами ✓/✗; reset → samples-panel сброшен к текущему=1, но
+ *     link-history и разделители прогонов на графике лосса живы.
  *
- * Скриншот-self-check (новый baseline 28): перед записью директория
- * очищается; сохраняются скриншоты каждой операции сэмпла 1 (13) и экрана
- * завершения эпохи (1) в режимах default и .lecture. Эталон-значения —
+ * Скриншот-self-check (baseline 28): перед записью директория очищается;
+ * сохраняются скриншоты каждой операции сэмпла 1 (13) и экрана завершения
+ * эпохи (1) в режимах default и .lecture — (13 + 1) × 2 = 28. Эталон-значения —
  * импортом констант из tests/tensor/etalon-constants.ts (plain-TS, общий
  * для vitest и playwright — без чтения JSON и без vitest-зависимости).
  *
@@ -200,4 +208,79 @@ test('6) история звена: FF двух эпох → история W1 �
   await page.getByTestId('btn-epoch').click()
   await expect(page.getByTestId('epoch-summary')).toBeVisible()
   await page.screenshot({ path: 'e2e/screenshots/epoch-end.lecture.png' })
+})
+
+test('7) выбор звена по символу формулы: aria-pressed, data-selection, панель звена', async ({ page }) => {
+  await page.goto('/')
+  const w1 = page.getByTestId('formula-sym-W1')
+  const svg = page.getByTestId('architecture-diagram')
+  await expect(svg, 'до выбора атрибута data-selection нет').not.toHaveAttribute('data-selection')
+
+  await w1.click()
+  await expect(w1, 'выбранный символ — aria-pressed').toHaveAttribute('aria-pressed', 'true')
+  await expect(svg, 'клик по W1 выбирает звено z1 (W1·x + b1)').toHaveAttribute('data-selection', 'z1')
+  const panel = page.getByTestId('link-panel')
+  await expect(panel).toBeVisible()
+  await expect(page.getByTestId('link-formula'), 'формула звена из opMeta (склейка matvec+add)').toContainText(
+    'z1 = W1·x + b1',
+  )
+
+  // повторный клик по выбранному символу снимает выбор (D-26)
+  await w1.click()
+  await expect(panel, 'панель звена скрыта').toBeHidden()
+  await expect(w1, 'aria-pressed снят').toHaveAttribute('aria-pressed', 'false')
+  await expect(svg, 'выбор снят — атрибут удалён').not.toHaveAttribute('data-selection')
+})
+
+test('8) tanh подсвечивает скрытый слой (.diag-selected); клик по биасу b1 → drill', async ({ page }) => {
+  await page.goto('/')
+  await page.getByTestId('formula-sym-tanh').click()
+  await expect(page.getByTestId('architecture-diagram'), 'tanh выбирает звено a1').toHaveAttribute(
+    'data-selection',
+    'a1',
+  )
+  expect(
+    await page.locator('.diag-selected').count(),
+    'подсвечены узлы скрытого слоя: класс .diag-selected ≥ 3',
+  ).toBeGreaterThanOrEqual(3)
+  await expect(page.locator('g.diag-selected .diag-node'), 'три узла a1 несут .diag-selected').toHaveCount(3)
+
+  // клик по биас-узлу b1 на диаграмме — полный drill числа (tier 2)
+  await page.getByRole('button', { name: /^Биас b1\[0\]/ }).click()
+  await expect(page.getByTestId('drill-panel')).toBeVisible()
+})
+
+test('9) samples-panel: текущий помечен; FF → 4 вердикта; reset сохраняет историю сессии', async ({ page }) => {
+  await page.goto('/')
+  const panel = page.getByTestId('samples-panel')
+  await expect(panel).toBeVisible()
+  await expect(panel.getByTestId('sample-row'), '4 примера обучающей выборки').toHaveCount(4)
+  await expect(panel.locator('.sample-row-current'), 'текущий пример помечен (до прохода — первый)').toHaveCount(1)
+  await expect(panel.locator('[data-index="0"]')).toHaveClass(/sample-row-current/)
+  await expect(panel.locator('.sample-verdict-ok, .sample-verdict-miss'), 'вердиктов до прохода нет').toHaveCount(0)
+
+  await page.getByTestId('btn-epoch').click() // эпоха 1 — FF
+  await expect(page.getByTestId('epoch-summary')).toContainText('Эпоха 1 завершена')
+  await expect(
+    panel.locator('.sample-verdict-ok, .sample-verdict-miss'),
+    'после FF все 4 примера с вердиктами ✓/✗',
+  ).toHaveCount(4)
+
+  // reset = перезапуск прогона: samples-panel сброшен к текущему=1, но
+  // история сессии (link-history, разделители прогонов) жива до reload
+  await page.getByTestId('btn-reset').click()
+  await expect(page.getByTestId('step-indicator')).toHaveText('Эпоха 1 · пример 1 · шаг 1')
+  await expect(panel.locator('.sample-row-current'), 'после reset текущий — снова первый').toHaveCount(1)
+  await expect(panel.locator('[data-index="0"]')).toHaveClass(/sample-row-current/)
+  await expect(panel.locator('.sample-verdict-ok, .sample-verdict-miss'), 'вердикты новой эпохи пусты').toHaveCount(0)
+  await expect(page.getByTestId('run-dividers').locator('line'), 'разделитель прогона на графике жив').toHaveCount(1)
+
+  await page.getByTestId('formula-sym-W1').click()
+  const history = page.getByTestId('link-history')
+  if (!(await history.evaluate((el) => el.open))) await history.locator('summary').click()
+  expect(
+    await history.locator('[data-testid="link-value"]').count(),
+    'история звена пережила reset (4 сэмпла + стартовые)',
+  ).toBeGreaterThanOrEqual(5)
+  await page.getByTestId('formula-sym-W1').click() // снимаем выбор
 })
