@@ -14,8 +14,15 @@
 import { useSyncExternalStore } from 'react'
 import { gradIo, MLP, OPS_PER_SAMPLE, SampleCursor, tensorIo, type Phase, type StepRecord, type Tensor, type TensorIo } from '../tensor'
 import { SAMPLE_COUNT, XOR_SCENARIO } from './scenario'
+import type { SegmentId } from '../ui/chainLinks'
 
 export type Mode = 'default' | 'lecture'
+
+/** Выбор звена цепи формулы-хребта (01.2-01): клик по символу формулы. */
+export interface LinkSelection {
+  segment: SegmentId
+  symbol: string
+}
 
 /** Экран прогона: walkthrough или экран завершения эпохи (R3). */
 export type RunScreen = 'walkthrough' | 'epoch-end'
@@ -239,6 +246,8 @@ export class TrainingRun {
   /** Счётчик мутаций: веса — Float64Array, Object.is их не видит (R4 §6.2). */
   version = 0
   drill: Drill | null = null
+  /** Выбранное звено цепи (01.2-01): независимо от шага и drill. */
+  selection: LinkSelection | null = null
   mode: Mode = 'default'
   currentRecord: StepRecord | null = null
   /** Экран прогона: после последней операции эпохи — 'epoch-end' (R3). */
@@ -400,6 +409,10 @@ export class TrainingRun {
     this.version += 1
     this.emit()
   }
+
+  selectLink(_segment: SegmentId, _symbol: string): void {}
+
+  clearLink(): void {}
 
   toggleMode(): void {
     this.mode = this.mode === 'default' ? 'lecture' : 'default'

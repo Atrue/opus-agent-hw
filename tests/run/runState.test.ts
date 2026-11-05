@@ -102,6 +102,47 @@ describe('TrainingRun: курсор прогона', () => {
   })
 })
 
+describe('TrainingRun: selection звена формулы-хребта (01.2-01)', () => {
+  it('selectLink публикует selection и инкрементирует version', () => {
+    const v0 = run.version
+    run.selectLink('z1', 'W1')
+    expect(run.selection).toEqual({ segment: 'z1', symbol: 'W1' })
+    expect(run.version).toBe(v0 + 1)
+    run.clearLink()
+  })
+
+  it('clearLink снимает выбор', () => {
+    run.selectLink('z1', 'W1')
+    run.clearLink()
+    expect(run.selection).toBeNull()
+  })
+
+  it('advance() НЕ сбрасывает selection — выбор звена живёт независимо от шага', () => {
+    run.selectLink('L', 'L')
+    run.advance()
+    run.advance()
+    expect(run.selection).toEqual({ segment: 'L', symbol: 'L' })
+    run.clearLink()
+  })
+
+  it('reset() НЕ сбрасывает selection', () => {
+    run.selectLink('W', 'η')
+    run.reset()
+    expect(run.selection).toEqual({ segment: 'W', symbol: 'η' })
+    run.clearLink()
+  })
+
+  it('drill и selection независимы: openDrill не трогает выбор звена', () => {
+    run.selectLink('x', 'x')
+    run.advance()
+    run.openDrill('z1[0]')
+    expect(run.drill).not.toBeNull()
+    expect(run.selection).toEqual({ segment: 'x', symbol: 'x' })
+    run.clearLink()
+    run.closeDrill()
+  })
+})
+
 describe('TrainingRun: эпохи и fast-forward (R3)', () => {
   it('runEpoch() доводит прогон до экрана завершения эпохи и пишет лосс-точки всех сэмплов', () => {
     run.runEpoch()
