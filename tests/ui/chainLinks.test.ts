@@ -9,6 +9,7 @@
 
 import { describe, expect, it } from 'vitest'
 import { CHAIN_GEOMETRY_IDS, SEGMENTS, geometryOf, symbolToSegment, type SegmentGeometry } from '../../src/ui/chainLinks'
+import { GEOMETRY_IDS } from '../../src/ui/ArchitectureDiagram'
 import { XOR_SCENARIO } from '../../src/run/scenario'
 
 /** Полный словарь символов формулы-строки (must_haves плана). */
@@ -197,5 +198,14 @@ describe('chainLinks: контракт станций CHAIN_GEOMETRY_IDS (01.2-0
     expect([...covered.edges].sort()).toEqual([...CHAIN_GEOMETRY_IDS.edges].sort())
     expect([...covered.plates].sort()).toEqual([...CHAIN_GEOMETRY_IDS.plates].sort())
     expect([...covered.biases].sort()).toEqual([...CHAIN_GEOMETRY_IDS.biases].sort())
+  })
+})
+
+describe('ArchitectureDiagram ↔ chainLinks: синхронность контракта станций (01.2-04)', () => {
+  it('GEOMETRY_IDS диаграммы == контракт цепи станций (узлы, рёбра, плашки, биасы)', () => {
+    expect(new Set(GEOMETRY_IDS.nodes)).toEqual(new Set(CHAIN_GEOMETRY_IDS.nodes))
+    expect(new Set(GEOMETRY_IDS.edges)).toEqual(new Set(CHAIN_GEOMETRY_IDS.edges))
+    expect(new Set(GEOMETRY_IDS.plates)).toEqual(new Set(CHAIN_GEOMETRY_IDS.plates))
+    expect(new Set(GEOMETRY_IDS.biases)).toEqual(new Set(CHAIN_GEOMETRY_IDS.biases))
   })
 })

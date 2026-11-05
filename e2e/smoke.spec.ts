@@ -251,6 +251,20 @@ test('8) tanh подсвечивает скрытый слой (.diag-selected);
   await page.getByTestId('btn-next').click()
   await page.getByRole('button', { name: /^Биас b1\[0\]/ }).click()
   await expect(page.getByTestId('drill-panel')).toBeVisible()
+
+  // 8b (01.2-04): станции цепи со значениями — прогон до bce-опы (7 кликов =
+  // операции 0–6): z1×3 + a1×3 + z2 + ŷ + L = 9 живых чисел, ни одного «н/д»;
+  // клик по плашке BCE выбирает звено L
+  for (let i = 0; i < 6; i++) await page.getByTestId('btn-next').click()
+  const stations = page.getByTestId('station-value')
+  await expect(stations, 'станции со значениями: z1×3, a1×3, z2, ŷ, L').toHaveCount(9)
+  await expect(stations.filter({ hasText: 'н/д' }), 'после bce все станции несут числа').toHaveCount(0)
+  await page.getByRole('button', { name: /BCE/ }).click()
+  await expect(page.getByTestId('architecture-diagram'), 'клик по BCE-плашке выбирает звено L').toHaveAttribute(
+    'data-selection',
+    'L',
+  )
+  await expect(page.getByTestId('link-panel')).toBeVisible()
 })
 
 test('9) samples-panel: текущий помечен; FF → 4 вердикта; reset сохраняет историю сессии', async ({ page }) => {
