@@ -709,13 +709,16 @@ circle.diag-hit:focus-visible {
 }
 
 /*
- * Дополнения диаграммы (01.2-01, пункты 7–9 ТЗ): вход-чипы x, биас-квадраты
- * b1/b2, плашки активаций tanh/σ, выходной блок y/L — все буквы формулы
- * имеют визуальное воплощение. Стили — строго на существующих токенах.
+ * Цепь-станций диаграммы (01.2-04, пункты 1/2/4/6/7 UAT): раскладка по
+ * формуле пример → x → z1(+b1) → tanh → a1 → z2(+b2) → σ → ŷ → BCE → L.
+ * Значения станций — ВНУТРИ узлов (буква сверху, живое число снизу); вход x
+ * вписан в цепь маркером «пример k» и подводами-пунктирами (звено x
+ * подсвечивает и их); биасы — чипы «+b₁ⱼ» станций сумм; лосс — плашка BCE +
+ * узел L. Стили — строго на существующих токенах.
  *
  * Подсветка выбранного звена (selectionGeometry) — primary: мятный внешний
  * кейсинг рёбер (+6px против амбер-кейсинга +3px активной op), ринг узлов,
- * обводка+тинт 10% плашек/биасов/чипов — отличима от амбера активной
+ * обводка+тинт 10% плашек/чипов/подводов — отличима от амбера активной
  * операции (D-25) и сосуществует с ней. Подписи весов видны и на выбранном
  * звене. data-selection на svg-корне — e2e-хук (01.2-03).
  */
@@ -736,23 +739,45 @@ circle.diag-hit:focus-visible {
 .diag-node-selring.on {
   opacity: 1;
 }
-.diag-io-chip { /* вход-чип значения x: моно «= 1»/«= 0» */
+.diag-sample-marker { /* маркер источника-примера «пример k» */
   fill: var(--color-surface-container);
   stroke: var(--color-outline-variant);
   stroke-width: 1;
 }
-.diag-io-value { /* значения входов/биасов — моно, табличные цифры */
+.diag-sample-marker-label {
   font-family: var(--font-mono);
-  font-size: calc(12px * var(--diag-scale));
+  font-size: calc(11px * var(--diag-scale));
   font-variant-numeric: tabular-nums;
-  fill: var(--color-on-surface);
+  fill: var(--color-on-surface-variant);
 }
-.diag-bias { /* биас-квадрат у нейрона */
+.diag-feed { /* подвод пример → x: тонкий пунктир, не вес (pointer-events off) */
+  stroke: var(--color-outline-variant);
+  stroke-width: 1.5;
+  stroke-dasharray: 2 3;
+  fill: none;
+  pointer-events: none;
+}
+.diag-feed-g.diag-selected .diag-feed {
+  stroke: var(--color-primary); /* звено x подсвечивает и подводы (Gap 1) */
+}
+.diag-node-value { /* живое число станции внутри узла (буква сверху, число снизу) */
+  font-family: var(--font-mono);
+  font-size: calc(10.5px * var(--diag-scale));
+  font-variant-numeric: tabular-nums;
+  fill: var(--color-on-surface-variant);
+}
+.diag-bias-chip { /* чип «+b₁ⱼ» станции сумм: клик → drill биаса (Gap 7) */
   fill: var(--color-surface-container);
   stroke: var(--color-outline-variant);
   stroke-width: 1;
 }
-.diag-plate { /* плашка активации tanh/σ: полупрозрачна — рёбра читаются под ней */
+.diag-bias-chip-label {
+  font-family: var(--font-mono);
+  font-size: calc(10.5px * var(--diag-scale));
+  fill: var(--color-on-surface);
+  pointer-events: none;
+}
+.diag-plate { /* плашка-станция tanh/σ/bce: полупрозрачна — цепь читается под ней */
   fill: color-mix(in srgb, var(--color-surface-container-lowest) 80%, transparent);
   stroke: var(--color-outline);
   stroke-width: 1.5;
@@ -764,23 +789,32 @@ circle.diag-hit:focus-visible {
   fill: var(--color-on-surface-variant);
   pointer-events: none;
 }
-.diag-out-label { /* выходной блок y/L справа от ŷ — моно */
+.diag-out-label { /* метка y у BCE-станции — моно */
   font-family: var(--font-mono);
   font-size: calc(13px * var(--diag-scale));
   font-variant-numeric: tabular-nums;
   fill: var(--color-on-surface);
   cursor: pointer;
 }
-/* выбранное звено: primary на новых элементах (тинт 10% — паттерн активной op) */
-.diag-selected .diag-io-chip {
-  stroke: var(--color-primary);
+/* амбер активной op на станциях-плашках и биас-чипах (тинт 12% — паттерн узлов) */
+.diag-plate-g.active .diag-plate {
+  stroke: var(--color-tertiary);
+  fill: color-mix(in srgb, var(--color-tertiary) 12%, transparent);
 }
-.diag-selected .diag-io-value {
-  fill: var(--color-primary);
+.diag-bias-g.active .diag-bias-chip {
+  stroke: var(--color-tertiary);
+  fill: color-mix(in srgb, var(--color-tertiary) 12%, var(--color-surface-container));
 }
-.diag-selected .diag-bias {
+/* выбранное звено: primary на станциях (тинт 10% — паттерн активной op) */
+.diag-selected .diag-bias-chip {
   stroke: var(--color-primary);
   fill: color-mix(in srgb, var(--color-primary) 10%, var(--color-surface-container));
+}
+.diag-selected .diag-bias-chip-label {
+  fill: var(--color-primary);
+}
+.diag-selected .diag-node-value {
+  fill: var(--color-primary);
 }
 .diag-selected .diag-plate {
   stroke: var(--color-primary);

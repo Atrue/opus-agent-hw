@@ -110,7 +110,9 @@ export default function LinkPanel() {
         </span>
       </button>
       <div className="link-panel-main">
-        <h2 className="ui-label text-on-surface-variant">{segment.title}</h2>
+        <h2 className="ui-label text-on-surface-variant">
+          <SubscriptText text={segment.title} />
+        </h2>
         <p data-testid="link-formula" className="num link-formula">
           <SubscriptText text={segment.formula} />
         </p>
