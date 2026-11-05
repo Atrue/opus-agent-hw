@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"secondary":"#4cd7f6","outline":"#86948a","surface":"#0f131c","on-tertiary-fixed":"#2a1700","primary-container":"#10b981","surface-tint":"#4edea3","tertiary":"#ffb95f","on-primary-container":"#00422b","surface-variant":"#31353e","on-primary-fixed-variant":"#005236","on-secondary-fixed":"#001f26","tertiary-fixed-dim":"#ffb95f","primary":"#4edea3","on-surface-variant":"#bbcabf","inverse-surface":"#dfe2ee","on-error":"#690005","surface-container-high":"#262a33","on-secondary-container":"#00424e","tertiary-fixed":"#ffddb8","surface-dim":"#0f131c","on-secondary":"#003640","surface-bright":"#353942","on-error-container":"#ffdad6","error":"#ffb4ab","secondary-fixed-dim":"#4cd7f6","on-secondary-fixed-variant":"#004e5c","error-container":"#93000a","surface-container-low":"#181c24","on-background":"#dfe2ee","on-primary":"#003824","on-tertiary":"#472a00","primary-fixed-dim":"#4edea3","inverse-on-surface":"#2c3039","on-primary-fixed":"#002113","surface-container":"#1c2028","primary-fixed":"#6ffbbe","outline-variant":"#3c4a42","surface-container-highest":"#31353e","secondary-container":"#03b5d3","secondary-fixed":"#acedff","surface-container-lowest":"#0a0e16","background":"#0f131c","on-tertiary-fixed-variant":"#653e00","on-tertiary-container":"#523200","tertiary-container":"#e29100","on-surface":"#dfe2ee","inverse-primary":"#006c49"},borderRadius:{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},spacing:{"space-sm":"0.5rem","gutter-desktop":"1.25rem","margin-mobile":"0.75rem","space-lg":"1.25rem","gutter":"1rem","margin-desktop":"1.5rem","space-xl":"2rem","margin":"1rem","gutter-mobile":"0.5rem","space-xs":"0.25rem","space-md":"0.75rem"},fontFamily:{"label-sm":["JetBrains Mono"],"headline-sm":["Space Grotesk"],"label-md":["JetBrains Mono"],"headline-md":["Space Grotesk"],"headline-lg-mobile":["Space Grotesk"],"headline-xl-mobile":["Space Grotesk"],"headline-lg":["Space Grotesk"],"body-lg":["Geist"],"label-lg":["JetBrains Mono"],"code-matrix":["JetBrains Mono"],"headline-xl":["Space Grotesk"],"body-sm":["Geist"],"body-md":["Geist"]},fontSize:{"label-sm":["10px",{"lineHeight":"12px","letterSpacing":"0.04em","fontWeight":"500"}],"headline-sm":["15px",{"lineHeight":"20px","letterSpacing":"0em","fontWeight":"500"}],"label-md":["11px",{"lineHeight":"14px","letterSpacing":"0.02em","fontWeight":"500"}],"headline-md":["18px",{"lineHeight":"24px","letterSpacing":"-0.01em","fontWeight":"500"}],"headline-lg-mobile":["20px",{"lineHeight":"28px","letterSpacing":"-0.01em","fontWeight":"600"}],"headline-xl-mobile":["24px",{"lineHeight":"32px","letterSpacing":"-0.01em","fontWeight":"600"}],"headline-lg":["24px",{"lineHeight":"32px","letterSpacing":"-0.015em","fontWeight":"600"}],"body-lg":["15px",{"lineHeight":"22px","letterSpacing":"-0.005em","fontWeight":"400"}],"label-lg":["13px",{"lineHeight":"16px","letterSpacing":"0em","fontWeight":"500"}],"code-matrix":["11px",{"lineHeight":"14px","letterSpacing":"-0.01em","fontWeight":"400"}],"headline-xl":["32px",{"lineHeight":"40px","letterSpacing":"-0.02em","fontWeight":"600"}],"body-sm":["11px",{"lineHeight":"16px","letterSpacing":"0.01em","fontWeight":"400"}],"body-md":["13px",{"lineHeight":"18px","letterSpacing":"0em","fontWeight":"400"}]}}}};</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><header class="fixed top-0 left-0 right-0 h-16 bg-surface-container-lowest/95 backdrop-blur-md z-50 shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-16 w-full px-gutter-desktop flex items-center justify-between gap-space-md"><div class="flex items-center gap-space-md shrink-0"><img alt="NeuroTrace Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1UeJrr8-OcFkuJXO6ZsdpYkT64i5y1x8t9Wn0C1VVcJS4DqzxIhKdnZp5ULuaYWUbTbyUiHsSCmSb3dSB1_DTjT4tewT34fN0pRrSw8qUW6hWpKyWEw5XktgrFOFWQkDSN0XMeBOgLEPu65oI7Vnefp2qf4xh9UzwG9XaHq02k_-RnDkKaHnPn9w_Ef1mjJd4GxL2CFjwHHZVAki4g77BU4Ti0r-G-JL0htR-t_qmwk"/><div class="flex flex-col"><span class="font-headline-sm text-headline-sm uppercase tracking-wider text-primary font-bold">NeuroTrace</span><span class="font-label-sm text-label-sm text-on-surface-variant">Interactive Deep Learning Step-Debugger</span></div></div><nav class="hidden xl:flex items-center gap-space-xs bg-surface-container-low p-space-xs rounded-lg" data-active-classes="bg-surface-container-high text-primary font-label-md"><a class="px-space-md py-space-xs rounded font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors whitespace-nowrap" data-path="single-perceptron-and-or" href="#">1. Одиночный перцептрон (AND/OR)</a><a aria-current="page" class="px-space-md py-space-xs rounded transition-colors whitespace-nowrap bg-surface-container-high text-primary font-label-md" data-path="mlp-xor-network" href="#">2. MLP для XOR (2 скрытых нейрона)</a><a class="px-space-md py-space-xs rounded font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors whitespace-nowrap" data-path="two-layer-mlp-spiral" href="#">3. Двухслойный MLP (Спираль)</a><a class="px-space-md py-space-xs rounded font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors whitespace-nowrap" data-path="tiny-mnist-classifier" href="#">4. Tiny MNIST (784→64→10)</a></nav><div class="flex items-center gap-space-sm shrink-0"><div class="hidden md:flex items-center bg-surface-container-low p-space-xs rounded-lg font-label-sm text-label-sm"><button class="px-space-sm py-space-xs rounded bg-surface-container-high text-primary font-medium shadow-sm">Интерактивный тренажёр</button><button class="px-space-sm py-space-xs rounded text-on-surface-variant hover:text-on-surface transition-colors">Авто-прогон</button></div><div class="flex items-center gap-space-xs bg-surface-container-low px-space-sm py-space-xs rounded-lg"><button class="p-space-xs rounded text-secondary hover:bg-surface-container-high transition-colors flex items-center justify-center" title="Step Backward (B)"><span class="material-symbols-outlined text-[18px]">skip_previous</span></button><button class="p-space-xs rounded bg-primary-container text-on-primary-container hover:bg-primary transition-colors flex items-center justify-center font-bold" title="Play/Pause (Space)"><span class="material-symbols-outlined text-[18px]">play_arrow</span></button><button class="p-space-xs rounded text-primary hover:bg-surface-container-high transition-colors flex items-center justify-center" title="Step Forward (Space)"><span class="material-symbols-outlined text-[18px]">skip_next</span></button><button class="p-space-xs rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors flex items-center justify-center" title="Reset (R)"><span class="material-symbols-outlined text-[18px]">restart_alt</span></button><div class="hidden lg:flex items-center gap-space-sm pl-space-sm"><input class="w-24 h-1 bg-surface-container-highest rounded-lg appearance-none cursor-pointer accent-primary" max="12" min="1" type="range" value="4"/><span class="font-code-matrix text-code-matrix text-secondary whitespace-nowrap">Step 4 / 12 — Backprop ∂L/∂W1</span></div></div><div class="flex items-center gap-space-xs"><button class="hidden sm:flex items-center gap-space-xs px-space-sm py-space-xs rounded bg-surface-container-low text-on-surface hover:bg-surface-container-high font-label-sm text-label-sm transition-colors" title="Export Code"><span class="material-symbols-outlined text-[16px] text-tertiary">code</span><span>PyTorch/NumPy</span></button><a class="p-space-xs rounded bg-surface-container-low text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors flex items-center justify-center" data-path="system-docs" href="#" title="Documentation"><span class="material-symbols-outlined text-[18px]">help_outline</span></a><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></div></header><aside class="fixed left-0 top-16 bottom-12 w-64 bg-surface-container-low/95 backdrop-blur-md z-40 flex flex-col p-space-md"><div class="flex items-center justify-between mb-space-md px-space-xs"><span class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">Topology Graph</span><span class="font-code-matrix text-code-matrix text-primary">DAG v2.4</span></div><nav class="flex-1 flex flex-col gap-space-xs overflow-y-auto" data-active-classes="bg-surface-container text-primary font-bold"><a class="flex items-center justify-between px-space-md py-space-sm rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all" data-path="single-perceptron-and-or" href="#"><span class="font-label-md text-label-md truncate">Perceptron (AND/OR)</span><span class="font-code-matrix text-label-sm text-outline">2→1</span></a><a aria-current="page" class="flex items-center justify-between px-space-md py-space-sm rounded transition-all bg-surface-container text-primary font-bold" data-path="mlp-xor-network" href="#"><span class="font-label-md text-label-md truncate">MLP for XOR</span><span class="font-code-matrix text-label-sm text-outline">2→2→1</span></a><a class="flex items-center justify-between px-space-md py-space-sm rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all" data-path="two-layer-mlp-spiral" href="#"><span class="font-label-md text-label-md truncate">2-Layer Spiral MLP</span><span class="font-code-matrix text-label-sm text-outline">2→16→3</span></a><a class="flex items-center justify-between px-space-md py-space-sm rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all" data-path="tiny-mnist-classifier" href="#"><span class="font-label-md text-label-md truncate">Tiny MNIST Classifier</span><span class="font-code-matrix text-label-sm text-outline">784→64→10</span></a><div class="my-space-sm border-t border-surface-container-high/40"></div><a class="flex items-center justify-between px-space-md py-space-sm rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all" data-path="gradient-flow-debugger" href="#"><span class="font-label-md text-label-md truncate">Gradient Flow Inspector</span><span class="font-code-matrix text-label-sm text-secondary">∇W</span></a><a class="flex items-center justify-between px-space-md py-space-sm rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all" data-path="system-docs" href="#"><span class="font-label-md text-label-md truncate">Docs &amp; Formulations</span><span class="font-code-matrix text-label-sm text-tertiary">LaTeX</span></a></nav><div class="pt-space-md bg-surface-container-low"><div class="p-space-sm rounded bg-surface-container text-on-surface-variant font-code-matrix text-code-matrix flex flex-col gap-space-xs"><div class="flex justify-between items-center"><span class="text-outline">DEVICE:</span><span class="text-primary">WASM / CPU</span></div><div class="flex justify-between items-center"><span class="text-outline">PRECISION:</span><span class="text-on-surface">FP32 Matrix</span></div></div></div></aside><div class="pl-64"><main class="relative pt-16 pb-12 w-full min-h-screen bg-surface"><div class="flex flex-col w-full">
+<!-- Top Step Timeline Bar -->
+<section class="w-full px-gutter-desktop py-space-sm bg-surface-container-lowest shadow-sm flex flex-col gap-space-xs">
+<div class="flex items-center justify-between flex-wrap gap-space-sm">
+<div class="flex items-center gap-space-sm">
+<span class="px-space-sm py-0.5 rounded bg-tertiary-container text-on-tertiary-container font-label-sm text-label-sm uppercase font-semibold">
+          Backward Pass
+        </span>
+<span class="font-headline-sm text-headline-sm text-on-surface">
+          Шаг 7 из 8 — Градиент скрытого слоя <span class="font-code-matrix text-secondary font-bold">∂L/∂W^(1)</span>
+</span>
+</div>
+<div class="flex items-center gap-space-md">
+<div class="flex items-center gap-space-xs text-on-surface-variant font-label-sm text-label-sm">
+<span class="w-2 h-2 rounded-full bg-secondary animate-ping"></span>
+<span>Обратное распространение ошибки по графу вычислений</span>
+</div>
+<div class="flex items-center gap-space-xs bg-surface-container-low px-space-sm py-1 rounded">
+<span class="text-outline font-label-sm text-label-sm">Паттерн:</span>
+<span class="font-code-matrix text-code-matrix text-primary font-bold">XOR [x₁=0, x₂=1] → y=1.0</span>
+</div>
+</div>
+</div>
+<!-- Stepper Pills Flow -->
+<div class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-space-xs mt-space-xs">
+<!-- 1 -->
+<div class="flex flex-col px-space-sm py-1.5 rounded bg-surface-container-low text-on-surface-variant opacity-80">
+<span class="font-label-sm text-label-sm text-outline">1. Вход X</span>
+<span class="font-code-matrix text-label-sm text-on-surface font-semibold">[0, 1]</span>
+</div>
+<!-- 2 -->
+<div class="flex flex-col px-space-sm py-1.5 rounded bg-surface-container-low text-on-surface-variant opacity-80">
+<span class="font-label-sm text-label-sm text-outline">2. Суммы Z^(1)</span>
+<span class="font-code-matrix text-label-sm text-on-surface font-semibold">[-0.35, 0.82]</span>
+</div>
+<!-- 3 -->
+<div class="flex flex-col px-space-sm py-1.5 rounded bg-surface-container-low text-on-surface-variant opacity-80">
+<span class="font-label-sm text-label-sm text-outline">3. Скрытые A^(1)</span>
+<span class="font-code-matrix text-label-sm text-primary font-semibold">[0.413, 0.694]</span>
+</div>
+<!-- 4 -->
+<div class="flex flex-col px-space-sm py-1.5 rounded bg-surface-container-low text-on-surface-variant opacity-80">
+<span class="font-label-sm text-label-sm text-outline">4. Выход ŷ</span>
+<span class="font-code-matrix text-label-sm text-on-surface font-semibold">0.180 (цель: 1.0)</span>
+</div>
+<!-- 5 -->
+<div class="flex flex-col px-space-sm py-1.5 rounded bg-surface-container-low text-on-surface-variant opacity-80">
+<span class="font-label-sm text-label-sm text-outline">5. Функция потерь</span>
+<span class="font-code-matrix text-label-sm text-error font-semibold">MSE = 0.3362</span>
+</div>
+<!-- 6 -->
+<div class="flex flex-col px-space-sm py-1.5 rounded bg-surface-container-low text-on-surface-variant opacity-80">
+<span class="font-label-sm text-label-sm text-secondary">6. ∂L/∂ŷ &amp; ∂L/∂z₂</span>
+<span class="font-code-matrix text-label-sm text-secondary font-semibold">δ_out = -0.1210</span>
+</div>
+<!-- 7 (ACTIVE) -->
+<div class="flex flex-col px-space-sm py-1.5 rounded bg-surface-container-high text-primary ring-1 ring-primary shadow-sm relative overflow-hidden">
+<div class="absolute inset-0 bg-primary/10 animate-pulse pointer-events-none"></div>
+<span class="font-label-sm text-label-sm text-primary font-bold">7. ∂L/∂W^(1) [ТЕКУЩИЙ]</span>
+<span class="font-code-matrix text-label-sm text-on-surface font-bold">δ₁·Xᵀ градиенты</span>
+</div>
+<!-- 8 -->
+<div class="flex flex-col px-space-sm py-1.5 rounded bg-surface-container-low text-outline opacity-60">
+<span class="font-label-sm text-label-sm">8. Сдвиг весов</span>
+<span class="font-code-matrix text-label-sm">W ← W - η·∇W</span>
+</div>
+</div>
+</section>
+<!-- 3-Column Studio Workbench -->
+<div class="w-full px-gutter-desktop py-space-md grid grid-cols-1 xl:grid-cols-12 gap-space-md items-start">
+<!-- LEFT COLUMN: Synaptic DAG Architecture & Decision Boundary (4 cols) -->
+<div class="xl:col-span-4 flex flex-col gap-space-md">
+<!-- Network Visual Canvas Card -->
+<div class="bg-surface-container-low p-space-md rounded shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[18px] text-primary">hub</span>
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold">Топология MLP (2→2→1)</span>
+</div>
+<span class="px-space-xs py-0.5 rounded bg-surface-container text-secondary font-code-matrix text-label-sm">
+            Forward: 50% / Back: 70%
+          </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+          Кликните по синапсу или нейрону для детального расчёта и подсветки связей цепного правила.
+        </p>
+<!-- Interactive SVG Computation DAG -->
+<div class="relative w-full aspect-[4/3] bg-surface-container-lowest rounded overflow-hidden flex items-center justify-center p-2">
+<svg class="w-full h-full select-none" id="network-dag" viewbox="0 0 420 300">
+<defs>
+<lineargradient id="grad-active-back" x1="100%" x2="0%" y1="50%" y2="50%">
+<stop offset="0%" stop-color="#ffb95f" stop-opacity="1"></stop>
+<stop offset="100%" stop-color="#4cd7f6" stop-opacity="0.8"></stop>
+</lineargradient>
+<filter height="140%" id="glow-cyan" width="140%" x="-20%" y="-20%">
+<fegaussianblur result="blur" stddeviation="3"></fegaussianblur>
+<fecomposite in="SourceGraphic" in2="blur" operator="over"></fecomposite>
+</filter>
+</defs>
+<!-- Backprop Flow Indicator Pulses (Layer 2 -> Layer 1) -->
+<path class="opacity-90" d="M 330 150 C 270 150, 270 90, 210 90" fill="none" stroke="#ffb95f" stroke-dasharray="4 4" stroke-width="2.5"></path>
+<path class="opacity-90" d="M 330 150 C 270 150, 270 210, 210 210" fill="none" stroke="#ffb95f" stroke-dasharray="4 4" stroke-width="2.5"></path>
+<!-- Layer 1 -> Input Backward Signals (Targeted Synapse w11 highlighted) -->
+<!-- x1 to h1 (w11) - Selected -->
+<path class="cursor-pointer transition-all hover:stroke-secondary" d="M 80 90 C 130 90, 160 90, 210 90" fill="none" filter="url(#glow-cyan)" id="edge-w11" stroke="#4edea3" stroke-width="4"></path>
+<!-- x2 to h1 (w21) -->
+<path class="cursor-pointer transition-all hover:stroke-secondary" d="M 80 210 C 130 210, 160 90, 210 90" fill="none" id="edge-w21" stroke="#ffb95f" stroke-dasharray="3 3" stroke-width="3"></path>
+<!-- x1 to h2 (w12) -->
+<path class="cursor-pointer transition-all hover:stroke-secondary" d="M 80 90 C 130 90, 160 210, 210 210" fill="none" id="edge-w12" stroke="#86948a" stroke-width="1.5"></path>
+<!-- x2 to h2 (w22) -->
+<path class="cursor-pointer transition-all hover:stroke-secondary" d="M 80 210 C 130 210, 160 210, 210 210" fill="none" id="edge-w22" stroke="#4edea3" stroke-width="2"></path>
+<!-- Synapse Weight Badges -->
+<rect fill="#181c24" height="16" rx="3" stroke="#4edea3" stroke-width="1" width="46" x="120" y="74"></rect>
+<text fill="#4edea3" font-family="JetBrains Mono" font-size="9" font-weight="bold" text-anchor="middle" x="143" y="86">w₁₁=+0.45</text>
+<rect fill="#181c24" height="16" rx="3" stroke="#ffb95f" stroke-width="1" width="46" x="120" y="132"></rect>
+<text fill="#ffb95f" font-family="JetBrains Mono" font-size="9" font-weight="bold" text-anchor="middle" x="143" y="144">w₂₁=-0.82</text>
+<rect fill="#181c24" height="16" rx="3" stroke="#4cd7f6" stroke-width="1" width="46" x="250" y="105"></rect>
+<text fill="#4cd7f6" font-family="JetBrains Mono" font-size="9" text-anchor="middle" x="273" y="117">w_out₁=+1.34</text>
+<rect fill="#181c24" height="16" rx="3" stroke="#4cd7f6" stroke-width="1" width="46" x="250" y="180"></rect>
+<text fill="#4cd7f6" font-family="JetBrains Mono" font-size="9" text-anchor="middle" x="273" y="192">w_out₂=-1.20</text>
+<!-- INPUT NODES -->
+<!-- X1 -->
+<g class="cursor-pointer" transform="translate(80,90)">
+<circle fill="#1c2028" r="22" stroke="#86948a" stroke-width="2"></circle>
+<text fill="#dfe2ee" font-family="Space Grotesk" font-size="11" font-weight="bold" text-anchor="middle" y="-4">x₁</text>
+<text fill="#86948a" font-family="JetBrains Mono" font-size="10" text-anchor="middle" y="10">0.00</text>
+</g>
+<!-- X2 -->
+<g class="cursor-pointer" transform="translate(80,210)">
+<circle fill="#1c2028" r="22" stroke="#4edea3" stroke-width="2"></circle>
+<text fill="#dfe2ee" font-family="Space Grotesk" font-size="11" font-weight="bold" text-anchor="middle" y="-4">x₂</text>
+<text fill="#4edea3" font-family="JetBrains Mono" font-size="10" font-weight="bold" text-anchor="middle" y="10">1.00</text>
+</g>
+<!-- HIDDEN NODES -->
+<!-- H1 -->
+<g class="cursor-pointer ring-node" transform="translate(210,90)">
+<circle fill="#1c2028" filter="url(#glow-cyan)" r="26" stroke="#4edea3" stroke-width="2.5"></circle>
+<text fill="#dfe2ee" font-family="Space Grotesk" font-size="11" font-weight="bold" text-anchor="middle" y="-7">h₁ (Sigmoid)</text>
+<text fill="#86948a" font-family="JetBrains Mono" font-size="9" text-anchor="middle" y="6">z = -0.35</text>
+<text fill="#4edea3" font-family="JetBrains Mono" font-size="10" font-weight="bold" text-anchor="middle" y="17">a₁ = 0.413</text>
+</g>
+<!-- H2 -->
+<g class="cursor-pointer" transform="translate(210,210)">
+<circle fill="#1c2028" r="26" stroke="#86948a" stroke-width="1.5"></circle>
+<text fill="#dfe2ee" font-family="Space Grotesk" font-size="11" font-weight="bold" text-anchor="middle" y="-7">h₂ (Sigmoid)</text>
+<text fill="#86948a" font-family="JetBrains Mono" font-size="9" text-anchor="middle" y="6">z = 0.82</text>
+<text fill="#4cd7f6" font-family="JetBrains Mono" font-size="10" text-anchor="middle" y="17">a₂ = 0.694</text>
+</g>
+<!-- OUTPUT NODE -->
+<!-- Y_HAT -->
+<g class="cursor-pointer" transform="translate(340,150)">
+<circle fill="#1c2028" r="28" stroke="#ffb95f" stroke-width="2.5"></circle>
+<text fill="#dfe2ee" font-family="Space Grotesk" font-size="12" font-weight="bold" text-anchor="middle" y="-8">ŷ (Выход)</text>
+<text fill="#ffb95f" font-family="JetBrains Mono" font-size="11" font-weight="bold" text-anchor="middle" y="7">0.180</text>
+<text fill="#ffb4ab" font-family="JetBrains Mono" font-size="8.5" text-anchor="middle" y="19">цель: 1.0</text>
+</g>
+<!-- Flow Directions Indicators -->
+<text fill="#86948a" font-family="JetBrains Mono" font-size="9" x="140" y="27">ВХОДНОЙ СЛОЙ</text>
+<text fill="#4edea3" font-family="JetBrains Mono" font-size="9" text-anchor="middle" x="210" y="27">СКРЫТЫЙ СЛОЙ</text>
+<text fill="#ffb95f" font-family="JetBrains Mono" font-size="9" text-anchor="middle" x="340" y="27">ВЫХОД (1-BIT)</text>
+</svg>
+<!-- Interactive Node Floating Legend -->
+<div class="absolute bottom-2 left-2 flex items-center gap-space-sm bg-surface/90 px-space-sm py-1 rounded backdrop-blur-sm text-label-sm font-label-sm">
+<span class="flex items-center gap-1 text-primary"><span class="w-2 h-0.5 bg-primary"></span> Прямой проход</span>
+<span class="flex items-center gap-1 text-tertiary"><span class="w-2 h-0.5 bg-tertiary"></span> Градиентная волна</span>
+</div>
+</div>
+<!-- 2D XOR Decision Boundary Section -->
+<div class="bg-surface-container p-space-sm rounded flex flex-col gap-space-xs mt-space-xs">
+<div class="flex items-center justify-between">
+<span class="font-headline-sm text-headline-sm text-on-surface">Разделяющая граница XOR</span>
+<span class="font-code-matrix text-label-sm text-primary">Эпоха 42 (Loss: 0.041)</span>
+</div>
+<div class="grid grid-cols-12 gap-space-sm items-center">
+<!-- Miniature Scatter Plot -->
+<div class="col-span-5 bg-surface-container-lowest aspect-square rounded p-1.5 relative overflow-hidden flex items-center justify-center">
+<svg class="w-full h-full" viewbox="0 0 100 100">
+<!-- Shaded Decision Regions -->
+<path d="M 0,0 Q 40,40 50,100 L 0,100 Z" fill="#00422b" opacity="0.45"></path>
+<path d="M 50,0 Q 60,60 100,100 L 100,0 Z" fill="#00422b" opacity="0.45"></path>
+<!-- Non-linear boundary curves -->
+<path d="M 0,10 Q 55,45 45,100" fill="none" stroke="#4edea3" stroke-width="1.8"></path>
+<path d="M 55,0 Q 45,55 100,90" fill="none" stroke="#4edea3" stroke-width="1.8"></path>
+<!-- Data Points XOR -->
+<!-- (0,0) -> 0 Class -->
+<circle cx="20" cy="80" fill="#31353e" r="4.5" stroke="#86948a" stroke-width="1.5"></circle>
+<!-- (0,1) -> 1 Class [CURRENT ACTIVE] -->
+<circle cx="20" cy="20" fill="#4edea3" r="6" stroke="#dfe2ee" stroke-width="2"></circle>
+<circle class="animate-pulse" cx="20" cy="20" fill="none" r="9" stroke="#4edea3" stroke-width="1"></circle>
+<!-- (1,0) -> 1 Class -->
+<circle cx="80" cy="80" fill="#4edea3" r="4.5" stroke="#dfe2ee" stroke-width="1.5"></circle>
+<!-- (1,1) -> 0 Class -->
+<circle cx="80" cy="20" fill="#31353e" r="4.5" stroke="#86948a" stroke-width="1.5"></circle>
+</svg>
+</div>
+<!-- Legend and Quick Input Switcher -->
+<div class="col-span-7 flex flex-col gap-space-xs font-label-sm text-label-sm">
+<div class="flex items-center justify-between text-outline">
+<span>Точка:</span>
+<span class="text-primary font-bold">P₂(x₁=0, x₂=1) → y=1</span>
+</div>
+<div class="flex items-center justify-between text-outline">
+<span>Выход сети:</span>
+<span class="text-error font-medium">0.180 (Не сошлось)</span>
+</div>
+<div class="flex items-center justify-between text-outline">
+<span>Цель:</span>
+<span class="text-on-surface">1.000</span>
+</div>
+<div class="grid grid-cols-4 gap-1 mt-1">
+<button class="py-1 rounded bg-surface-container-high text-on-surface-variant hover:text-on-surface font-code-matrix text-label-sm transition-colors">[0,0]</button>
+<button class="py-1 rounded bg-primary-container text-on-primary-container font-code-matrix text-label-sm font-bold shadow-sm">[0,1]</button>
+<button class="py-1 rounded bg-surface-container-high text-on-surface-variant hover:text-on-surface font-code-matrix text-label-sm transition-colors">[1,0]</button>
+<button class="py-1 rounded bg-surface-container-high text-on-surface-variant hover:text-on-surface font-code-matrix text-label-sm transition-colors">[1,1]</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Quick Concept Insight Callout -->
+<div class="bg-surface-container-low p-space-md rounded flex items-start gap-space-sm">
+<span class="material-symbols-outlined text-secondary text-[22px] shrink-0 mt-0.5">psychology</span>
+<div class="flex flex-col gap-1">
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold">Почему XOR требует скрытый слой?</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+            XOR линейно не разделим. Нейроны <code class="text-primary font-code-matrix">h₁</code> и <code class="text-primary font-code-matrix">h₂</code> преобразуют двумерное пространство в новые координаты, где гиперплоскость выходного нейрона способна провести разделение.
+          </p>
+</div>
+</div>
+</div>
+<!-- MIDDLE COLUMN: Chain Rule Inspector & Formula Drill-down (5 cols) -->
+<div class="xl:col-span-5 flex flex-col gap-space-md">
+<!-- Core Chain Rule Card -->
+<div class="bg-surface-container-low p-space-md rounded shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[20px] text-tertiary">functions</span>
+<span class="font-headline-md text-headline-md text-on-surface font-semibold">Аналитическое цепное правило (Chain Rule)</span>
+</div>
+<span class="px-space-xs py-0.5 rounded bg-surface-container-high font-code-matrix text-label-sm text-on-surface-variant">
+            длина цепи = 5
+          </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+          Вычисление частной производной ошибки по первому синаптическому весу скрытого нейрона <span class="font-code-matrix text-primary font-bold">w₁₁</span>:
+        </p>
+<!-- Big LaTeX Representation Box -->
+<div class="p-space-md bg-surface-container-lowest rounded flex flex-col gap-space-xs overflow-x-auto shadow-inner">
+<div class="font-code-matrix text-headline-sm text-secondary font-semibold tracking-wide whitespace-nowrap">
+            ∂L/∂w₁₁ = <span class="text-tertiary">(∂L/∂ŷ)</span> · <span class="text-secondary">(∂ŷ/∂z_out)</span> · <span class="text-outline">(∂z_out/∂a₁)</span> · <span class="text-primary">(∂a₁/∂z₁)</span> · <span class="text-inverse-surface">(∂z₁/∂w₁₁)</span>
+</div>
+<div class="font-code-matrix text-label-sm text-on-surface-variant whitespace-nowrap">
+            где z_out = w_out₁·a₁ + w_out₂·a₂ + b_out, а z₁ = w₁₁·x₁ + w₂₁·x₂ + b₁
+          </div>
+</div>
+<!-- 5 Interactive Factor Cards -->
+<div class="flex flex-col gap-space-xs">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-outline">Числовая подстановка по сомножителям:</span>
+<!-- Factor 1 -->
+<div class="p-space-sm rounded bg-surface-container flex items-center justify-between transition-all hover:bg-surface-container-high cursor-pointer">
+<div class="flex items-center gap-space-sm">
+<span class="w-6 h-6 rounded bg-tertiary-container text-on-tertiary-container flex items-center justify-center font-code-matrix text-label-sm font-bold">1</span>
+<div class="flex flex-col">
+<span class="font-code-matrix text-label-sm text-on-surface">∂L / ∂ŷ = (ŷ - y)</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Градиент квадратичной ошибки MSE</span>
+</div>
+</div>
+<div class="text-right">
+<span class="font-code-matrix text-headline-sm text-tertiary font-bold">-0.8200</span>
+<div class="font-code-matrix text-label-sm text-outline">0.180 - 1.000</div>
+</div>
+</div>
+<!-- Factor 2 -->
+<div class="p-space-sm rounded bg-surface-container flex items-center justify-between transition-all hover:bg-surface-container-high cursor-pointer">
+<div class="flex items-center gap-space-sm">
+<span class="w-6 h-6 rounded bg-secondary-container text-on-secondary-container flex items-center justify-center font-code-matrix text-label-sm font-bold">2</span>
+<div class="flex flex-col">
+<span class="font-code-matrix text-label-sm text-on-surface">∂ŷ / ∂z_out = σ'(z_out) = ŷ(1 - ŷ)</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Производная выходного сигмоида</span>
+</div>
+</div>
+<div class="text-right">
+<span class="font-code-matrix text-headline-sm text-secondary font-bold">+0.1476</span>
+<div class="font-code-matrix text-label-sm text-outline">0.18 · (1 - 0.18)</div>
+</div>
+</div>
+<!-- Factor 3 -->
+<div class="p-space-sm rounded bg-surface-container flex items-center justify-between transition-all hover:bg-surface-container-high cursor-pointer">
+<div class="flex items-center gap-space-sm">
+<span class="w-6 h-6 rounded bg-surface-variant text-on-surface flex items-center justify-center font-code-matrix text-label-sm font-bold">3</span>
+<div class="flex flex-col">
+<span class="font-code-matrix text-label-sm text-on-surface">∂z_out / ∂a₁ = w_out₁</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Вес связи между h₁ и выходом</span>
+</div>
+</div>
+<div class="text-right">
+<span class="font-code-matrix text-headline-sm text-on-surface font-bold">+1.3400</span>
+<div class="font-code-matrix text-label-sm text-outline">фиксирован на шаге</div>
+</div>
+</div>
+<!-- Factor 4 -->
+<div class="p-space-sm rounded bg-surface-container flex items-center justify-between transition-all hover:bg-surface-container-high cursor-pointer">
+<div class="flex items-center gap-space-sm">
+<span class="w-6 h-6 rounded bg-primary-container text-on-primary-container flex items-center justify-center font-code-matrix text-label-sm font-bold">4</span>
+<div class="flex flex-col">
+<span class="font-code-matrix text-label-sm text-on-surface">∂a₁ / ∂z₁ = σ'(z₁) = a₁(1 - a₁)</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Чувствительность скрытого нейрона h₁</span>
+</div>
+</div>
+<div class="text-right">
+<span class="font-code-matrix text-headline-sm text-primary font-bold">+0.2424</span>
+<div class="font-code-matrix text-label-sm text-outline">0.413 · (1 - 0.413)</div>
+</div>
+</div>
+<!-- Factor 5 -->
+<div class="p-space-sm rounded bg-surface-container flex items-center justify-between transition-all hover:bg-surface-container-high cursor-pointer">
+<div class="flex items-center gap-space-sm">
+<span class="w-6 h-6 rounded bg-surface-bright text-on-surface flex items-center justify-center font-code-matrix text-label-sm font-bold">5</span>
+<div class="flex flex-col">
+<span class="font-code-matrix text-label-sm text-on-surface">∂z₁ / ∂w₁₁ = x₁</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Входное значение первого признака</span>
+</div>
+</div>
+<div class="text-right">
+<span class="font-code-matrix text-headline-sm text-outline font-bold">0.0000</span>
+<div class="font-code-matrix text-label-sm text-outline">нулевой входной сигнал!</div>
+</div>
+</div>
+</div>
+<!-- Resulting Multiplication Box -->
+<div class="p-space-sm rounded bg-surface-container-high flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold">Итог перемножения:</span>
+<span class="font-code-matrix text-headline-md text-primary font-bold">∂L/∂w₁₁ = 0.00000</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+            Поскольку вход <code class="font-code-matrix text-secondary font-bold">x₁ = 0</code>, синапс не получает градиентного импульса на текущем обучающем примере. 
+            Однако соседний синапс <code class="font-code-matrix text-tertiary font-bold">w₂₁</code> (где вход <code class="font-code-matrix text-primary">x₂ = 1</code>) получит:
+          </p>
+<div class="p-space-xs rounded bg-surface-container-lowest font-code-matrix text-label-sm text-tertiary flex justify-between items-center">
+<span>∂L/∂w₂₁ = (-0.82) · 0.1476 · 1.34 · 0.2424 · 1.0 =</span>
+<span class="font-bold text-on-surface">-0.03926</span>
+</div>
+</div>
+<!-- Interactive Student Self-Check Exercise -->
+<div class="bg-surface-container p-space-sm rounded flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-primary uppercase font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">edit_note</span>
+              Интерактивный тест на понимание
+            </span>
+<span class="font-code-matrix text-label-sm text-outline">Задача #7</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface">
+            Каково значение градиента свободного члена смещения <span class="font-code-matrix text-secondary font-bold">∂L/∂b₁</span>?
+            <span class="text-outline text-body-sm">(Указание: ∂z₁/∂b₁ = 1)</span>
+</p>
+<div class="flex items-center gap-space-xs mt-1">
+<input class="bg-surface-container-lowest text-on-surface font-code-matrix text-label-sm px-space-sm py-1.5 rounded focus:outline-none focus:ring-1 focus:ring-primary w-32" id="quiz-input" placeholder="-0.039" type="text"/>
+<button class="px-space-sm py-1.5 rounded bg-primary-container text-on-primary-container font-label-sm text-label-sm uppercase font-bold hover:bg-primary transition-all" id="quiz-btn">
+              Проверить ответ
+            </button>
+<span class="font-code-matrix text-label-sm text-outline pl-2" id="quiz-feedback"></span>
+</div>
+</div>
+</div>
+</div>
+<!-- RIGHT COLUMN: Tensor Drill-Down & Weight Heatmaps (3 cols) -->
+<div class="xl:col-span-3 flex flex-col gap-space-md">
+<!-- Matrices Panel Card -->
+<div class="bg-surface-container-low p-space-md rounded shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[20px] text-secondary">grid_view</span>
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold">Тензоры и Матрицы</span>
+</div>
+<span class="font-code-matrix text-label-sm text-outline">Shape: [2, 2]</span>
+</div>
+<!-- Sub Tabs -->
+<div class="flex items-center bg-surface-container p-0.5 rounded font-label-sm text-label-sm">
+<button class="flex-1 py-1 rounded bg-surface-container-high text-primary font-bold shadow-sm">
+            W₁, W₂
+          </button>
+<button class="flex-1 py-1 rounded text-on-surface-variant hover:text-on-surface transition-colors">
+            ∇W, ∇b
+          </button>
+<button class="flex-1 py-1 rounded text-on-surface-variant hover:text-on-surface transition-colors">
+            Активации
+          </button>
+</div>
+<!-- Matrix W1 (Weights Layer 1) -->
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<span class="font-code-matrix text-label-sm text-on-surface font-bold">Матрица весов W^(1) [Вход → Скрытый]</span>
+<span class="font-code-matrix text-label-sm text-outline">2 × 2</span>
+</div>
+<div class="grid grid-cols-2 gap-space-xs bg-surface-container-lowest p-space-xs rounded">
+<!-- Cell [0,0] - w11 Selected -->
+<div class="p-space-sm rounded bg-surface-container-high ring-1 ring-primary flex flex-col gap-0.5 cursor-pointer relative group transition-all hover:bg-surface-bright">
+<div class="flex items-center justify-between font-label-sm text-label-sm text-outline">
+<span>w₁₁ (x₁→h₁)</span>
+<span class="text-primary font-bold">Активен</span>
+</div>
+<span class="font-code-matrix text-headline-sm text-primary font-bold">+0.4500</span>
+<div class="flex items-center justify-between font-code-matrix text-label-sm text-outline pt-1">
+<span>Δw:</span>
+<span class="text-on-surface">0.0000</span>
+</div>
+</div>
+<!-- Cell [0,1] - w12 -->
+<div class="p-space-sm rounded bg-surface-container flex flex-col gap-0.5 cursor-pointer relative group transition-all hover:bg-surface-container-high">
+<div class="flex items-center justify-between font-label-sm text-label-sm text-outline">
+<span>w₁₂ (x₁→h₂)</span>
+<span class="text-outline">FP32</span>
+</div>
+<span class="font-code-matrix text-headline-sm text-error font-semibold">-0.8200</span>
+<div class="flex items-center justify-between font-code-matrix text-label-sm text-outline pt-1">
+<span>Δw:</span>
+<span class="text-on-surface">0.0000</span>
+</div>
+</div>
+<!-- Cell [1,0] - w21 -->
+<div class="p-space-sm rounded bg-surface-container flex flex-col gap-0.5 cursor-pointer relative group transition-all hover:bg-surface-container-high">
+<div class="flex items-center justify-between font-label-sm text-label-sm text-outline">
+<span>w₂₁ (x₂→h₁)</span>
+<span class="text-tertiary font-bold">∇W &gt; 0</span>
+</div>
+<span class="font-code-matrix text-headline-sm text-secondary font-semibold">+1.1200</span>
+<div class="flex items-center justify-between font-code-matrix text-label-sm text-outline pt-1">
+<span>Δw:</span>
+<span class="text-tertiary">+0.0039</span>
+</div>
+</div>
+<!-- Cell [1,1] - w22 -->
+<div class="p-space-sm rounded bg-surface-container flex flex-col gap-0.5 cursor-pointer relative group transition-all hover:bg-surface-container-high">
+<div class="flex items-center justify-between font-label-sm text-label-sm text-outline">
+<span>w₂₂ (x₂→h₂)</span>
+<span class="text-outline">FP32</span>
+</div>
+<span class="font-code-matrix text-headline-sm text-primary font-semibold">+0.3400</span>
+<div class="flex items-center justify-between font-code-matrix text-label-sm text-outline pt-1">
+<span>Δw:</span>
+<span class="text-tertiary">-0.0021</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Gradient Matrix dW1 -->
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<span class="font-code-matrix text-label-sm text-tertiary font-bold">Градиенты ∇W^(1) = ∂L/∂W^(1)</span>
+<span class="font-code-matrix text-label-sm text-outline">Loss-Grad</span>
+</div>
+<div class="grid grid-cols-2 gap-space-xs bg-surface-container-lowest p-space-xs rounded">
+<!-- dW11 -->
+<div class="p-space-xs rounded bg-surface-container flex flex-col">
+<span class="font-label-sm text-label-sm text-outline">∂L/∂w₁₁</span>
+<span class="font-code-matrix text-label-md text-on-surface-variant font-bold">0.00000</span>
+</div>
+<!-- dW12 -->
+<div class="p-space-xs rounded bg-surface-container flex flex-col">
+<span class="font-label-sm text-label-sm text-outline">∂L/∂w₁₂</span>
+<span class="font-code-matrix text-label-md text-on-surface-variant font-bold">0.00000</span>
+</div>
+<!-- dW21 -->
+<div class="p-space-xs rounded bg-surface-container flex flex-col">
+<span class="font-label-sm text-label-sm text-tertiary">∂L/∂w₂₁</span>
+<span class="font-code-matrix text-label-md text-tertiary font-bold">-0.03926</span>
+</div>
+<!-- dW22 -->
+<div class="p-space-xs rounded bg-surface-container flex flex-col">
+<span class="font-label-sm text-label-sm text-secondary">∂L/∂w₂₂</span>
+<span class="font-code-matrix text-label-md text-secondary font-bold">+0.02115</span>
+</div>
+</div>
+</div>
+<!-- Dynamic Parameter Update Simulator Box -->
+<div class="p-space-sm rounded bg-surface-container flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold">Сдвиг SGD: W_new = W - η·∇W</span>
+</div>
+<div class="flex flex-col gap-1 font-label-sm text-label-sm">
+<div class="flex items-center justify-between text-outline">
+<span>Темп обучения η (LR):</span>
+<span class="font-code-matrix text-secondary font-bold" id="lr-val">0.100</span>
+</div>
+<input class="w-full h-1 bg-surface-container-highest rounded appearance-none cursor-pointer accent-secondary" id="lr-slider" max="1.0" min="0.01" step="0.01" type="range" value="0.10"/>
+</div>
+<div class="p-space-xs rounded bg-surface-container-lowest flex flex-col gap-0.5 mt-1 font-code-matrix text-label-sm">
+<div class="flex justify-between text-outline">
+<span>Для w₁₁:</span>
+<span class="text-on-surface">0.450 - (0.1 · 0.0) = <strong class="text-primary">0.450</strong></span>
+</div>
+<div class="flex justify-between text-outline">
+<span>Для w₂₁:</span>
+<span class="text-on-surface">1.120 - (0.1 · -0.039) = <strong class="text-tertiary">1.1239</strong></span>
+</div>
+</div>
+</div>
+<!-- Bias Vector Display -->
+<div class="flex items-center justify-between p-space-sm rounded bg-surface-container-lowest text-label-sm font-label-sm">
+<div class="flex flex-col">
+<span class="text-outline font-label-sm">Вектор смещений b^(1):</span>
+<span class="font-code-matrix text-on-surface font-semibold">[b₁: -0.150, b₂: +0.420]</span>
+</div>
+<span class="px-space-xs py-0.5 rounded bg-surface-container text-outline font-code-matrix">
+            ∇b = [-0.039, +0.021]
+          </span>
+</div>
+</div>
+<!-- Quick Export Code Card -->
+<div class="bg-surface-container-low p-space-sm rounded flex flex-col gap-space-xs">
+<div class="flex items-center justify-between text-label-sm font-label-sm text-outline">
+<span class="flex items-center gap-1 text-on-surface"><span class="material-symbols-outlined text-[16px] text-tertiary">terminal</span> PyTorch Gradient Hook</span>
+<span class="font-code-matrix">W1.grad</span>
+</div>
+<pre class="bg-surface-container-lowest p-space-xs rounded font-code-matrix text-label-sm text-on-surface-variant overflow-x-auto leading-tight"><code>loss = criterion(y_hat, y)
+loss.backward()
+print(model.fc1.weight.grad)
+# tensor([[ 0.0000, -0.0393],
+#         [ 0.0000,  0.0212]])</code></pre>
+</div>
+</div>
+</div>
+</div>
+<script>
+  // Simple interactive behavior for quiz and sliders without dependencies
+  document.addEventListener('DOMContentLoaded', () => {
+    const quizBtn = document.getElementById('quiz-btn');
+    const quizInput = document.getElementById('quiz-input');
+    const quizFeedback = document.getElementById('quiz-feedback');
+    const lrSlider = document.getElementById('lr-slider');
+    const lrVal = document.getElementById('lr-val');
+
+    if (quizBtn && quizInput && quizFeedback) {
+      quizBtn.addEventListener('click', () => {
+        const val = parseFloat(quizInput.value.trim().replace(',', '.'));
+        if (!isNaN(val) && Math.abs(val - (-0.039)) < 0.005) {
+          quizFeedback.textContent = "✓ Верно! ∂L/∂b₁ = δ₁ · 1 = -0.0392";
+          quizFeedback.className = "font-code-matrix text-label-sm text-primary pl-2";
+        } else {
+          quizFeedback.textContent = "Подсказка: перемножьте первые 4 сомножителя (-0.0392)";
+          quizFeedback.className = "font-code-matrix text-label-sm text-error pl-2";
+        }
+      });
+    }
+
+    if (lrSlider && lrVal) {
+      lrSlider.addEventListener('input', (e) => {
+        lrVal.textContent = parseFloat(e.target.value).toFixed(3);
+      });
+    }
+  });
+</script></main></div><footer class="fixed bottom-0 left-0 right-0 h-12 bg-surface-container-lowest/95 backdrop-blur-md z-50 shadow-[0_-1px_8px_rgba(0,0,0,0.04)]"><div class="h-12 w-full px-gutter-desktop flex items-center justify-between text-on-surface-variant font-code-matrix text-code-matrix overflow-x-auto gap-space-lg"><div class="flex items-center gap-space-lg shrink-0"><div class="flex items-center gap-space-xs"><span class="text-outline">LOSS:</span><span class="text-error font-medium">0.0412</span><span class="text-outline text-label-sm">(MSE)</span></div><div class="flex items-center gap-space-xs"><span class="text-outline">LR:</span><span class="text-secondary font-medium">0.010</span><input class="w-16 h-1 bg-surface-container-highest rounded appearance-none cursor-pointer accent-secondary" max="0.1" min="0.001" step="0.001" type="range" value="0.01"/></div><div class="flex items-center gap-space-xs"><span class="text-outline">EPOCH:</span><span class="text-on-surface font-medium">042 / 100</span></div><div class="flex items-center gap-space-xs"><span class="inline-block w-2 h-2 rounded-full bg-primary animate-pulse"></span><span class="text-primary font-medium">Healthy (No Vanishing)</span></div></div><div class="hidden md:flex items-center gap-space-md shrink-0 text-label-sm text-outline"><span class="font-medium text-on-surface-variant">Hotkeys:</span><span><kbd class="px-1.5 py-0.5 rounded bg-surface-container text-on-surface">Space</kbd> Step</span><span><kbd class="px-1.5 py-0.5 rounded bg-surface-container text-on-surface">R</kbd> Reset</span><span><kbd class="px-1.5 py-0.5 rounded bg-surface-container text-on-surface">B</kbd> Backprop</span></div></div></footer></body></html>
