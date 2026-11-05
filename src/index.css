@@ -601,6 +601,95 @@ circle.diag-hit:focus-visible {
 }
 
 /*
+ * Дополнения диаграммы (01.2-01, пункты 7–9 ТЗ): вход-чипы x, биас-квадраты
+ * b1/b2, плашки активаций tanh/σ, выходной блок y/L — все буквы формулы
+ * имеют визуальное воплощение. Стили — строго на существующих токенах.
+ *
+ * Подсветка выбранного звена (selectionGeometry) — primary: мятный внешний
+ * кейсинг рёбер (+6px против амбер-кейсинга +3px активной op), ринг узлов,
+ * обводка+тинт 10% плашек/биасов/чипов — отличима от амбера активной
+ * операции (D-25) и сосуществует с ней. Подписи весов видны и на выбранном
+ * звене. data-selection на svg-корне — e2e-хук (01.2-03).
+ */
+.diag-edge-selcasing {
+  stroke-linecap: round;
+  stroke-width: calc((var(--w) + 6) * var(--edge-scale, 1));
+  opacity: 0; /* постоянный рендер, видимость классом (паттерн кейсинга R5) */
+}
+.diag-edge-g.diag-selected .diag-edge-selcasing {
+  opacity: 1;
+}
+.diag-node-selring {
+  fill: none;
+  stroke: var(--color-primary);
+  stroke-width: 2;
+  opacity: 0;
+}
+.diag-node-selring.on {
+  opacity: 1;
+}
+.diag-io-chip { /* вход-чип значения x: моно «= 1»/«= 0» */
+  fill: var(--color-surface-container);
+  stroke: var(--color-outline-variant);
+  stroke-width: 1;
+}
+.diag-io-value { /* значения входов/биасов — моно, табличные цифры */
+  font-family: var(--font-mono);
+  font-size: calc(12px * var(--diag-scale));
+  font-variant-numeric: tabular-nums;
+  fill: var(--color-on-surface);
+}
+.diag-bias { /* биас-квадрат у нейрона */
+  fill: var(--color-surface-container);
+  stroke: var(--color-outline-variant);
+  stroke-width: 1;
+}
+.diag-plate { /* плашка активации tanh/σ: полупрозрачна — рёбра читаются под ней */
+  fill: color-mix(in srgb, var(--color-surface-container-lowest) 80%, transparent);
+  stroke: var(--color-outline);
+  stroke-width: 1.5;
+  cursor: pointer;
+  transition: stroke 180ms ease-out, fill 180ms ease-out;
+}
+.diag-plate-label {
+  font-family: var(--font-mono);
+  fill: var(--color-on-surface-variant);
+  pointer-events: none;
+}
+.diag-out-label { /* выходной блок y/L справа от ŷ — моно */
+  font-family: var(--font-mono);
+  font-size: calc(13px * var(--diag-scale));
+  font-variant-numeric: tabular-nums;
+  fill: var(--color-on-surface);
+  cursor: pointer;
+}
+/* выбранное звено: primary на новых элементах (тинт 10% — паттерн активной op) */
+.diag-selected .diag-io-chip {
+  stroke: var(--color-primary);
+}
+.diag-selected .diag-io-value {
+  fill: var(--color-primary);
+}
+.diag-selected .diag-bias {
+  stroke: var(--color-primary);
+  fill: color-mix(in srgb, var(--color-primary) 10%, var(--color-surface-container));
+}
+.diag-selected .diag-plate {
+  stroke: var(--color-primary);
+  fill: color-mix(in srgb, var(--color-primary) 10%, transparent);
+}
+.diag-selected .diag-plate-label {
+  fill: var(--color-primary);
+}
+.diag-selected .diag-out-label {
+  fill: var(--color-primary);
+}
+/* подписи весов: активная op, hover и выбранное звено (анти-«стена цифр») */
+.diag-edge-g.diag-selected .diag-edge-label {
+  opacity: 1;
+}
+
+/*
  * Гейты (R5 §4.2): prefers-reduced-motion гасит анимации и переходы ГЛОБАЛЬНО
  * (e2e проверяет computed animation-name активного .diag-flow === 'none');
  * @media print останавливает пунктир и пульс — статичный кадр. .lecture поток
