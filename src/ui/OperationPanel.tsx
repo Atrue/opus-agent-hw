@@ -68,13 +68,13 @@ export default function OperationPanel({ record }: { record: StepRecord | null }
         <p data-testid="step-formula" className="num text-on-surface">
           <SubscriptText text="z1 = W1·x" />
         </p>
-        <p className="ui-text text-on-surface-variant">Нажмите «Шаг →» — движок исполнит первую операцию, и здесь появятся её числа.</p>
+        <p className="ui-text text-on-surface-variant">Нажмите «Шаг»: движок исполнит первую операцию, и здесь появятся её числа.</p>
       </div>
     )
   }
   const rows = buildOperationRows(record)
-  // update: массив значений — «до -> после»
-  const joiner = record.phase === 'update' ? '->' : ','
+  // update: массив значений — «до → после»
+  const joiner = record.phase === 'update' ? '→' : ','
   return (
     <div data-testid="step-panel" className="card h-full overflow-auto">
       <div className="card-head">

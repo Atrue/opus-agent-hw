@@ -2,10 +2,10 @@ import { useEffect } from 'react'
 import { run, useRunSlice } from '../run/runState'
 
 /**
- * Контролы прогона (R3, forward-only): [Сброс] (детерминированный старт,
- * без подтверждения — состояние полностью восстанавливается прогоном),
- * [Запустить эпоху ⏩] (fast-forward: весь остаток эпохи пакетно, record:false)
- * и primary CTA: «Шаг →» в walkthrough, «Следующая эпоха» на экране эпохи —
+ * Контролы прогона (R3, forward-only; redesign — транспорт в шапке):
+ * [Сброс] (детерминированный старт, без подтверждения — состояние полностью
+ * восстанавливается прогоном), [Запустить эпоху] (fast-forward: весь остаток
+ * эпохи пакетно, record:false) и primary CTA: «Шаг» в walkthrough, «Следующая эпоха» на экране эпохи —
  * эпохи бесконечны, «Шаг» никогда не disabled. Перехода назад нет ни кнопкой,
  * ни клавиатурой. Клавиатура: → / Space / PgDn → следующая операция (с экрана
  * эпохи — следующая эпоха), Esc → закрыть drill. Focus-ring — в CSS.
@@ -38,7 +38,7 @@ export default function StepControls() {
       <button
         type="button"
         data-testid="btn-reset"
-        className="btn btn-secondary ui-label"
+        className="btn ui-label"
         onClick={() => run.reset()}
       >
         Сброс
@@ -47,17 +47,17 @@ export default function StepControls() {
         <button
           type="button"
           data-testid="btn-epoch"
-          className="btn btn-secondary ui-label whitespace-nowrap"
+          className="btn ui-label whitespace-nowrap"
           onClick={() => run.runEpoch()}
         >
-          Запустить эпоху ⏩
+          Запустить эпоху
         </button>
       )}
       {screen === 'epoch-end' ? (
         <button
           type="button"
           data-testid="btn-epoch-next"
-          className="btn btn-primary ui-label whitespace-nowrap"
+          className="btn btn-primary ui-label"
           onClick={() => run.advance()}
         >
           Следующая эпоха
@@ -69,7 +69,7 @@ export default function StepControls() {
           className="btn btn-primary ui-label"
           onClick={() => run.advance()}
         >
-          Шаг →
+          Шаг
         </button>
       )}
     </div>

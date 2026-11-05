@@ -41,7 +41,7 @@ export default function WeightsTable() {
   return (
     <div
       data-testid="weights-table"
-      className="min-h-0 flex-1 overflow-auto"
+      className="screen screen-scroll min-h-0 flex-1 overflow-auto"
       role="group"
       aria-label="Таблица весов по эпохам"
     >
@@ -69,7 +69,7 @@ export default function WeightsTable() {
                   value: v,
                   formula: null,
                   gradient: gradAt(record?.grads?.[g.sym], g.index),
-                  note: e === last ? null : `эпоха ${String(e)} · сейчас: ${formatKey(live[r] ?? v)}`,
+                  note: e === last ? null : `эпоха ${String(e)}, сейчас: ${formatKey(live[r] ?? v)}`,
                 }
                 return (
                   <td

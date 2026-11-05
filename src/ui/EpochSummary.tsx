@@ -27,7 +27,7 @@ export default function EpochSummary() {
         <h2 data-testid="epoch-title" className="card-title">
           Эпоха {summary.epoch} завершена
         </h2>
-        <span className="card-meta ui-label">точность {formatKey(summary.accuracy)}</span>
+        <span className="card-meta ui-label">Точность {formatKey(summary.accuracy)}</span>
       </div>
       <div className="flex flex-col gap-2">
         <p data-testid="epoch-loss-before" className="num text-on-surface">
@@ -38,11 +38,11 @@ export default function EpochSummary() {
         </p>
       </div>
       <p data-testid="epoch-accuracy" className="num text-on-surface">
-        Точность: {formatKey(summary.accuracy)} ({summary.correct} из {sampleCount} верно, порог 0.5)
+        {summary.correct} из {sampleCount} верно (порог 0.5)
       </p>
       <p className="ui-text text-on-surface-variant">
-        «Следующая эпоха» продолжает обучение — эпохи не кончаются. Числа этой эпохи идентичны пошагово и после
-        «Запустить эпоху ⏩».
+        «Следующая эпоха» продолжает обучение: эпохи не кончаются. Числа этой эпохи идентичны пошаговому проходу и
+        fast-forward «Запустить эпоху».
       </p>
     </div>
   )

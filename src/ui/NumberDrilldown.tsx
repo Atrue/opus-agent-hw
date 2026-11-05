@@ -22,7 +22,7 @@ const GLOSSARY = '∂L/∂W — градиент L по W (в CS231n: dL/dW)'
 function DrillHeading({ sym, value }: { sym: string; value: number }) {
   return (
     <h2 data-testid="drill-heading" className="num text-on-surface">
-      <SubscriptText text={sym} /> — {formatKey(value)}
+      <SubscriptText text={sym} /> = {formatKey(value)}
     </h2>
   )
 }
@@ -32,7 +32,7 @@ function TerminalPanel({ resolved }: { resolved: ResolvedNumber }) {
   return (
     <div data-testid="drill-terminal" className="terminal-panel">
       <p className="num text-on-surface">
-        <SubscriptText text="∂L/∂x" /> — входные данные
+        <SubscriptText text="∂L/∂x" />: входные данные
       </p>
       <p className="ui-text text-on-surface">
         <SubscriptText text={TERMINAL_BODY} />
@@ -66,7 +66,7 @@ export default function NumberDrilldown({ record, drill }: { record: StepRecord;
       <div className="card-head">
         <span className="icon" aria-hidden="true">edit_note</span>
         <h2 className="card-title">Разбор числа</h2>
-        <button type="button" data-testid="drill-back" className="btn btn-secondary ui-label card-meta whitespace-nowrap" onClick={() => run.closeDrill()}>
+        <button type="button" data-testid="drill-back" className="btn ui-label card-meta whitespace-nowrap" onClick={() => run.closeDrill()}>
           ← к шагу
         </button>
       </div>
@@ -97,7 +97,7 @@ export default function NumberDrilldown({ record, drill }: { record: StepRecord;
 
           {isBackward && (
             <div data-testid="drill-chain" className="flex flex-col gap-1">
-              <span className="ui-label text-on-surface-variant">цепное правило — уровень выше</span>
+              <span className="ui-label text-on-surface-variant">цепное правило: уровень выше</span>
               {record.inputs.map((input) => (
                 <p key={input.sym} className="num text-on-surface-variant">
                   <SubscriptText text={input.sym} /> = {flattenTensorValues(input.values).map(formatKey).join(', ')}

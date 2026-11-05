@@ -1,3 +1,11 @@
+/* Hallmark · shape: rail workbench (рельс 2 · сцена 6 · результат+панель 4) · genre: modern-minimal · theme: brand (DESIGN.md) · redesign: full · scope: app · job: шаг
+ * paper: #0f131c (панель прибора) · accent: #4edea3 (мята = forward/успех) · display: Space Grotesk · body: Geist · code: JetBrains Mono
+ * nav: шапка-транспорт (заголовок, фаза, контролы, лекционный режим) + рельс шагов · footer: статус-бар LOSS/LR/позиция/hotkeys · signature: ResultZone — ŷ/y/L всегда на экране
+ * axes: dark-paper/display-grotesk/accent-mint · posture: workbench (app screen) · contrast: pass (AA, DESIGN.md §2.2) · v2.0.0 */
+/* Hallmark · pre-emit critique: P4 H4 E4 S5 R4 V5 · weakest: E, запись «до» нашла скролл 320–375 и перенос «Шаг →»; заложил overflow-x: clip, nowrap на кнопках, без стрелок на лейблах — проверяю рендером */
+/* Hallmark · waive 37 · четвёртый font-slot — Material Symbols, иконочные лигатуры · не текстовая гарнитура: текстовых три (SG/Geist/JBMono), символы не несут прозу */
+/* Hallmark · kept «Эпоха N · пример N · шаг N» в step-indicator · точный e2e-контракт smoke.spec.ts:48, тест не правится · 63 names it */
+/* Hallmark · reworded "XOR — backprop по шагам" to "XOR: backprop по шагам" · 19 names the dash */
 @import "tailwindcss";
 @import "@fontsource-variable/space-grotesk";
 @import "@fontsource-variable/geist";
@@ -22,6 +30,8 @@
   --font-sans: "Geist Variable", system-ui, sans-serif;
   --font-display: "Space Grotesk Variable", "Geist Variable", system-ui, sans-serif;
   --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
+  --font-symbols: "Material Symbols Outlined";
+  --font-outlier: var(--font-mono); /* числовой слой — outlier-роль: моно */
 
   /* 60% — поверхности */
   --color-background: #0f131c;
@@ -61,6 +71,10 @@
   --color-neg-text: #FF8A50;
   --color-pos-text: #00C489;
 
+  /* Тени приборной темы (тёмный холст — мягкие, с оффетом) */
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.35);
+  --shadow-panel: 0 4px 12px rgb(0 0 0 / 0.5);
+
   /* Кегли: лекционный режим меняет ТОЛЬКО переменные (D-06 сохранён) */
   --num-size: 16px;   /* числа/формулы → 32px в .lecture */
   --ui-size: 16px;    /* UI-текст/контролы → 20px в .lecture */
@@ -68,7 +82,7 @@
 }
 
 /* Лекционный режим (D-06): класс на корне, без JS-пересчёта layout.
-   --edge-scale ×2 — толщина SVG-рёбер. Хром (степпер/статус-бар) не масштабируется. */
+   --edge-scale ×2 — толщина SVG-рёбер. Хром (рельс/статус-бар) не масштабируется. */
 .lecture {
   --num-size: 32px;
   --ui-size: 20px;
@@ -76,14 +90,28 @@
   --edge-scale: 2;
 }
 
+/* База Floor: клип горизонтали, поверхности браузера в теме палитры */
+html,
+body {
+  overflow-x: clip;
+}
+html {
+  scrollbar-color: var(--color-outline-variant) var(--color-background);
+}
+::selection {
+  background: color-mix(in srgb, var(--color-primary) 25%, transparent);
+  color: var(--color-on-surface);
+}
 body {
   background: var(--color-background);
   color: var(--color-on-surface);
+  caret-color: var(--color-primary);
 }
 
 /*
  * Типографика (DESIGN.md §3): числовой слой продукта моноширинный;
  * числа всегда weight 400 — акцент через фон-тинт и цвет, не через вес.
+ * Лейблы — sentence case, без трекинга (шаг мельче body).
  */
 .num { /* числа/формулы — JetBrains Mono + табличные цифры, leading-tight */
   font-family: var(--font-mono);
@@ -97,24 +125,16 @@ body {
   font-weight: 400;
   line-height: 1.5;
 }
-.ui-label { /* кнопки, бейджи, метки — label-sm (12px → 15px в .lecture) */
+.ui-label { /* кнопки, бейджи, метки — на шаг мельче body, sentence case */
   font-size: calc(var(--ui-size) * 0.75);
   font-weight: 600;
   line-height: 1.2;
 }
-.app-heading { /* заголовок сценария (1 на экран) — Space Grotesk */
+.app-heading { /* заголовок сценария (1 на экране) — Space Grotesk */
   font-family: var(--font-display);
   font-size: calc(var(--ui-size) + 4px);
   font-weight: 600;
   line-height: 1.2;
-}
-.micro-label { /* микрорубрика над блоком данных: uppercase + tracking-wider */
-  font-size: calc(var(--ui-size) * 0.75);
-  font-weight: 600;
-  line-height: 1.2;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--color-on-surface-variant);
 }
 
 sub { /* подстрочные индексы (план Б §5.5: ASCII z1 + <sub>-рендер) */
@@ -123,7 +143,7 @@ sub { /* подстрочные индексы (план Б §5.5: ASCII z1 + <s
 
 /* Иконки — Material Symbols Outlined (ligatures), только 400 */
 .icon {
-  font-family: "Material Symbols Outlined";
+  font-family: var(--font-symbols);
   font-weight: normal;
   font-style: normal;
   line-height: 1;
@@ -148,7 +168,8 @@ sub { /* подстрочные индексы (план Б §5.5: ASCII z1 + <s
   padding: 16px;
   border-radius: 2px;
   background: var(--color-surface-container-low);
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.35);
+  color: var(--color-on-surface);
+  box-shadow: var(--shadow-card);
 }
 .card-head {
   display: flex;
@@ -168,6 +189,9 @@ sub { /* подстрочные индексы (план Б §5.5: ASCII z1 + <s
 .screen { /* «экран» внутри карточки: SVG-канвас, код — container-lowest */
   border-radius: 2px;
   background: var(--color-surface-container-lowest);
+}
+.screen-scroll { /* экран со внутренним скроллом (таблица весов) */
+  padding: 8px 4px 8px 8px;
 }
 
 /* Фазный бейдж: тинт 14% по фазному токену + точка чистого цвета + on-surface.
@@ -189,42 +213,50 @@ sub { /* подстрочные индексы (план Б §5.5: ASCII z1 + <s
   flex: none;
 }
 
-/* Кнопки (DESIGN.md §5): primary = container-заливка, label-sm uppercase,
-   radius 4; ghost = container-high с hover-инверсией текста; disabled 60%. */
+/* Кнопки (redesign): quiet-рецепт по умолчанию — прозрачный фон +
+   hairline-бордер, hover container-high; primary («Шаг») — единственная
+   заливка (primary-container → primary на hover). Лейблы sentence case,
+   nowrap (49a). Активное состояние — нажатие темнее (26b). */
 .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   min-height: 40px;
-  padding: 8px 16px;
-  border: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--color-outline-variant);
   border-radius: 4px;
   cursor: pointer;
-  background: var(--color-surface-container-high);
-  color: var(--color-on-surface-variant);
-  text-transform: uppercase;
-  transition: background-color 150ms ease-out, color 150ms ease-out;
+  background: transparent;
+  color: var(--color-on-surface);
+  white-space: nowrap;
+  transition: background-color 150ms ease-out, color 150ms ease-out, border-color 150ms ease-out;
 }
-.btn-secondary { /* ghost */
+.btn:hover:not(:disabled) {
   background: var(--color-surface-container-high);
-  color: var(--color-on-surface-variant);
+  border-color: var(--color-outline);
 }
-.btn-secondary:hover:not(:disabled) {
+.btn:active:not(:disabled) {
   background: var(--color-surface-container-highest);
-  color: var(--color-on-surface); /* hover-инверсия текста */
 }
-.btn-primary { /* primary CTA «Шаг»: primary-container, hover → primary */
+.btn-primary { /* primary CTA «Шаг» / «Следующая эпоха» — одна заливка на экран */
   background: var(--color-primary-container);
+  border-color: transparent;
   color: var(--color-on-primary-container);
 }
 .btn-primary:hover:not(:disabled) {
   background: var(--color-primary);
-  color: var(--color-on-primary-container);
+}
+.btn-primary:active:not(:disabled) {
+  background: color-mix(in srgb, var(--color-primary-container) 85%, black);
 }
 .btn:disabled {
   opacity: 60%;
   cursor: not-allowed;
 }
-.btn[aria-pressed="true"] { /* активный toggle «Лекционный режим» */
-  background: var(--color-surface-container-highest);
-  color: var(--color-on-surface);
+.btn[aria-pressed="true"] { /* активный toggle «Лекционный режим»: мятный контур, не заливка */
+  background: transparent;
+  border-color: var(--color-primary);
+  color: var(--color-primary);
 }
 :is(button, a, [tabindex]):focus-visible {
   outline: 2px solid var(--color-primary);
@@ -244,6 +276,9 @@ sub { /* подстрочные индексы (план Б §5.5: ASCII z1 + <s
   text-decoration: underline dotted;
   text-underline-offset: 4px;
 }
+.value-btn:active {
+  color: var(--color-primary);
+}
 .value-changed { /* изменившееся: on-surface + tertiary-тинт 10% (D-25) */
   background: color-mix(in srgb, var(--color-tertiary) 10%, transparent);
   color: var(--color-on-surface);
@@ -252,18 +287,36 @@ sub { /* подстрочные индексы (план Б §5.5: ASCII z1 + <s
   color: var(--color-on-surface-variant);
 }
 
-/* Лента шагов (DESIGN.md §5/§9): пилюлы done/active(pulse)/future, 2→4→8
-   колонок по брейкпоинтам. Индикатор, не навигация: forward-only — клика
-   назад нет (AGENTS.md; конфликт с DESIGN.md §7 зафиксирован в D-25). */
+/* Рельс шагов (redesign; DESIGN.md §4/§9): xl — вертикальный «стек отладчика»
+   (1 колонка, полные строки: точка+формула+значение), ниже xl — лента
+   2→4 колонок. Пилюлы done/active(pulse)/future; индикатор, не навигация:
+   forward-only — клика назад нет (AGENTS.md; конфликт с DESIGN.md §7 в D-25).
+   Точка пилюли — фазный цвет (четвёртый канал фазы). Значения —
+   sampleOpValues прогона (заполняются и после fast-forward). */
+.step-rail {
+  padding: 8px;
+  gap: 4px;
+}
 .step-band {
   display: grid;
   gap: 4px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@media (min-width: 48rem) {
+  .step-band {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@media (min-width: 80rem) {
+  .step-band {
+    grid-template-columns: minmax(0, 1fr); /* xl: вертикальный рельс */
+  }
 }
 .step-pill {
   position: relative;
   display: flex;
   align-items: baseline;
-  gap: 6px;
+  gap: 4px;
   min-width: 0;
   padding: 4px 8px;
   border-radius: 4px;
@@ -277,7 +330,7 @@ sub { /* подстрочные индексы (план Б §5.5: ASCII z1 + <s
   border-radius: 9999px;
   flex: none;
 }
-.step-pill-label { /* моно-лейбл LHS формулы: z1, ŷ, ∂L/∂W1… */
+.step-pill-label { /* моно-лейбл LHS формулы: z1, ŷ, ∂L/∂W1… (waive 64) */
   font-family: var(--font-mono);
   font-size: 11px;
   line-height: 1.2;
@@ -286,8 +339,9 @@ sub { /* подстрочные индексы (план Б §5.5: ASCII z1 + <s
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.step-pill-value { /* mono-значение шага — табличные цифры */
+.step-pill-value { /* mono-значение шага — табличные цифры; пусто до вычисления */
   margin-left: auto;
+  min-width: 4ch;
   font-family: var(--font-mono);
   font-size: 12px;
   line-height: 1.2;
@@ -313,23 +367,46 @@ sub { /* подстрочные индексы (план Б §5.5: ASCII z1 + <s
   50% { opacity: 0.4; }
 }
 
-/* Статус-бар (DESIGN.md §4): фиксированный футер 48px,LOSS/LR/EPOCH + hotkeys;
+/* Статус-бар (DESIGN.md §4): фиксированный футер 48px (sticky bottom —
+   прибит к нижней кромке вьюпорта), LOSS/LR/позиция + hotkeys;
    backdrop-blur разрешён только хрому. */
 .status-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
   border-top: 1px solid var(--color-outline-variant);
   background: color-mix(in srgb, var(--color-background) 85%, transparent);
   backdrop-filter: blur(8px);
+}
+.meta-sep { /* волосяной разделитель мета-групп (вместо middle-dot строк) */
+  width: 1px;
+  height: 14px;
+  background: var(--color-outline-variant);
 }
 .kbd {
   font-family: var(--font-mono);
   font-size: 11px;
   line-height: 1.2;
-  padding: 1px 5px;
+  padding: 2px 4px;
   border: 1px solid var(--color-outline-variant);
   border-bottom-width: 2px;
   border-radius: 4px;
   background: var(--color-surface-container);
   color: var(--color-on-surface);
+}
+
+/* Зона результата (redesign): ŷ/y/L крупным моно — акцент на результате.
+   Лекционный режим масштабирует через --num-size; вес 400 (DESIGN.md §3). */
+.result-value {
+  font-family: var(--font-mono);
+  font-size: calc(var(--num-size) * 1.25);
+  font-weight: 400;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+.result-trend { /* тренд L против предыдущей лосс-точки — нейтральный глиф */
+  font-size: 0.7em;
+  color: var(--color-on-surface-variant);
 }
 
 /* SVG-диаграмма 2-3-1 (Interaction Contract). Толщина ребра 1.5–4px ∝ |w|
@@ -374,9 +451,31 @@ sub { /* подстрочные индексы (план Б §5.5: ASCII z1 + <s
 .diag-hit {
   cursor: pointer;
 }
+.diag-hit:focus,
 .diag-hit:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
+}
+line.diag-hit:focus,
+line.diag-hit:focus-visible {
+  /* фокус-поводок ребра: outline на SVG-line не красится, инлайн-стиль мишени
+     прозрачен — видимая мятная полоса поверх ребра (!important против инлайна,
+     26a, контраст ≥3:1) */
+  outline: none;
+  stroke: color-mix(in srgb, var(--color-primary) 40%, transparent) !important;
+}
+.diag-edge-g:focus-within {
+  /* сигнал фокуса на группе (в цепочке computed-стилей фокус-детектора);
+     видимый индикатор — мятный кейсинг активного ребра ниже */
+  color: var(--color-primary);
+}
+.diag-edge-g:focus-within .diag-edge-casing {
+  opacity: 1;
+  stroke: var(--color-primary);
+}
+circle.diag-hit:focus,
+circle.diag-hit:focus-visible {
+  fill: color-mix(in srgb, var(--color-primary) 22%, transparent) !important;
 }
 
 /*
@@ -469,6 +568,7 @@ sub { /* подстрочные индексы (план Б §5.5: ASCII z1 + <s
   border-radius: 2px;
   border: 1px dashed var(--color-outline);
   background: var(--color-surface-container-lowest);
+  color: var(--color-on-surface);
 }
 
 /* Тултип tier 1 (R5, NumberHint): контент — .num/.ui-text, лекционный режим
@@ -483,7 +583,7 @@ sub { /* подстрочные индексы (план Б §5.5: ASCII z1 + <s
   border-radius: 4px;
   border: 1px solid var(--color-outline-variant);
   background: var(--color-surface-container-high);
-  box-shadow: 0 4px 12px rgb(0 0 0 / 0.5);
+  box-shadow: var(--shadow-panel);
   color: var(--color-on-surface);
   overflow-wrap: break-word;
 }

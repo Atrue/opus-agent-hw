@@ -7,7 +7,8 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   test: {
-    // e2e/smoke.spec.ts — Playwright, не vitest (5 проверок запускаются pnpm e2e)
-    exclude: ['e2e/**', 'node_modules/**', 'dist/**'],
+    // e2e/smoke.spec.ts — Playwright, не vitest (5 проверок запускаются pnpm e2e);
+    // .claude/** — инструменты воркспейса (скиллы), не код проекта
+    exclude: ['e2e/**', 'node_modules/**', 'dist/**', '.claude/**'],
   },
 })

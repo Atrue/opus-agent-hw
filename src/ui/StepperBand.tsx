@@ -4,10 +4,11 @@ import { formatKey } from '../format/numbers'
 import SubscriptText from './SubscriptText'
 
 /**
- * Лента шагов (DESIGN.md §4/§9) — навигационный хребет: 13 пилюль операций
+ * Рельс шагов (DESIGN.md §4/§9) — навигационный хребет: 13 пилюль операций
  * текущего сэмпла с mono-значениями. Состояния: done (opacity-80, значение
  * заполнено) / active (container-high + ring-1 primary + оверлей primary/10
- * pulse 2s) / future (opacity-60). 2→4→8 колонок по брейкпоинтам.
+ * pulse 2s) / future (opacity-60). Раскладку держит .step-band в index.css:
+ * 2 колонки → 4 (md) → 1 вертикальный рельс (xl).
  *
  * Индикатор, НЕ навигация: прогон forward-only (AGENTS.md/D-21) — клика назад
  * нет; конфликт с DESIGN.md §7 («каждый шаг кликабелен для возврата»)
@@ -39,7 +40,7 @@ export default function StepperBand() {
       data-testid="step-band"
       role="list"
       aria-label={`Лента шагов сэмпла: ${String(stepInSample)} из 13`}
-      className="step-band grid-cols-2 md:grid-cols-4 xl:grid-cols-8"
+      className="step-band"
     >
       {XOR_SCENARIO.opMeta.map((meta, i) => {
         const step = i + 1
@@ -53,7 +54,7 @@ export default function StepperBand() {
             <span className="step-pill-label">
               <SubscriptText text={pillLabel(meta.formula)} />
             </span>
-            <span className="step-pill-value">{done && value !== undefined ? formatKey(value) : '·'}</span>
+            <span className="step-pill-value">{done && value !== undefined ? formatKey(value) : ''}</span>
           </div>
         )
       })}

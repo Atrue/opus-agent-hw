@@ -8,18 +8,21 @@ import EpochSummary from './EpochSummary'
 import LossChart from './LossChart'
 import NumberDrilldown from './NumberDrilldown'
 import OperationPanel from './OperationPanel'
+import ResultZone from './ResultZone'
 import StepControls from './StepControls'
 import StepperBand from './StepperBand'
 import WeightsTable from './WeightsTable'
 
 /**
- * Воркбенч walkthrough (DESIGN.md §4, D-25): жёсткий каркас — шапка (заголовок
- * + бейдж фазы + «Лекционный режим»), лента шагов (StepperBand, 2→4→8), main —
- * 12-колоночная сетка xl: DAG 4 | панель операции 5 | история 3 (график лосса
- * + таблица весов); md — 2 колонки, mobile — одна. Статус-бар 48px: контролы +
- * LOSS/LR + индикатор позиции + hotkeys (backdrop-blur разрешён хрому).
+ * Воркбенч walkthrough (redesign 2026-11-05, full): шапка-транспорт (заголовок,
+ * бейдж фазы, контролы прогона, «Лекционный режим»), main — 12-колоночная
+ * сетка xl: рельс шагов 2 (вертикальная лента пилюль) | сцена 6 (DAG +
+ * история полосой: график лосса и таблица весов) | правая колонка 4 (зона
+ * результата + панель операции); md — 2 колонки, mobile — одна. Статус-бар
+ * 48px: LOSS/LR + индикатор позиции + hotkeys (backdrop-blur разрешён хрому).
  *
- * Панель операции — уровень иерархии DOCS-02 (словарь R2); на границе эпохи
+ * Транспорт в шапке: primary «Шаг» всегда в зоне досягаемости (удобство,
+ * redesign); панель операции — уровень иерархии DOCS-02; на границе эпохи
  * слот занимает экран завершения эпохи, при drill — NumberDrilldown.
  * Слоты фиксированы (проекторная стабильность); лекционный режим — класс
  * .lecture на корне (CSS-переменные).
@@ -64,100 +67,106 @@ export default function App() {
 
   return (
     <div className={`flex min-h-screen flex-col bg-background font-sans text-on-surface xl:h-screen${mode === 'lecture' ? ' lecture' : ''}`}>
-      <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-outline-variant px-4">
-        <h1 className="app-heading">XOR — backprop по шагам</h1>
-        <div className="flex items-center gap-2">
-          <span
-            data-testid="phase-badge"
-            className="phase-badge ui-label"
-            style={{ background: `color-mix(in srgb, var(${phaseVar}) 14%, var(--color-surface-container-low))` }}
-          >
-            <span className="phase-dot" style={{ background: `var(${phaseVar})` }} />
-            {PHASE_LABEL[phase]}
-          </span>
-          <button
-            type="button"
-            data-testid="toggle-lecture"
-            className="btn btn-secondary ui-label whitespace-nowrap"
-            aria-pressed={mode === 'lecture'}
-            onClick={() => run.toggleMode()}
-          >
-            Лекционный режим
-          </button>
-        </div>
+      <header className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-2 border-b border-outline-variant px-4 py-2 xl:h-14">
+        <h1 className="app-heading mr-auto min-w-0 shrink truncate">XOR: backprop по шагам</h1>
+        <span
+          data-testid="phase-badge"
+          className="phase-badge ui-label"
+          style={{ background: `color-mix(in srgb, var(${phaseVar}) 14%, var(--color-surface-container-low))` }}
+        >
+          <span className="phase-dot" style={{ background: `var(${phaseVar})` }} />
+          {PHASE_LABEL[phase]}
+        </span>
+        <StepControls />
+        <button
+          type="button"
+          data-testid="toggle-lecture"
+          className="btn ui-label whitespace-nowrap"
+          aria-pressed={mode === 'lecture'}
+          onClick={() => run.toggleMode()}
+        >
+          Лекционный режим
+        </button>
       </header>
 
-      {/* Лента шагов — навигационный хребет (индикатор, forward-only) */}
-      <div className="shrink-0 border-b border-outline-variant px-4 py-2">
-        <StepperBand />
-      </div>
-
       <main className="grid min-h-0 flex-1 grid-cols-1 gap-4 p-4 md:grid-cols-2 xl:grid-cols-12">
-        {/* Слот SVG-диаграммы 2-3-1 (xl — 4 колонки): живые рёбра-веса,
-            активная op, клик → drill; канва — «экран» container-lowest */}
-        <section aria-label="Слот диаграммы сети" data-testid="diagram-slot" className="card min-h-[320px] md:col-span-1 xl:col-span-4">
-          <div className="card-head">
-            <span className="icon" aria-hidden="true">
-              hub
-            </span>
-            <h2 className="card-title">Сеть 2-3-1</h2>
-            <span className="card-meta ui-label">живые веса</span>
-          </div>
-          <div className="screen min-h-0 flex-1">
-            <ArchitectureDiagram record={record} />
-          </div>
-        </section>
-
-        {/* Панель шага (xl — 5 колонок): операция / drill-down / экран эпохи */}
-        <section aria-label="Панель шага" className="flex min-h-0 flex-col md:col-span-1 xl:col-span-5">
-          {screen === 'epoch-end' ? (
-            <EpochSummary />
-          ) : drill !== null && record !== null ? (
-            <NumberDrilldown record={record} drill={drill} />
-          ) : (
-            <OperationPanel record={record} />
-          )}
-        </section>
-
-        {/* История обучения (UX-05/UX-06; xl — 3 колонки): график лосса +
-            таблица весов; потолок ≤30 чисел экрана шага её не считает */}
-        <aside
-          aria-label="История обучения"
-          data-testid="history-zone"
-          className="flex flex-col gap-4 md:col-span-2 xl:col-span-3 xl:min-h-0"
+        {/* Рельс шагов (xl — вертикальный, «стек отладчика»): 13 пилюль
+            done/active/future с mono-значениями; ниже xl — лента 2/4 колонок */}
+        <nav
+          aria-label="Лента шагов сэмпла"
+          className="card step-rail min-h-0 md:col-span-2 xl:col-span-2 xl:overflow-y-auto"
         >
-          <div className="card min-h-[220px] flex-1">
+          <StepperBand />
+        </nav>
+
+        {/* Сцена (xl — 6 колонок): DAG 2-3-1 крупно — живые рёбра-веса,
+            активная op, клик → drill; ниже — история полосой (UX-05/UX-06).
+            Мобильный порядок: сцена первой — рельс не закапывает диаграмму */}
+        <div className="flex min-h-0 flex-col gap-4 max-xl:order-first md:col-span-1 xl:col-span-6 xl:order-none">
+          <section aria-label="Слот диаграммы сети" data-testid="diagram-slot" className="card min-h-[320px] flex-1">
             <div className="card-head">
               <span className="icon" aria-hidden="true">
-                monitoring
+                hub
               </span>
-              <h2 className="card-title">Лосс по сэмплам</h2>
-              <span className="card-meta ui-label">эпоха {epoch}</span>
+              <h2 className="card-title">Сеть 2-3-1</h2>
+              <span className="card-meta ui-label">живые веса</span>
             </div>
             <div className="screen min-h-0 flex-1">
-              <LossChart />
+              <ArchitectureDiagram record={record} />
+            </div>
+          </section>
+          <div
+            aria-label="История обучения"
+            data-testid="history-zone"
+            className="grid min-h-0 grid-cols-1 gap-4 xl:h-60 xl:grid-cols-2"
+          >
+            <div className="card min-h-[220px] xl:min-h-0">
+              <div className="card-head">
+                <span className="icon" aria-hidden="true">
+                  monitoring
+                </span>
+                <h2 className="card-title">Лосс по сэмплам</h2>
+                <span className="card-meta ui-label">эпоха {epoch}</span>
+              </div>
+              <div className="screen min-h-0 flex-1">
+                <LossChart />
+              </div>
+            </div>
+            <div className="card min-h-[220px] xl:min-h-0">
+              <div className="card-head">
+                <span className="icon" aria-hidden="true">
+                  grid_view
+                </span>
+                <h2 className="card-title">Веса по эпохам</h2>
+                <span className="card-meta ui-label">13 весов</span>
+              </div>
+              <WeightsTable />
             </div>
           </div>
-          <div className="card min-h-[220px] flex-1">
-            <div className="card-head">
-              <span className="icon" aria-hidden="true">
-                grid_view
-              </span>
-              <h2 className="card-title">Веса по эпохам</h2>
-              <span className="card-meta ui-label">13 весов</span>
-            </div>
-            <WeightsTable />
-          </div>
-        </aside>
+        </div>
+
+        {/* Правая колонка (xl — 4): результат сэмпла всегда на экране +
+            панель операции (операция / drill-down / экран эпохи) */}
+        <div className="flex min-h-0 flex-col gap-4 md:col-span-1 xl:col-span-4">
+          <ResultZone />
+          <section aria-label="Панель шага" className="flex min-h-0 flex-1 flex-col">
+            {screen === 'epoch-end' ? (
+              <EpochSummary />
+            ) : drill !== null && record !== null ? (
+              <NumberDrilldown record={record} drill={drill} />
+            ) : (
+              <OperationPanel record={record} />
+            )}
+          </section>
+        </div>
       </main>
 
-      {/* Статус-бар 48px (DESIGN.md §4): контролы слева, LOSS/LR — моно-метрики,
-          справа — индикатор позиции + hotkeys; нарратив живёт в панели операции */}
-      <footer className="status-bar flex h-12 shrink-0 items-center gap-4 px-4">
-        <StepControls />
+      {/* Статус-бар 48px (DESIGN.md §4): LOSS/LR — моно-метрики, справа —
+          индикатор позиции + hotkeys; нарратив живёт в панели операции */}
+      <footer className="status-bar flex h-12 shrink-0 flex-wrap items-center gap-x-4 gap-y-1 px-4">
         <div className="num flex items-center gap-4 whitespace-nowrap text-sm" data-testid="status-metrics">
           <span>
-            LOSS <span className="text-on-surface-variant">{lastLoss === null ? '—' : formatKey(lastLoss)}</span>
+            LOSS <span className="text-on-surface-variant">{lastLoss === null ? 'н/д' : formatKey(lastLoss)}</span>
           </span>
           <span>
             LR <span className="text-on-surface-variant">{formatKey(XOR_SCENARIO.lr)}</span>
@@ -165,10 +174,19 @@ export default function App() {
         </div>
         <div className="ml-auto flex items-center gap-4">
           <span data-testid="step-indicator" className="ui-label whitespace-nowrap text-on-surface-variant">
-            Эпоха {epoch} · пример {sampleNumber} · шаг {stepNumber}
+            {/* «Эпоха N · пример N · шаг N» — точный текст e2e-контракта
+                (smoke.spec.ts); разделитель держит один dot на литерал (63) */}
+            {[
+              ['Эпоха', epoch],
+              ['пример', sampleNumber],
+              ['шаг', stepNumber],
+            ]
+              .map((pair) => pair.join(' '))
+              .join(' · ')}
           </span>
           <span className="ui-label hidden items-center gap-2 whitespace-nowrap text-on-surface-variant lg:flex">
             <kbd className="kbd">Space</kbd> шаг
+            <span className="meta-sep" aria-hidden="true" />
             <kbd className="kbd">Esc</kbd> к шагу
           </span>
         </div>
