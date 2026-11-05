@@ -30,8 +30,9 @@
 `src/ui/App.tsx`, `src/ui/StepperBand.tsx` (новый), `OperationPanel`,
 `NumberDrilldown`, `EpochSummary`, `LossChart`, `WeightsTable`, `NumberHint`,
 `NarrativeLine`, `ArchitectureDiagram`; доки: DESIGN.md §2.1–2.2/§3/§7,
-DECISIONS.md D-25, 01-DESIGN-TOKENS.md (superseded), artifacts/ (6 скринов
-«было/стало»), STATE.md.
+DECISIONS.md D-25, 01-DESIGN-TOKENS.md (superseded), artifacts/ (скрин
+редизайна `20261105-003-redesign-dark-ui.png`; пары «до/после» остальных
+экранов — в git-истории коммита d4a39a8), STATE.md.
 
 ## Верификация
 
