@@ -1,6 +1,7 @@
 # Requirements: Backprop Trainer — Интерактивный тренажёр обучения нейросетей
 
 **Defined:** 2026-11-02
+**Updated:** 2026-11-05 — фаза 01.2 (D-26): UX-06 переписан — «Таблица весов по эпохам» → «История звена цепи» по сэмплам (раскрывающийся блок панели звена); Phase mapping UX-06 → Phase 01.2
 **Updated:** 2026-11-02 — ревизия после архитектурного ревью фазы 01 (`.planning/reviews/01/DECISIONS.md`): UX-01 (шаг назад) удалено; DOCS-01 — forward-only + эпохи + fast-forward; DOCS-04/05 — reload = честный сброс; добавлены UX-05/UX-06 (история обучения); NFR-02 — юнит-константы.
 **Core Value:** Пользователь сам пошагово исполняет forward/backward-pass готового сценария и видит каждый градиент числом — в браузере, без регистрации, по одной ссылке.
 
@@ -34,7 +35,7 @@ Requirements for initial release (R1). Each maps to roadmap phases.
 ### Training History
 
 - [x] **UX-05**: График лосса: по шагам внутри текущей эпохи и сводка по завершённым эпохам — прогресс обучения виден с первого шага
-- [x] **UX-06**: Таблица весов: строки — веса (W₁, W₂, b₁, b₂), столбцы — эпохи; обновляется на завершении эпохи
+- [x] **UX-06** (переписан D-26, Phase 01.2): История звена цепи: раскрывающийся блок в панели звена; значения по сэмплам (стартовые константы → после каждого обновления весов), разделители эпох/прогонов; выбор звена — клик по символу формулы или элементу диаграммы; reset сохраняет историю сессии до reload (пункт 6 ТЗ; Given/When/Then — корневой `REQUIREMENTS.md`)
 
 ### Understanding Measurement
 
@@ -103,15 +104,15 @@ Which phases cover which requirements. Updated during roadmap creation.
 | UX-03 | Phase 3 | Pending |
 | UX-04 | Phase 4 | Pending |
 | UX-05 | Phase 1.1 | Complete |
-| UX-06 | Phase 1.1 | Complete |
+| UX-06 | Phase 01.2 | Complete (переписан D-26: история звена вместо таблицы весов) |
 
 **Coverage:**
 - v1 requirements: 11 total
 - Mapped to phases: 11
 - Unmapped: 0 ✓
 
-> UX-01 (шаг назад) удалён ревью R3 (forward-only). UX-05/UX-06 отражены в Phase 1.1 — под-фаза вставляется командой `/gsd-phase --insert` (архитектурный рефакторинг R1–R5).
+> UX-01 (шаг назад) удалён ревью R3 (forward-only). UX-05/UX-06 отражены в Phase 1.1 — под-фаза вставляется командой `/gsd-phase --insert` (архитектурный рефакторинг R1–R5). UX-06 переписан решением D-26 (2026-11-05) и закрыт заново фазой 01.2: таблица весов по эпохам → история звена цепи по сэмплам; канонические acceptance criteria — корневой `REQUIREMENTS.md` (ревизия v1.2).
 
 ---
 *Requirements defined: 2026-11-02*
-*Last updated: 2026-11-02 after roadmap creation*
+*Last updated: 2026-11-05 — UX-06 переписан (D-26, Phase 01.2)*
