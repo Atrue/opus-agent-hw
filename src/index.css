@@ -1039,3 +1039,33 @@ circle.diag-hit:focus-visible {
   min-width: 34px;
   padding: 2px 8px;
 }
+.samples-table-wrap { /* таблица-датасет «Примеры» (01.2-07): колонки = переменные */
+  overflow-x: auto;
+  min-height: 0;
+}
+.samples-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+.samples-table th,
+.samples-table td {
+  padding: 6px 10px;
+  text-align: right;
+  border-bottom: 1px solid var(--color-surface-container);
+}
+.samples-table th:first-child,
+.samples-table td:first-child,
+.samples-table th:last-child,
+.samples-table td:last-child {
+  text-align: left;
+}
+.samples-table thead th {
+  border-bottom: 1px solid var(--color-outline-variant);
+}
+.sample-row-current td {
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+}
+.sample-row-current td:first-child {
+  border-left: 2px solid var(--color-primary);
+}

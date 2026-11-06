@@ -1,20 +1,19 @@
 import { useRunSlice } from '../run/runState'
 import { XOR_SCENARIO } from '../run/scenario'
 import { formatKey } from '../format/numbers'
+import SubscriptText from './SubscriptText'
 
 /**
- * «Примеры» (01.2-05, пункт 3 UAT; эволюция SamplesPanel 01.2-02): чистая
- * таблица обучающей выборки — 4 строки вход x → метка y; у пройденных в
- * текущей эпохе — выход ŷ и вердикт ✓/✗ порогом 0.5 (та же логика, что у
- * движка); текущий пример подсвечен. Карточка живёт в полосе истории рядом
- * с графиком лосса («на чём учится сеть»); крупный блок текущего примера
- * («что с ним происходит») переехал в ResultPanel. Строки — индикаторы,
- * НЕ навигация: прогон forward-only, клик по непройденному примеру ничего
- * не делает.
+ * «Примеры» (01.2-05; таблица-датасет — 01.2-07, пункт 8 цикла 2): обучающая
+ * выборка как таблица, где КОЛОНКИ = названия переменных (x₁ | x₂ | y | ŷ | ✓),
+ * строки = примеры; у пройденных в текущей эпохе — выход ŷ и вердикт порогом
+ * 0.5 (та же логика, что у движка); текущий пример подсвечен. Карточка живёт
+ * в полосе истории рядом с графиком лосса; фокус-блок текущего примера —
+ * ResultPanel. Строки — индикаторы, НЕ навигация (forward-only).
  *
  * testid samples-panel/sample-row и классы вердиктов сохранены — контракт
- * e2e-теста 9 (карточка где бы ни жила). Данные — только опубликованные
- * срезы прогона (sampleHistory текущего runId+epoch); новых вычислений нет.
+ * e2e-теста 9. Данные — только опубликованные срезы прогона (sampleHistory
+ * текущего runId+epoch); новых вычислений нет.
  */
 export default function ExamplesPanel() {
   const sampleIndex = useRunSlice((r) => r.sampleIndex)
@@ -38,36 +37,58 @@ export default function ExamplesPanel() {
         <h2 className="card-title">Примеры</h2>
         <span className="card-meta ui-label">выборка XOR</span>
       </div>
-      <div className="samples-list" role="list" aria-label="Примеры обучающей выборки">
-        {XOR_SCENARIO.samples.map((sample, i) => {
-          const rec = done.get(i)
-          const current = i === sampleIndex
-          return (
-            <div
-              key={i}
-              role="listitem"
-              aria-current={current ? 'true' : undefined}
-              data-testid="sample-row"
-              data-index={i}
-              className={`sample-row num${current ? ' sample-row-current' : ''}`}
-            >
-              <span className="sample-io">
-                {sample.x[0]}
-                {sample.x[1]} → {sample.y}
-              </span>
-              <span className="sample-out">
-                {rec ? (
-                  <>
-                    <span className="ui-label text-on-surface-variant">ŷ</span> {formatKey(rec.yhat)}{' '}
-                    <span className={rec.correct ? 'sample-verdict-ok' : 'sample-verdict-miss'} aria-label={rec.correct ? 'верно' : 'не сошлось'}>
-                      {rec.correct ? '✓' : '✗'}
-                    </span>
-                  </>
-                ) : null}
-              </span>
-            </div>
-          )
-        })}
+      <div className="samples-table-wrap">
+        <table className="samples-table num" aria-label="Примеры обучающей выборки: переменные по колонкам">
+          <thead>
+            <tr>
+              <th scope="col" className="ui-label text-on-surface-variant">
+                <SubscriptText text="x1" />
+              </th>
+              <th scope="col" className="ui-label text-on-surface-variant">
+                <SubscriptText text="x2" />
+              </th>
+              <th scope="col" className="ui-label text-on-surface-variant">
+                y
+              </th>
+              <th scope="col" className="ui-label text-on-surface-variant">
+                ŷ
+              </th>
+              <th scope="col" className="ui-label text-on-surface-variant" aria-label="вердикт">
+                ✓
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {XOR_SCENARIO.samples.map((sample, i) => {
+              const rec = done.get(i)
+              const current = i === sampleIndex
+              return (
+                <tr
+                  key={i}
+                  aria-current={current ? 'true' : undefined}
+                  data-testid="sample-row"
+                  data-index={i}
+                  className={`sample-row${current ? ' sample-row-current' : ''}`}
+                >
+                  <td>{sample.x[0]}</td>
+                  <td>{sample.x[1]}</td>
+                  <td>{sample.y}</td>
+                  <td>{rec ? formatKey(rec.yhat) : '·'}</td>
+                  <td>
+                    {rec ? (
+                      <span
+                        className={rec.correct ? 'sample-verdict-ok' : 'sample-verdict-miss'}
+                        aria-label={rec.correct ? 'верно' : 'не сошлось'}
+                      >
+                        {rec.correct ? '✓' : '✗'}
+                      </span>
+                    ) : null}
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
       </div>
     </section>
   )

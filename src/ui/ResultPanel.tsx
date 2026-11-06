@@ -28,7 +28,6 @@ export default function ResultPanel() {
   const correct = decided ? (yhat >= 0.5) === (sample.y >= 0.5) : null
   const prev = lossPoints.length >= 2 ? lossPoints[lossPoints.length - 2]! : null
   const trendDown = decided && prev !== null && loss! < prev
-  const lastLoss = lossPoints.length > 0 ? lossPoints[lossPoints.length - 1]! : null
 
   const verdictClass = correct === null ? 'text-on-surface-variant' : correct ? 'text-primary' : 'text-error'
   const verdictText = correct === null ? 'ŷ и L появятся по ходу прохода' : correct ? '✓ Верно' : 'Не сошлось'
@@ -74,13 +73,10 @@ export default function ResultPanel() {
       <p data-testid="result-verdict" className={`ui-label min-h-[1lh] ${verdictClass}`}>
         {verdictText}
       </p>
-      {/* моно-метрики из статус-бара (пункт 8 UAT): LOSS — последний
-          вычисленный лосс сессии (тот же источник, что был в футере),
-          LR — η из сценария */}
+      {/* моно-метрика из статус-бара (пункт 8 UAT): LR = η сценария.
+          LOSS-дубль удалён (01.2-07, пункт 9 цикла 2): единственный
+          лосс-показатель карточки — L текущего примера выше. */}
       <div className="num flex flex-wrap items-baseline gap-x-6 gap-y-1 text-sm">
-        <span>
-          LOSS <span className="text-on-surface-variant">{lastLoss === null ? 'н/д' : formatKey(lastLoss)}</span>
-        </span>
         <span>
           LR <span className="text-on-surface-variant">{formatKey(XOR_SCENARIO.lr)}</span>
         </span>
