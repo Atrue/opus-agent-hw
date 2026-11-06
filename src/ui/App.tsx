@@ -1,16 +1,16 @@
 import { run, useRunSlice } from '../run/runState'
 import { XOR_SCENARIO } from '../run/scenario'
 import { parseHash, toHash } from '../run/url'
-import { formatKey } from '../format/numbers'
 import type { Phase } from '../tensor'
 import ArchitectureDiagram from './ArchitectureDiagram'
 import EpochSummary from './EpochSummary'
+import ExamplesPanel from './ExamplesPanel'
 import FormulaStrip from './FormulaStrip'
 import LinkPanel from './LinkPanel'
 import LossChart from './LossChart'
 import NumberDrilldown from './NumberDrilldown'
 import OperationPanel from './OperationPanel'
-import SamplesPanel from './SamplesPanel'
+import ResultPanel from './ResultPanel'
 import StepControls from './StepControls'
 import StepperBand from './StepperBand'
 
@@ -18,9 +18,10 @@ import StepperBand from './StepperBand'
  * Воркбенч walkthrough (01.2-01 «формула-хребет»): шапка-транспорт →
  * формула-строка на всю ширину (+панель звена при выборе) → горизонтальная
  * лента шагов (одна строка с автоскроллом к активной пилюле) → main — сетка
- * xl: сцена 8 (DAG + история полосой: график лосса и таблица весов) |
- * правая колонка 4 (зона результата + панель операции); md — 2 колонки,
- * mobile — одна. Статус-бар 48px: LOSS/LR + индикатор позиции + hotkeys.
+ * xl: сцена 8 (DAG + история полосой: график лосса | карточка «Примеры») |
+ * правая колонка 4 («Результат» текущего примера + панель операции);
+ * md — 2 колонки, mobile — одна. Статус-бар 48px: слева индикатор позиции,
+ * справа hotkeys (LOSS/LR ушли в «Результат», пункт 8 UAT).
  *
  * Транспорт в шапке: primary «Шаг» всегда в зоне досягаемости (удобство,
  * redesign); панель операции — уровень иерархии DOCS-02; на границе эпохи
@@ -61,10 +62,8 @@ export default function App() {
   const screen = useRunSlice((r) => r.screen)
   const record = useRunSlice((r) => r.currentRecord)
   const drill = useRunSlice((r) => r.drill)
-  const lossPoints = useRunSlice((r) => r.epochLossPoints)
   const phase = record?.phase ?? XOR_SCENARIO.opMeta[0]!.phase
   const phaseVar = PHASE_COLOR_VAR[phase]
-  const lastLoss = lossPoints.length > 0 ? lossPoints[lossPoints.length - 1] : null
 
   return (
     <div className={`flex min-h-screen flex-col bg-background font-sans text-on-surface xl:h-screen${mode === 'lecture' ? ' lecture' : ''}`}>
@@ -119,13 +118,14 @@ export default function App() {
               <ArchitectureDiagram record={record} />
             </div>
           </section>
-          {/* История обучения (01.2-02): график лосса на всю ширину полосы —
-              таблица весов уступила место истории звена в панели (LinkHistory);
-              место под будущие дашки. Ось — сэмплы сессии, прогоны разделены */}
+          {/* История обучения (01.2-02; 01.2-05, пункт 3 UAT): полоса из двух
+              карточек — график лосса на оси сэмплов сессии | «Примеры»
+              (вся выборка XOR с вердиктами); таблица весов уступила место
+              истории звена в панели (LinkHistory); прогоны разделены */}
           <div
             aria-label="История обучения"
             data-testid="history-zone"
-            className="grid min-h-0 grid-cols-1 gap-4 xl:h-60"
+            className="grid min-h-0 grid-cols-1 gap-4 xl:h-60 xl:grid-cols-2"
           >
             <div className="card min-h-[220px] xl:min-h-0">
               <div className="card-head">
@@ -139,14 +139,15 @@ export default function App() {
                 <LossChart />
               </div>
             </div>
+            <ExamplesPanel />
           </div>
         </div>
 
-        {/* Правая колонка (xl — 4): «Примеры и результат» — вся выборка с
-            вердиктами + крупный блок текущего примера; панель операции
-            (операция / drill-down / экран эпохи) */}
+        {/* Правая колонка (xl — 4): «Результат» — текущий пример со всеми
+            входами, ŷ/L/тренд/вердикт + LOSS/LR (01.2-05, пункты 3/8 UAT) —
+            над панелью операции (операция / drill-down / экран эпохи) */}
         <div className="flex min-h-0 flex-col gap-4 md:col-span-1 xl:col-span-4">
-          <SamplesPanel />
+          <ResultPanel />
           <section aria-label="Панель шага" className="flex min-h-0 flex-1 flex-col">
             {screen === 'epoch-end' ? (
               <EpochSummary />
@@ -159,35 +160,26 @@ export default function App() {
         </div>
       </main>
 
-      {/* Статус-бар 48px (DESIGN.md §4): LOSS/LR — моно-метрики, справа —
-          индикатор позиции + hotkeys; нарратив живёт в панели операции */}
+      {/* Статус-бар 48px (DESIGN.md §4; 01.2-05, пункт 8 UAT): слева —
+          индикатор позиции (первый элемент), справа — hotkeys; LOSS/LR
+          переехали в карточку «Результат»; нарратив живёт в панели операции */}
       <footer className="status-bar flex h-12 shrink-0 flex-wrap items-center gap-x-4 gap-y-1 px-4">
-        <div className="num flex items-center gap-4 whitespace-nowrap text-sm" data-testid="status-metrics">
-          <span>
-            LOSS <span className="text-on-surface-variant">{lastLoss === null ? 'н/д' : formatKey(lastLoss)}</span>
-          </span>
-          <span>
-            LR <span className="text-on-surface-variant">{formatKey(XOR_SCENARIO.lr)}</span>
-          </span>
-        </div>
-        <div className="ml-auto flex items-center gap-4">
-          <span data-testid="step-indicator" className="ui-label whitespace-nowrap text-on-surface-variant">
-            {/* «Эпоха N · пример N · шаг N» — точный текст e2e-контракта
-                (smoke.spec.ts); разделитель держит один dot на литерал (63) */}
-            {[
-              ['Эпоха', epoch],
-              ['пример', sampleNumber],
-              ['шаг', stepNumber],
-            ]
-              .map((pair) => pair.join(' '))
-              .join(' · ')}
-          </span>
-          <span className="ui-label hidden items-center gap-2 whitespace-nowrap text-on-surface-variant lg:flex">
-            <kbd className="kbd">Space</kbd> шаг
-            <span className="meta-sep" aria-hidden="true" />
-            <kbd className="kbd">Esc</kbd> к шагу
-          </span>
-        </div>
+        <span data-testid="step-indicator" className="ui-label whitespace-nowrap text-on-surface-variant">
+          {/* «Эпоха N · пример N · шаг N» — точный текст e2e-контракта
+              (smoke.spec.ts); разделитель держит один dot на литерал (63) */}
+          {[
+            ['Эпоха', epoch],
+            ['пример', sampleNumber],
+            ['шаг', stepNumber],
+          ]
+            .map((pair) => pair.join(' '))
+            .join(' · ')}
+        </span>
+        <span className="ml-auto hidden items-center gap-2 whitespace-nowrap text-on-surface-variant ui-label lg:flex">
+          <kbd className="kbd">Space</kbd> шаг
+          <span className="meta-sep" aria-hidden="true" />
+          <kbd className="kbd">Esc</kbd> к шагу
+        </span>
       </footer>
     </div>
   )
