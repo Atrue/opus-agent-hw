@@ -1,15 +1,16 @@
 /**
- * Модель звеньев «формулы-хребта» (план 01.2-01; цепь-станций — 01.2-04):
- * 7 звеньев цепи x → z1 → a1 → z2 → ŷ(yhat) → L → W; каждый символ формулы
- * сети отображается ровно в одно звено; заголовки звеньев — символ формулы
- * первым (Gap 6 UAT); геометрия звена = станция цепи (узлы/рёбра/плашки/
- * биасы) и сверяется с контрактом CHAIN_GEOMETRY_IDS. Формулы звеньев — из
- * opMeta сценария (z1 = matvec+add → «z1 = W1·x + b1»). RU-строки — здесь же.
+ * Модель звеньев «формулы-хребта» (план 01.2-01; цепь-станций — 01.2-04;
+ * граф вычислений — 01.2-06): 7 звеньев цепи x → z1 → a1 → z2 → ŷ(yhat) → L →
+ * W; каждый символ формулы сети отображается ровно в одно звено; заголовки
+ * звеньев — символ формулы первым (Gap 6 UAT). Геометрия звена = ГРУППА
+ * звеньев графа вычислений (узлы-значения/операции + рёбра между ними,
+ * compGraph.SEGMENT_GROUPS): выбор символа формулы подсвечивает группу графа.
+ * Формулы звеньев — из opMeta сценария (z1 = matvec+add → «z1 = W1·x + b1»).
  */
 
 import { describe, expect, it } from 'vitest'
 import { CHAIN_GEOMETRY_IDS, SEGMENTS, geometryOf, symbolToSegment, type SegmentGeometry } from '../../src/ui/chainLinks'
-import { GEOMETRY_IDS } from '../../src/ui/ArchitectureDiagram'
+import { GRAPH_EDGES, GRAPH_NODES, SEGMENT_GROUPS } from '../../src/ui/compGraph'
 import { XOR_SCENARIO } from '../../src/run/scenario'
 
 /** Полный словарь символов формулы-строки (must_haves плана). */
@@ -27,7 +28,7 @@ const LEADING_SYMBOL: Record<string, string> = {
 }
 
 function geometrySize(g: SegmentGeometry): number {
-  return g.nodes.size + g.edges.size + g.plates.size + g.biases.size
+  return g.nodes.size + g.edges.size
 }
 
 describe('chainLinks: звенья формулы-хребта', () => {
@@ -55,45 +56,13 @@ describe('chainLinks: звенья формулы-хребта', () => {
 
   it('формулы звеньев собираются из opMeta: z1/z2 — склейка matvec+add, остальные — формулы оп', () => {
     const byId = new Map(SEGMENTS.map((s) => [s.id, s]))
-    // звено = объединение соседних оп: «z1 = W1·x» + «z1 = z1 + b1»
     expect(byId.get('z1')!.formula).toBe('z1 = W1·x + b1')
     expect(byId.get('z2')!.formula).toBe('z2 = W2·a1 + b2')
-    // символы z1/z2 доступны через звенья z1/z2 — панель показывает их формулы
     expect(byId.get('a1')!.formula).toBe(XOR_SCENARIO.opMeta[2]!.formula) // a1 = tanh(z1)
     expect(byId.get('yhat')!.formula).toBe(XOR_SCENARIO.opMeta[5]!.formula) // ŷ = σ(z2)
     expect(byId.get('L')!.formula).toBe(XOR_SCENARIO.opMeta[6]!.formula) // bce
   })
 
-  it('geometryOf(seg) непустая для всех 7 звеньев', () => {
-    for (const s of SEGMENTS) {
-      expect(geometrySize(geometryOf(s.id)), `геометрия звена ${s.id}`).toBeGreaterThan(0)
-    }
-  })
-
-  it('geometryOf(seg, sym) непустая и вложена в геометрию звена', () => {
-    for (const s of SEGMENTS) {
-      const whole = geometryOf(s.id)
-      for (const sym of s.symbols) {
-        const part = geometryOf(s.id, sym)
-        expect(geometrySize(part), `геометрия ${s.id}/${sym}`).toBeGreaterThan(0)
-        for (const n of part.nodes) expect(whole.nodes.has(n), `${s.id}/${sym}: узел ${n} ∈ звену`).toBe(true)
-        for (const e of part.edges) expect(whole.edges.has(e), `${s.id}/${sym}: ребро ${e} ∈ звену`).toBe(true)
-        for (const p of part.plates) expect(whole.plates.has(p), `${s.id}/${sym}: плашка ${p} ∈ звену`).toBe(true)
-        for (const b of part.biases) expect(whole.biases.has(b), `${s.id}/${sym}: биас ${b} ∈ звену`).toBe(true)
-      }
-    }
-  })
-
-  it('отображения символов на геометрию диаграммы (примеры плана)', () => {
-    expect(geometryOf('x', 'x').nodes).toEqual(new Set(['x[0]', 'x[1]']))
-    expect(geometryOf('z1', 'W1').edges).toEqual(new Set(['W1[0]', 'W1[1]', 'W1[2]', 'W1[3]', 'W1[4]', 'W1[5]']))
-    expect(geometryOf('z1', 'b1').biases).toEqual(new Set(['b1[0]', 'b1[1]', 'b1[2]']))
-    expect(geometryOf('a1', 'tanh').plates).toEqual(new Set(['tanh']))
-    expect(geometryOf('a1', 'tanh').nodes).toEqual(new Set(['a1[0]', 'a1[1]', 'a1[2]']))
-  })
-})
-
-describe('chainLinks: цепь-станций (01.2-04)', () => {
   it('заголовки звеньев начинаются с символа формулы (Gap 6: имена = символы)', () => {
     for (const s of SEGMENTS) {
       const lead = LEADING_SYMBOL[s.id]!
@@ -117,95 +86,74 @@ describe('chainLinks: цепь-станций (01.2-04)', () => {
       '∂L/∂W': 'W',
     })
   })
-
-  it('geometryOf("a1"): a1-узлы + tanh-плашка, z1-узлов нет (станции различимы геометрически)', () => {
-    const g = geometryOf('a1')
-    expect(g.nodes).toEqual(new Set(['a1[0]', 'a1[1]', 'a1[2]']))
-    expect(g.plates).toEqual(new Set(['tanh']))
-    for (const n of geometryOf('z1').nodes) {
-      expect(g.nodes.has(n), `z1-узел ${n} не входит в звено a1`).toBe(false)
-    }
-  })
-
-  it('звено L — станция лосса: ŷ + y + L + плашка bce (Gap 4)', () => {
-    const g = geometryOf('L')
-    expect(g.nodes).toEqual(new Set(['ŷ', 'y', 'L']))
-    expect(g.plates).toEqual(new Set(['bce']))
-  })
-
-  it('звено x — вход в цепи: узлы x + подводы примера (Gap 1)', () => {
-    const g = geometryOf('x')
-    expect(g.nodes).toEqual(new Set(['x[0]', 'x[1]']))
-    expect(g.edges).toEqual(new Set(['sample-feed[0]', 'sample-feed[1]']))
-  })
 })
 
-describe('chainLinks: контракт станций CHAIN_GEOMETRY_IDS (01.2-04)', () => {
-  it('12 узлов / 11 рёбер / 3 плашки / 4 биаса: станции z1[0..2], z2, плашка bce', () => {
-    expect(CHAIN_GEOMETRY_IDS.nodes).toHaveLength(12) // x×2, z1×3, a1×3, z2, ŷ, y, L
-    expect(CHAIN_GEOMETRY_IDS.edges).toHaveLength(11) // W1×6 + W2×3 + подводы×2
-    expect(CHAIN_GEOMETRY_IDS.plates).toHaveLength(3) // tanh, σ, bce
-    expect(CHAIN_GEOMETRY_IDS.biases).toHaveLength(4) // b1×3 + b2×1
-    expect(new Set(CHAIN_GEOMETRY_IDS.nodes)).toEqual(
-      new Set(['x[0]', 'x[1]', 'z1[0]', 'z1[1]', 'z1[2]', 'a1[0]', 'a1[1]', 'a1[2]', 'z2', 'ŷ', 'y', 'L']),
-    )
-    expect(new Set(CHAIN_GEOMETRY_IDS.edges)).toEqual(
-      new Set([
-        'W1[0]',
-        'W1[1]',
-        'W1[2]',
-        'W1[3]',
-        'W1[4]',
-        'W1[5]',
-        'W2[0]',
-        'W2[1]',
-        'W2[2]',
-        'sample-feed[0]',
-        'sample-feed[1]',
-      ]),
-    )
-    expect(new Set(CHAIN_GEOMETRY_IDS.plates)).toEqual(new Set(['tanh', 'σ', 'bce']))
+describe('chainLinks: геометрия = группы графа вычислений (01.2-06)', () => {
+  it('geometryOf(seg) возвращает группу SEGMENT_GROUPS (узлы + внутренние рёбра)', () => {
+    for (const s of SEGMENTS) {
+      const g = geometryOf(s.id)
+      const ref = SEGMENT_GROUPS[s.id]!
+      expect([...g.nodes], `узлы звена ${s.id}`).toEqual([...ref.nodes])
+      expect([...g.edges], `рёбра звена ${s.id}`).toEqual([...ref.edges])
+      expect(geometrySize(g), `геометрия звена ${s.id} непуста`).toBeGreaterThan(0)
+    }
   })
 
-  it('вся геометрия звеньев (geometryOf seg и sym) ссылается только на id контракта', () => {
-    const ids = {
-      nodes: new Set(CHAIN_GEOMETRY_IDS.nodes),
-      edges: new Set(CHAIN_GEOMETRY_IDS.edges),
-      plates: new Set(CHAIN_GEOMETRY_IDS.plates),
-      biases: new Set(CHAIN_GEOMETRY_IDS.biases),
-    }
+  it('geometryOf(seg, sym) непустая и вложена в геометрию звена', () => {
     for (const s of SEGMENTS) {
-      const geometries = [geometryOf(s.id), ...s.symbols.map((sym) => geometryOf(s.id, sym))]
-      for (const g of geometries) {
-        for (const n of g.nodes) expect(ids.nodes.has(n), `узел «${n}» есть в контракте`).toBe(true)
-        for (const e of g.edges) expect(ids.edges.has(e), `ребро «${e}» есть в контракте`).toBe(true)
-        for (const p of g.plates) expect(ids.plates.has(p), `плашка «${p}» есть в контракте`).toBe(true)
-        for (const b of g.biases) expect(ids.biases.has(b), `биас «${b}» есть в контракте`).toBe(true)
+      const whole = geometryOf(s.id)
+      for (const sym of s.symbols) {
+        const part = geometryOf(s.id, sym)
+        expect(geometrySize(part), `геометрия ${s.id}/${sym}`).toBeGreaterThan(0)
+        for (const n of part.nodes) expect(whole.nodes.has(n), `${s.id}/${sym}: узел ${n} ∈ звену`).toBe(true)
+        for (const e of part.edges) expect(whole.edges.has(e), `${s.id}/${sym}: ребро ${e} ∈ звену`).toBe(true)
       }
     }
   })
 
-  it('каждая сущность контракта покрыта хотя бы одним звеном (подсвечиваема выбором)', () => {
-    const covered = { nodes: new Set<string>(), edges: new Set<string>(), plates: new Set<string>(), biases: new Set<string>() }
-    for (const s of SEGMENTS) {
-      const g = geometryOf(s.id)
-      g.nodes.forEach((n) => covered.nodes.add(n))
-      g.edges.forEach((e) => covered.edges.add(e))
-      g.plates.forEach((p) => covered.plates.add(p))
-      g.biases.forEach((b) => covered.biases.add(b))
+  it('звено a1 = tanh-опы + a1-значения (≥3 элементов — контракт e2e 8); z1-узлов нет', () => {
+    const g = geometryOf('a1')
+    expect(g.nodes.size).toBeGreaterThanOrEqual(3)
+    expect([...g.nodes].filter((id) => id.startsWith('op:tanh'))).toHaveLength(3)
+    expect([...g.nodes].filter((id) => id.startsWith('a1['))).toHaveLength(3)
+    for (const n of geometryOf('z1').nodes) {
+      if (n.startsWith('z1[')) expect(g.nodes.has(n), `z1-узел ${n} не входит в звено a1`).toBe(false)
     }
-    expect([...covered.nodes].sort()).toEqual([...CHAIN_GEOMETRY_IDS.nodes].sort())
-    expect([...covered.edges].sort()).toEqual([...CHAIN_GEOMETRY_IDS.edges].sort())
-    expect([...covered.plates].sort()).toEqual([...CHAIN_GEOMETRY_IDS.plates].sort())
-    expect([...covered.biases].sort()).toEqual([...CHAIN_GEOMETRY_IDS.biases].sort())
+  })
+
+  it('звено L — станция лосса: bce + y + L + ŷ', () => {
+    const g = geometryOf('L')
+    for (const id of ['op:bce', 'y[0]', 'L', 'ŷ']) expect(g.nodes.has(id), `L содержит ${id}`).toBe(true)
+  })
+
+  it('звено W — update-станция + все 13 параметров', () => {
+    const g = geometryOf('W')
+    expect(g.nodes.has('op:update')).toBe(true)
+    expect([...g.nodes].filter((id) => id.startsWith('W1[') || id.startsWith('b1[') || id.startsWith('W2[') || id.startsWith('b2['))).toHaveLength(13)
   })
 })
 
-describe('ArchitectureDiagram ↔ chainLinks: синхронность контракта станций (01.2-04)', () => {
-  it('GEOMETRY_IDS диаграммы == контракт цепи станций (узлы, рёбра, плашки, биасы)', () => {
-    expect(new Set(GEOMETRY_IDS.nodes)).toEqual(new Set(CHAIN_GEOMETRY_IDS.nodes))
-    expect(new Set(GEOMETRY_IDS.edges)).toEqual(new Set(CHAIN_GEOMETRY_IDS.edges))
-    expect(new Set(GEOMETRY_IDS.plates)).toEqual(new Set(CHAIN_GEOMETRY_IDS.plates))
-    expect(new Set(GEOMETRY_IDS.biases)).toEqual(new Set(CHAIN_GEOMETRY_IDS.biases))
+describe('chainLinks: контракт графа CHAIN_GEOMETRY_IDS (01.2-06)', () => {
+  it('контракт = все узлы и рёбра графа вычислений', () => {
+    expect(new Set(CHAIN_GEOMETRY_IDS.nodes)).toEqual(new Set(GRAPH_NODES.map((n) => n.id)))
+    expect(new Set(CHAIN_GEOMETRY_IDS.edges)).toEqual(new Set(GRAPH_EDGES.map((e) => e.id)))
+  })
+
+  it('вся геометрия звеньев ссылается только на id контракта', () => {
+    const nodes = new Set(CHAIN_GEOMETRY_IDS.nodes)
+    const edges = new Set(CHAIN_GEOMETRY_IDS.edges)
+    for (const s of SEGMENTS) {
+      const geometries = [geometryOf(s.id), ...s.symbols.map((sym) => geometryOf(s.id, sym))]
+      for (const g of geometries) {
+        for (const n of g.nodes) expect(nodes.has(n), `узел «${n}» есть в контракте`).toBe(true)
+        for (const e of g.edges) expect(edges.has(e), `ребро «${e}» есть в контракте`).toBe(true)
+      }
+    }
+  })
+
+  it('каждый узел графа покрыт хотя бы одним звеном (подсвечиваем выбором)', () => {
+    const covered = new Set<string>()
+    for (const s of SEGMENTS) geometryOf(s.id).nodes.forEach((n) => covered.add(n))
+    expect([...covered].sort()).toEqual([...CHAIN_GEOMETRY_IDS.nodes].sort())
   })
 })
