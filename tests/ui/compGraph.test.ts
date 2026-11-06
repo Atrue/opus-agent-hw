@@ -36,7 +36,7 @@ describe('compGraph: инвентарь звеньев XOR 2-3-1', () => {
   })
 
   it('операции по-элементно: matvec×3, add×3, tanh×3, matvec2, add2, σ, bce + РОВНО ОДНА update-станция', () => {
-    const ops = GRAPH_NODES.filter((n) => n.kind === 'op')
+    const ops = GRAPH_NODES.filter((n) => n.kind === 'op' || n.kind === 'update')
     expect(ops).toHaveLength(14)
     expect(ops.filter((n) => n.id === 'op:update')).toHaveLength(1)
     expect(ops.filter((n) => n.label === 'tanh')).toHaveLength(3)
@@ -46,7 +46,7 @@ describe('compGraph: инвентарь звеньев XOR 2-3-1', () => {
 
   it('промежуточные значения — отдельные звенья: W1x×3, z1×3, a1×3, W2a1, z2, ŷ, L', () => {
     const computed = GRAPH_NODES.filter((n) => n.role === 'computed')
-    expect(ids(computed).sort()).toEqual(['L', 'W1x[0]', 'W1x[1]', 'W1x[2]', 'W2a1', 'a1[0]', 'a1[1]', 'a1[2]', 'ŷ', 'z1[0]', 'z1[1]', 'z1[2]', 'z2'])
+    expect(ids(computed).sort()).toEqual(['L', 'W1x[0]', 'W1x[1]', 'W1x[2]', 'W2a1', 'a1[0]', 'a1[1]', 'a1[2]', 'z1[0]', 'z1[1]', 'z1[2]', 'z2', 'ŷ'])
   })
 
   it('итого 43 звена: 3 константы + 13 параметров + 14 операций + 13 значений', () => {
