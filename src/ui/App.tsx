@@ -2,7 +2,7 @@ import { run, useRunSlice } from '../run/runState'
 import { XOR_SCENARIO } from '../run/scenario'
 import { parseHash, toHash } from '../run/url'
 import type { Phase } from '../tensor'
-import ArchitectureDiagram from './ArchitectureDiagram'
+import ComputationGraph from './ComputationGraph'
 import EpochSummary from './EpochSummary'
 import ExamplesPanel from './ExamplesPanel'
 import FormulaStrip from './FormulaStrip'
@@ -106,16 +106,16 @@ export default function App() {
             активная op, клик → drill; ниже — история полосой (UX-05/UX-06).
             Мобильный порядок: сцена первой — лента не закапывает диаграмму */}
         <div className="flex min-h-0 flex-col gap-4 max-xl:order-first md:col-span-1 xl:col-span-8 xl:order-none">
-          <section aria-label="Слот диаграммы сети" data-testid="diagram-slot" className="card min-h-[320px] flex-1">
+          <section aria-label="Слот графа вычислений" data-testid="diagram-slot" className="card min-h-[320px] flex-1">
             <div className="card-head">
               <span className="icon" aria-hidden="true">
                 hub
               </span>
-              <h2 className="card-title">Сеть 2-3-1</h2>
-              <span className="card-meta ui-label">живые веса</span>
+              <h2 className="card-title">Граф вычислений 2-3-1</h2>
+              <span className="card-meta ui-label">живые значения и градиенты</span>
             </div>
             <div className="screen min-h-0 flex-1">
-              <ArchitectureDiagram record={record} />
+              <ComputationGraph record={record} />
             </div>
           </section>
           {/* История обучения (01.2-02; 01.2-05, пункт 3 UAT): полоса из двух

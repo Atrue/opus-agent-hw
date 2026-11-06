@@ -1,24 +1,21 @@
 /**
- * Модель звеньев «формулы-хребта» (01.2-01; цепь-станций — 01.2-04,
- * утверждено владельцем 2026-11-05): цепь станций, читаемая слева-направо
- * строго по формуле — пример → x →[W1·x+b1]→ z1 →[tanh]→ a1 →[W2·a1+b2]→
- * z2 →[σ]→ ŷ →[BCE]→ L; звено W замыкает цикл обновлением весов. Чистый
- * view-слой над прогоном (без React, fast-refresh-safe; движок не меняется).
- * Звено = объединение соседних операций сценария (z1 = matvec+add); формулы
- * собираются из opMeta. symbolToSegment отображает каждый символ формулы
- * сети ровно в одно звено (клик по символу → run.selectLink); geometryOf —
- * геометрия подсветки звена на диаграмме (id узлов/рёбер/плашек/биасов,
- * контракт ArchitectureDiagram == CHAIN_GEOMETRY_IDS). Пользовательские
- * строки (RU) изолированы здесь (D-10, RU-first).
+ * Модель звеньев «формулы-хребта» (01.2-01; граф вычислений — 01.2-06):
+ * цепь из 7 звеньев x → z1 → a1 → z2 → ŷ → L → W — чистый view-слой над
+ * прогоном (без React, fast-refresh-safe; движок не меняется). Звено = группа
+ * звеньев графа вычислений (compGraph.SEGMENT_GROUPS): клик по символу
+ * формулы подсвечивает группу (узлы-значения/операции + рёбра между ними).
+ * Заголовки — символ формулы первым (Gap 6). Пользовательские строки (RU)
+ * изолированы здесь (D-10, RU-first).
  */
 
+import { GRAPH_EDGES, GRAPH_NODES, SEGMENT_GROUPS } from './compGraph'
 import { XOR_SCENARIO } from '../run/scenario'
 
 export type SegmentId = 'x' | 'z1' | 'a1' | 'z2' | 'yhat' | 'L' | 'W'
 
 export interface ChainSegment {
   id: SegmentId
-  /** Заголовок звена (RU) — символ формулы первым, шапка панели звена. */
+  /** Заголовок звена (RU, символ формулы первым) — шапка панели звена. */
   title: string
   /** Формула звена — из opMeta сценария (z1/z2: склейка matvec+add). */
   formula: string
@@ -26,15 +23,14 @@ export interface ChainSegment {
   symbols: readonly string[]
 }
 
-/** Плашки-станции на диаграмме: активации tanh/σ и лосс bce. */
-export type PlateId = 'tanh' | 'σ' | 'bce'
-
-/** Геометрия звена на диаграмме: множества id узлов/рёбер/плашек/биасов.
- *  Возвращаемые множества — разделяемый контракт только для чтения. */
+/**
+ * Геометрия звена на графе вычислений: узлы и рёбра группы (plates/biases —
+ * пустые, историческая форма интерфейса сохранена для совместимости).
+ */
 export interface SegmentGeometry {
   nodes: Set<string>
   edges: Set<string>
-  plates: Set<PlateId>
+  plates: Set<string>
   biases: Set<string>
 }
 
@@ -82,66 +78,59 @@ export const SEGMENT_NUMBER_SYMS: Record<SegmentId, readonly string[]> = {
   W: ['η', '∂L/∂W2', 'W2[0,0]'],
 }
 
-// id геометрии диаграммы-цепи станций (контракт ArchitectureDiagram, 01.2-04)
-const X_NODES = ['x[0]', 'x[1]']
-const Z1_NODES = ['z1[0]', 'z1[1]', 'z1[2]']
-const A1_NODES = ['a1[0]', 'a1[1]', 'a1[2]']
-const W1_EDGES = ['W1[0]', 'W1[1]', 'W1[2]', 'W1[3]', 'W1[4]', 'W1[5]']
-const W2_EDGES = ['W2[0]', 'W2[1]', 'W2[2]']
-/** Подводы примера: тонкие рёбра маркер «пример k» → узлы x (звено x). */
-const SAMPLE_FEEDS = ['sample-feed[0]', 'sample-feed[1]']
-const B1_NODES = ['b1[0]', 'b1[1]', 'b1[2]']
-const B2_NODES = ['b2[0]']
-
-/** Контракт цепи станций: сверяется юнит-тестом с GEOMETRY_IDS диаграммы
- *  (узлы x×2/z1×3/a1×3/z2/ŷ/y/L · рёбра W1×6+W2×3+подводы×2 · плашки
- *  tanh/σ/bce · биас-чипы b1×3+b2). */
+/** Контракт графа: все узлы/рёбра вычислительного графа (сверка с рендером). */
 export const CHAIN_GEOMETRY_IDS = {
-  nodes: [...X_NODES, ...Z1_NODES, ...A1_NODES, 'z2', 'ŷ', 'y', 'L'],
-  edges: [...W1_EDGES, ...W2_EDGES, ...SAMPLE_FEEDS],
-  plates: ['tanh', 'σ', 'bce'] as const,
-  biases: [...B1_NODES, ...B2_NODES],
+  nodes: GRAPH_NODES.map((n) => n.id),
+  edges: GRAPH_EDGES.map((e) => e.id),
+  plates: [] as string[],
+  biases: [] as string[],
 }
 
-function geom(nodes: string[] = [], edges: string[] = [], plates: PlateId[] = [], biases: string[] = []): SegmentGeometry {
-  return { nodes: new Set(nodes), edges: new Set(edges), plates: new Set(plates), biases: new Set(biases) }
+const EMPTY: ReadonlySet<string> = new Set<string>()
+
+function toGeometry(nodes: Iterable<string>, edges: Iterable<string>): SegmentGeometry {
+  return { nodes: new Set(nodes), edges: new Set(edges), plates: new Set<string>(), biases: new Set<string>() }
 }
 
-/** Геометрия звена-станции целиком: что подсвечивается на диаграмме при
- *  выборе. x = узлы+подводы; z1/z2 = рёбра W + узлы-суммы + биас-чипы;
- *  a1/yhat = узлы + плашка активации; L = ŷ+y+L + плашка bce. */
-const SEGMENT_GEOMETRY: Record<SegmentId, SegmentGeometry> = {
-  x: geom(X_NODES, SAMPLE_FEEDS),
-  z1: geom(Z1_NODES, W1_EDGES, [], B1_NODES),
-  a1: geom(A1_NODES, [], ['tanh']),
-  z2: geom(['z2'], W2_EDGES, [], B2_NODES),
-  yhat: geom(['ŷ'], [], ['σ']),
-  L: geom(['ŷ', 'y', 'L'], [], ['bce']),
-  W: geom([], [...W1_EDGES, ...W2_EDGES], [], [...B1_NODES, ...B2_NODES]),
+/** Геометрия группы: узлы группы + рёбра между ними (внутренние связи). */
+function groupGeometry(nodes: ReadonlySet<string>): SegmentGeometry {
+  const edges = GRAPH_EDGES.filter((e) => nodes.has(e.from) && nodes.has(e.to)).map((e) => e.id)
+  return toGeometry(nodes, edges)
 }
 
-/** Точечная геометрия символа (внутри своего звена); η/∂L/∂W масштабируют
- *  всё обновление → геометрия звена W (рёбра W1+W2 и биасы). */
-const SYMBOL_GEOMETRY: Record<string, SegmentGeometry> = {
-  x: geom(X_NODES, SAMPLE_FEEDS),
-  W1: geom([], W1_EDGES),
-  b1: geom([], [], [], B1_NODES),
-  tanh: geom(A1_NODES, [], ['tanh']),
-  W2: geom([], W2_EDGES),
-  b2: geom([], [], [], B2_NODES),
-  σ: geom(['ŷ'], [], ['σ']),
-  ŷ: geom(['ŷ']),
-  y: geom(['y']),
-  L: geom(['ŷ', 'y', 'L'], [], ['bce']),
-  η: SEGMENT_GEOMETRY.W,
-  '∂L/∂W': SEGMENT_GEOMETRY.W,
+/** Точечные подмножества символа внутри его звена (для geometryOf(seg, sym)). */
+const SYMBOL_NODES: Readonly<Record<string, readonly string[]>> = {
+  x: ['x[0]', 'x[1]'],
+  W1: ['W1[0]', 'W1[1]', 'W1[2]', 'W1[3]', 'W1[4]', 'W1[5]'],
+  b1: ['b1[0]', 'b1[1]', 'b1[2]'],
+  tanh: ['op:tanh[0]', 'op:tanh[1]', 'op:tanh[2]', 'a1[0]', 'a1[1]', 'a1[2]'],
+  W2: ['W2[0]', 'W2[1]', 'W2[2]'],
+  b2: ['b2[0]'],
+  σ: ['op:sigmoid', 'ŷ'],
+  ŷ: ['ŷ'],
+  y: ['y[0]'],
+  L: ['op:bce', 'y[0]', 'L', 'ŷ'],
+  η: ['op:update', 'W1[0]', 'W1[1]', 'W1[2]', 'W1[3]', 'W1[4]', 'W1[5]', 'b1[0]', 'b1[1]', 'b1[2]', 'W2[0]', 'W2[1]', 'W2[2]', 'b2[0]'],
+  '∂L/∂W': ['op:update', 'W1[0]', 'W1[1]', 'W1[2]', 'W1[3]', 'W1[4]', 'W1[5]', 'b1[0]', 'b1[1]', 'b1[2]', 'W2[0]', 'W2[1]', 'W2[2]', 'b2[0]'],
 }
 
 /** Геометрия подсветки: точечная для символа его звена, целиком для звена. */
 export function geometryOf(segment: SegmentId, symbol?: string): SegmentGeometry {
+  const whole = groupGeometry(SEGMENT_GROUPS[segment]!.nodes)
   if (symbol !== undefined) {
-    const g = SYMBOL_GEOMETRY[symbol]
-    if (g !== undefined && symbolToSegment[symbol] === segment) return g
+    const subset = SYMBOL_NODES[symbol]
+    if (subset !== undefined && symbolToSegment[symbol] === segment) {
+      const allowed = new Set(subset)
+      const nodes = [...whole.nodes].filter((n) => allowed.has(n))
+      const nodeSet = new Set(nodes)
+      const edges = [...whole.edges].filter((e) => {
+        const edge = GRAPH_EDGES.find((ge) => ge.id === e)!
+        return nodeSet.has(edge.from) && nodeSet.has(edge.to)
+      })
+      if (nodes.length > 0) return toGeometry(nodeSet, edges)
+    }
   }
-  return SEGMENT_GEOMETRY[segment]
+  return whole
 }
+
+export { EMPTY as EMPTY_GEOMETRY_SET }

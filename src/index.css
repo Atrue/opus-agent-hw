@@ -893,3 +893,136 @@ circle.diag-hit:focus-visible {
   color: var(--color-on-surface);
   overflow-wrap: break-word;
 }
+
+/* ═══ Граф вычислений (01.2-06, правила владельца) ═══
+   Звено-значение — закруглённый квадрат: константа — белая рамка
+   (--color-on-surface), параметр — зелёная (--color-pos, семантика только
+   «обновляемый», знак не переносится), вычисленное — нейтральная. Звено-
+   операция — круг. Внутри звена — живое значение (station-value), под звеном
+   — градиент (node-grad) после backward-шагов. Канва детерминирована
+   (compGraph: ранг×строка), рамки не сжимаются — скролл по обеим осям. */
+.graph-scroll {
+  overflow: auto; /* обе оси: рамки канвы не сжимаются (ответ владельца) */
+  min-height: 0;
+  height: 100%;
+}
+.graph-canvas {
+  display: block;
+  font-variant-numeric: tabular-nums;
+}
+.g-node-box {
+  fill: var(--color-surface-container-lowest);
+  stroke: var(--color-outline-variant);
+  stroke-width: 1.5;
+}
+.g-node-const .g-node-box {
+  stroke: var(--color-on-surface); /* белая рамка констант (x, y) */
+}
+.g-node-param .g-node-box {
+  stroke: var(--color-pos); /* зелёная рамка параметров (W1/b1/W2/b2) */
+}
+.g-node-label {
+  fill: var(--color-on-surface-variant);
+  font-size: calc(9.5px * var(--diag-scale, 1));
+}
+.g-node-value,
+.g-op .g-node-value {
+  fill: var(--color-on-surface);
+  font-size: calc(10px * var(--diag-scale, 1));
+}
+.node-grad { /* ∂L/∂· под звеном — приглушённый моно (после backward) */
+  fill: var(--color-on-surface-variant);
+  opacity: 0.85;
+  font-size: calc(9px * var(--diag-scale, 1));
+  pointer-events: none; /* тексты звеньев не перехватывают hover рёбер */
+}
+.g-node-label,
+.g-node-value,
+.g-op-label,
+.g-update-label {
+  pointer-events: none;
+}
+.g-node-selring,
+.g-op circle {
+  fill: var(--color-surface-container);
+  stroke: var(--color-outline-variant);
+  stroke-width: 1.5;
+}
+.g-op circle.g-op-main,
+.g-op > circle:first-of-type {
+  stroke: var(--color-outline-variant);
+}
+.g-op-label {
+  fill: var(--color-on-surface);
+  font-size: calc(10px * var(--diag-scale, 1));
+}
+.g-op.active circle,
+.g-node.active .g-node-box {
+  stroke: var(--color-tertiary); /* амбер активного шага (лента) */
+  stroke-width: 3;
+}
+.g-op.diag-selected circle,
+.g-node.diag-selected .g-node-box {
+  stroke: var(--color-primary); /* мятный primary выбранного звена цепи */
+  stroke-width: 3;
+}
+.g-node-selring {
+  fill: none;
+  stroke: var(--color-primary);
+  stroke-width: 2;
+  opacity: 0;
+}
+.g-node.diag-selected .g-node-selring,
+.g-op.diag-selected .g-node-selring {
+  opacity: 1;
+}
+.g-edge-update .diag-edge,
+.g-edge-update .diag-edge-casing,
+.g-edge-update .diag-edge-selcasing,
+.g-edge-update .diag-flow {
+  stroke-dasharray: 3 4; /* update-рёбра: тонкий пунктир (не поток данных) */
+  opacity: 0.55;
+}
+.g-tip { /* hover-тултип рёбра: fwd/bwd значения источника (CSS-only) */
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+  text-anchor: middle;
+}
+.diag-edge-g:hover .g-tip,
+.diag-edge-g:focus-within .g-tip {
+  opacity: 1;
+}
+.g-tip rect {
+  fill: var(--color-surface-container-high);
+  stroke: var(--color-outline-variant);
+}
+.g-tip text {
+  fill: var(--color-on-surface);
+  font-size: calc(10px * var(--diag-scale, 1));
+}
+.g-tip .g-tip-bwd {
+  fill: var(--color-on-surface-variant);
+}
+.g-update rect {
+  fill: var(--color-surface-container-lowest);
+  stroke: var(--color-secondary); /* update-фаза (DESIGN §2: phase-upd) */
+  stroke-width: 1.5;
+}
+.g-update.active rect {
+  stroke: var(--color-tertiary); /* активна на 13-м шаге (амбер активного шага) */
+  stroke-width: 3;
+}
+.g-update.diag-selected rect {
+  stroke: var(--color-primary);
+  stroke-width: 3;
+}
+.g-update-label {
+  fill: var(--color-on-surface);
+  font-size: calc(10.5px * var(--diag-scale, 1));
+}
+@media (prefers-reduced-motion: reduce) {
+  .g-tip {
+    transition: none;
+  }
+}

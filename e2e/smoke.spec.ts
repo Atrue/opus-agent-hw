@@ -5,7 +5,8 @@ import { ETALON_SAMPLE_1 } from '../tests/tensor/etalon-constants'
 
 /**
  * Полная e2e фаз 01.1–01.2 (R3, план 01.1-03; тест 6 — 01.2-02; тесты 7–9 —
- * 01.2-03; тест 10 — 01.2-05) — 10 проверок живого цикла:
+ * 01.2-03; тест 10 — 01.2-05; тесты 8b/8c — 01.2-06 граф вычислений) —
+ * 11 проверок живого цикла:
  * (1) первый «Шаг»: числа движка в панели (эталон-константы сэмпла 1),
  *     индикатор «Эпоха 1 · пример 1 · шаг 2»;
  * (2) полная эпоха 1 пошагово (4 сэмпла × 13 оп): DOM без NaN/Infinity/
@@ -236,7 +237,7 @@ test('7) выбор звена по символу формулы: aria-pressed,
   await expect(svg, 'выбор снят — атрибут удалён').not.toHaveAttribute('data-selection')
 })
 
-test('8) tanh подсвечивает скрытый слой (.diag-selected); клик по биасу b1 → drill', async ({ page }) => {
+test('8) tanh подсвечивает группу графа (.diag-selected); клик по биасу b1 → drill', async ({ page }) => {
   await page.goto('/')
   await page.getByTestId('formula-sym-tanh').click()
   await expect(page.getByTestId('architecture-diagram'), 'tanh выбирает звено a1').toHaveAttribute(
@@ -245,30 +246,58 @@ test('8) tanh подсвечивает скрытый слой (.diag-selected);
   )
   expect(
     await page.locator('.diag-selected').count(),
-    'подсвечены узлы скрытого слоя: класс .diag-selected ≥ 3',
+    'группа звена a1: tanh-опы + a1-значения + рёбра — ≥ 3',
   ).toBeGreaterThanOrEqual(3)
-  await expect(page.locator('g.diag-selected .diag-node'), 'три узла a1 несут .diag-selected').toHaveCount(3)
+  await expect(page.locator('g.g-op.diag-selected'), 'три tanh-операции несут .diag-selected').toHaveCount(3)
 
-  // клик по биас-узлу b1 на диаграмме — полный drill числа (tier 2);
+  // клик по узлу параметра b1[0] на графе — полный drill числа (tier 2);
   // drill-слот живёт в панели операции: до первого шага записи нет (by design),
   // поэтому один «Шаг» — и разбор числа доступен
   await page.getByTestId('btn-next').click()
   await page.getByRole('button', { name: /^Биас b1\[0\]/ }).click()
   await expect(page.getByTestId('drill-panel')).toBeVisible()
 
-  // 8b (01.2-04): станции цепи со значениями — прогон до bce-опы (7 кликов =
-  // операции 0–6): z1×3 + a1×3 + z2 + ŷ + L = 9 живых чисел, ни одного «н/д»;
-  // клик по плашке BCE выбирает звено L
+  // 8b (01.2-06): граф вычислений — звенья со значениями; прогон до bce-опы
+  // (7 кликов = операции 0–6): все значения/параметры/операции несут числа,
+  // ни одного «н/д»; клик по узлу BCE выбирает звено L
   for (let i = 0; i < 6; i++) await page.getByTestId('btn-next').click()
   const stations = page.getByTestId('station-value')
-  await expect(stations, 'станции со значениями: z1×3, a1×3, z2, ŷ, L').toHaveCount(9)
-  await expect(stations.filter({ hasText: 'н/д' }), 'после bce все станции несут числа').toHaveCount(0)
-  await page.getByRole('button', { name: /BCE/ }).click()
-  await expect(page.getByTestId('architecture-diagram'), 'клик по BCE-плашке выбирает звено L').toHaveAttribute(
+  await expect(stations, 'звенья графа со значениями (z1×3, a1×3, z2, ŷ, L и др.)').toHaveCount(42)
+  await expect(stations.filter({ hasText: 'н/д' }), 'после bce все звенья несут числа').toHaveCount(0)
+  await page.getByRole('button', { name: 'Операция BCE' }).click()
+  await expect(page.getByTestId('architecture-diagram'), 'клик по узлу BCE выбирает звено L').toHaveAttribute(
     'data-selection',
     'L',
   )
   await expect(page.getByTestId('link-panel')).toBeVisible()
+})
+
+test('8c) граф: градиенты под звеньями, hover рёбер fwd/bwd, update-станция обновляет параметры', async ({ page }) => {
+  await page.goto('/')
+
+  // 12 кликов = операции 0–11 (backward завершён, до sgd): под звеньями
+  // появляются градиенты ∂L/∂· (параметры, промежуточные значения)
+  for (let i = 0; i < 12; i++) await page.getByTestId('btn-next').click()
+  const grads = page.getByTestId('node-grad')
+  expect(await grads.count(), 'градиенты под звеньями после backward (параметры, значения, операции)').toBeGreaterThanOrEqual(30)
+  await expect(grads.filter({ hasText: '∂ =' }).first()).toBeVisible()
+
+  // hover ребра → тултип с двумя значениями: forward (значение источника)
+  // и backward (градиент источника ∂L/∂·)
+  await page.locator('.diag-edge-g .diag-hit').first().hover()
+  const tipOpacity = await page.locator('.g-tip').first().evaluate((el) => getComputedStyle(el).opacity)
+  expect(tipOpacity, 'тултип ребра видим при hover (opacity → 1)').toBe('1')
+  const tipText = (await page.locator('.g-tip').first().textContent()) ?? ''
+  expect(tipText, 'тултип несёт forward-значение источника').toMatch(/=\s*[-−+]?[\d.]/)
+  expect(tipText, 'тултип несёт backward-значение (∂L/∂ источника)').toContain('∂L/∂')
+
+  // 13-й шаг — sgd: update-станция активна, параметры обновились (b1[0])
+  const b1Value = page.locator('g[data-node="b1[0]"] [data-testid="station-value"]')
+  const before = ((await b1Value.textContent()) ?? '').trim()
+  await page.getByTestId('btn-next').click()
+  await expect(page.locator('g.g-update.active'), 'update-станция активна на 13-м шаге').toBeAttached()
+  const after = ((await b1Value.textContent()) ?? '').trim()
+  expect(after, 'параметр b1[0] обновился на шаге sgd').not.toBe(before)
 })
 
 test('9) samples-panel: текущий помечен; FF → 4 вердикта; reset сохраняет историю сессии', async ({ page }) => {
