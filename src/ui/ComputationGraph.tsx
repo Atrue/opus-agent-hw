@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { run, useRunSlice } from '../run/runState'
 import type { StepRecord, Tensor } from '../tensor'
 import { formatKey } from '../format/numbers'
@@ -347,10 +348,16 @@ function anchor(id: string, side: 'left' | 'right'): { x: number; y: number } {
   return { x: side === 'right' ? n.x + halfW : n.x - halfW, y: n.y }
 }
 
+/** Уровни зума канвы (детерминированные; 0.5–2.0, шаг 0.25). */
+const ZOOM_MIN = 0.5
+const ZOOM_MAX = 2
+const ZOOM_STEP = 0.25
+
 export default function ComputationGraph({ record }: { record: StepRecord | null }) {
   // версия прогона: перерисовка на каждую операцию (параметры мутируются на месте)
   const version = useRunSlice((r) => r.version)
   const selection = useRunSlice((r) => r.selection)
+  const [zoom, setZoom] = useState(1)
   const { view } = buildGraph()
   const stepIdx = stepIndexOf(record)
   const activeGroup = stepIdx !== null ? STEP_GROUPS[stepIdx]! : null
@@ -366,18 +373,34 @@ export default function ComputationGraph({ record }: { record: StepRecord | null
 
   return (
     <div className="graph-scroll">
-      <svg
-        data-testid="architecture-diagram"
-        data-version={version}
-        data-flow={flowOf(record)}
-        data-selection={selection?.segment}
-        width={view.w}
-        height={view.h}
-        viewBox={`0 0 ${view.w} ${view.h}`}
-        className="graph-canvas"
-        role="img"
-        aria-label="Граф вычислений 2-3-1: константы x и y, параметры W1/b1/W2/b2, операции matvec, add, tanh, σ, BCE и станция обновления весов; внутри звена — живое значение, под звеном — градиент после backward"
-      >
+      {/* зум: уровни 0.5–2.0 (шаг 0.25, сброс 1); transform на внутренней
+          обёртке не ломает скролл (габарит обёртки = масштаб канвы);
+          лекционный --diag-scale суммируется, не подменяется */}
+      <div className="graph-zoom" role="group" aria-label="Масштаб графа">
+        <button type="button" data-testid="graph-zoom-out" className="btn ui-label" aria-label="Уменьшить масштаб" disabled={zoom <= ZOOM_MIN} onClick={() => setZoom((z) => Math.max(ZOOM_MIN, +(z - ZOOM_STEP).toFixed(2)))}>
+          −
+        </button>
+        <button type="button" data-testid="graph-zoom-reset" className="btn ui-label" aria-label="Сбросить масштаб" onClick={() => setZoom(1)}>
+          {Math.round(zoom * 100)}%
+        </button>
+        <button type="button" data-testid="graph-zoom-in" className="btn ui-label" aria-label="Увеличить масштаб" disabled={zoom >= ZOOM_MAX} onClick={() => setZoom((z) => Math.min(ZOOM_MAX, +(z + ZOOM_STEP).toFixed(2)))}>
+          +
+        </button>
+      </div>
+      <div className="graph-zoom-layer" style={{ width: view.w * zoom, height: view.h * zoom }}>
+        <svg
+          data-testid="architecture-diagram"
+          data-version={version}
+          data-flow={flowOf(record)}
+          data-selection={selection?.segment}
+          width={view.w}
+          height={view.h}
+          viewBox={`0 0 ${view.w} ${view.h}`}
+          className="graph-canvas"
+          style={{ transform: `scale(${zoom})`, transformOrigin: '0 0' }}
+          role="img"
+          aria-label="Граф вычислений 2-3-1: константы x и y, параметры W1/b1/W2/b2, операции matvec, add, tanh, σ, BCE и станция обновления весов; внутри звена — живое значение, под звеном — градиент после backward"
+        >
         {GRAPH_EDGES.map((e) => {
           const from = anchor(e.from, 'right')
           const to = anchor(e.to, 'left')
@@ -516,7 +539,8 @@ export default function ComputationGraph({ record }: { record: StepRecord | null
             </g>
           )
         })}
-      </svg>
+        </svg>
+      </div>
     </div>
   )
 }

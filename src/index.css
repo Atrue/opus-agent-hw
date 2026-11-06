@@ -1026,3 +1026,16 @@ circle.diag-hit:focus-visible {
     transition: none;
   }
 }
+.graph-zoom { /* контролы масштаба канвы: sticky-угол полосы прокрутки */
+  position: sticky;
+  top: 6px;
+  margin-left: auto;
+  z-index: 5;
+  display: flex;
+  gap: 4px;
+  width: fit-content;
+}
+.graph-zoom .btn {
+  min-width: 34px;
+  padding: 2px 8px;
+}
