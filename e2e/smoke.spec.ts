@@ -300,10 +300,12 @@ test('8c) граф: градиенты под звеньями, hover рёбер
   expect(after, 'параметр b1[0] обновился на шаге sgd').not.toBe(before)
 })
 
-test('9) samples-panel: текущий помечен; FF → 4 вердикта; reset сохраняет историю сессии', async ({ page }) => {
+test('9) samples-panel: колонки-переменные; текущий помечен; FF → 4 вердикта; reset сохраняет историю', async ({ page }) => {
   await page.goto('/')
   const panel = page.getByTestId('samples-panel')
   await expect(panel).toBeVisible()
+  // таблица-датасет: колонки = названия переменных (01.2-07, пункт 8 цикла 2)
+  await expect(panel.locator('thead th'), 'колонки = переменные x1 | x2 | y | ŷ | ✓').toHaveText(['x1', 'x2', 'y', 'ŷ', '✓'])
   await expect(panel.getByTestId('sample-row'), '4 примера обучающей выборки').toHaveCount(4)
   await expect(panel.locator('.sample-row-current'), 'текущий пример помечен (до прохода — первый)').toHaveCount(1)
   await expect(panel.locator('[data-index="0"]')).toHaveClass(/sample-row-current/)
@@ -345,10 +347,12 @@ test('10) result-zone: все входы текущего примера + ŷ/L/
   await expect(zone).toContainText(/x1\s*=\s*1/)
   await expect(zone).toContainText(/x2\s*=\s*0/)
   await expect(zone).toContainText(/y\s*=\s*1/)
-  // ŷ/L/LOSS до вычисления — «н/д» (DESIGN §6); LR = η сценария уже на месте
+  // ŷ/L до вычисления — «н/д» (DESIGN §6); LR = η сценария уже на месте;
+  // LOSS-дубля нет — единственный лосс-показатель это L (01.2-07, пункт 9)
   await expect(zone).toContainText('н/д')
   await expect(zone).toContainText('LR')
   await expect(zone).toContainText('0.5')
+  await expect(zone).not.toContainText('LOSS')
 
   // 7 кликов = операции 0–6 (matvec…bce): ŷ и L вычислены — эталон-числа
   for (let i = 0; i < 7; i++) await page.getByTestId('btn-next').click()
