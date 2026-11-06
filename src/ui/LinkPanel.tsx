@@ -117,6 +117,11 @@ export default function LinkPanel() {
           <SubscriptText text={segment.formula} />
         </p>
       </div>
+      {/* подзаголовок живых чисел (01.2-05, пункт 5 UAT): пояснение семантики —
+          что за числа и почему до вычисления строки нет */}
+      <p className="ui-label w-full text-on-surface-variant">
+        значения живого прогона — символ появляется после вычисления в текущем сэмпле
+      </p>
       <div className="link-numbers">
         {SEGMENT_NUMBER_SYMS[segment.id].map((sym) => (
           <LinkNumberRow key={sym} sym={sym} />
