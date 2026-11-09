@@ -217,6 +217,8 @@ private emit(): void {
 
 ### `eslint.config.js` (new) + `package.json` + `.oxlintrc.json` (D-27)
 
+> **Ревизия D-27 (владелец, 2026-11-09, ревью планов): линтер = только oxlint.** Части этого паттерна про `eslint.config.js`, FlatCompat/airbnb-стек и скрипт `oxlint && eslint .` устарели (см. переработанный 02-01-PLAN.md и 02-CONTEXT.md §D-27 ревизия). Актуален ниже: **carve-out `.oxlintrc.json` для `*.test.ts`** (используется планом 02-02) и существующая override-механика. Новый bring-up 02-01: categories correctness/suspicious=error, pedantic/perf=warn в `.oxlintrc.json` + замороженный блок исключений; `scripts.lint` не меняется.
+
 **Role-analog:** `.oxlintrc.json:7-39` — существующий линтер-конфиг c override-механикой:
 
 ```json
