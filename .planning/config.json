@@ -23,14 +23,14 @@
     "plan_check": true,
     "verifier": true,
     "nyquist_validation": false,
-    "auto_advance": true,
+    "auto_advance": false,
     "node_repair": true,
     "node_repair_budget": 2,
     "ui_phase": true,
     "ui_safety_gate": true,
     "ai_integration_phase": true,
     "api_coverage_gate": true,
-    "human_verify_mode": "end-of-phase",
+    "human_verify_mode": "mid-flight",
     "context_guard_mode": "warn",
     "text_mode": false,
     "compact_content": false,
@@ -89,6 +89,6 @@
     "source_grounding": true,
     "source_grounding_authority": "grep"
   },
-  "mode": "yolo",
-  "granularity": "coarse"
+  "mode": "interactive",
+  "granularity": "fine"
 }
