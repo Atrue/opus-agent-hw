@@ -1,19 +1,19 @@
 ---
 gsd_state_version: "1.0"
-current_phase: "01.2"
-current_phase_name: Формула-хребет и история звена (INSERTED)
-status: executing
-stopped_at: "Вставка 01.2 «формула-хребет»: модель утверждена владельцем, планы 01.2-01/01.2-02/01.2-03 созданы; фаза 2 не тронута (Plans: TBD); ожидается /gsd-execute-phase"
-last_updated: "2026-11-05T13:34:06.643Z"
-last_activity: 2026-11-05
-last_activity_desc: Phase 01.2 execution started
-state_head: bc9fa0c98970fcf83658a9842ed947f855d07634
+current_phase: "02"
+current_phase_name: Движок и MVP-walkthrough на одном нейроне
+status: planning
+stopped_at: "Фаза 01.2 закрыта (верификация 39/39 + UAT 3/3 принят владельцем 2026-11-09); планы фазы 2 (9 шт) отревьюены: 02-02/02-07 подтверждены, 02-01 переработан под oxlint-only (ревизия D-27), 02-08 принят по умолчанию; ожидается подтверждение остальных пунктов ревью → /gsd-execute-phase (волна 1 = 02-01)"
+last_updated: "2026-11-09T14:29:24.000Z"
+last_activity: 2026-11-09
+last_activity_desc: Phase 01.2 closed; phase-2 plan review in progress (D-27 revised to oxlint-only)
+state_head: a0b21f1687240b7f84f842919aaf756bf064f45bb
 progress:
   total_phases: 6
-  completed_phases: 2
-  total_plans: 12
-  completed_plans: 9
-  percent: 33
+  completed_phases: 3
+  total_plans: 25
+  completed_plans: 16
+  percent: 64
 ---
 
 # Project State
@@ -23,16 +23,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-11-03)
 
 **Core value:** Пользователь сам пошагово исполняет forward/backward-pass готового сценария и видит каждый градиент числом — в браузере, без регистрации, по одной ссылке (первый шаг < 1 мин).
-**Current focus:** Phase 01.2 — Формула-хребет и история звена (INSERTED)
+**Current focus:** Phase 02 — Движок и MVP-walkthrough на одном нейроне
 
 ## Current Position
 
-Phase: 01.2 (Формула-хребет и история звена (INSERTED)) — EXECUTING
-Plan: 1 of 3
-Status: Executing Phase 01.2
-Last activity: 2026-11-05 — Phase 01.2 execution started
+Phase: 02 (Движок и MVP-walkthrough на одном нейроне) — PLANNING (plans 9/9 created, review in progress)
+Plan: 1 of 9 (02-01, wave 1)
+Status: Phase-2 plan review: 02-02/02-07 confirmed, 02-01 reworked to oxlint-only (D-27 revision), 02-08 accepted by default; remaining items pending owner confirmation
+Last activity: 2026-11-09 — Phase 01.2 closed; phase-2 plan review
 
-Progress: [███░░░░░░░] 33%
+Progress: [██████▓░░░] 64%
 
 ## Performance Metrics
 
@@ -45,6 +45,7 @@ Progress: [███░░░░░░░] 33%
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
+| 01.2 | 7 | - | - |
 | 01.1 | 5 | - | - |
 | 01 | 4 | - | - |
 
@@ -108,6 +109,8 @@ Recent decisions affecting current work:
 - [Quick 2026-11-05]: D-25 — редизайн UI под DESIGN.md: тёмная «приборная» тема (суперсессия D-06), токен-контракт = DESIGN.md + index.css @theme; шрифты Space Grotesk/Geist/Material Symbols (fontsource, OFL), Inter удалён; знак числа Okabe-Ito сохранён ролью (§2.1, AA на тёмном §2.2); каркас workbench 4/5/3 + лента шагов (индикатор, forward-only) + статус-бар 48px; лекционный режим и reduced-motion гейты сохранены; e2e/юниты/линт зелёные, скрин-baseline 28 регенерирован, артефакт редизайна в artifacts/ (003)
 - [2026-11-05, утверждено владельцем]: модель «формула-хребет» для 9 пунктов ТЗ — формула-строка с полной формулой сети сверху, клик по символу выбирает звено цепи (x→z1→a1→z2→ŷ→L→W): подсветка геометрии на диаграмме (primary, отличимо от амбера активной op) + панель звена; история звена per-sample (гранулярность утверждена) вместо таблицы весов UX-06; reset = перезапуск прогона (runId), история сессии живёт до reload; все примеры выборки — в блоке «Примеры и результат» (бывшая зона результата, переименована владельцем); лента шагов — горизонтально вверх, автоскролл к активной; реализация — вставленной фазой 01.2, планами 01.2-01…03 (журнализация D-26 — в 01.2-03); фаза 2 не смешивается с этими правками и стартует отдельно после 01.2
 - [01.2-03]: D-26 зафиксирован в DECISIONS.md — формула-строка = навигационное ядро, звено цепи x→z1→a1→z2→ŷ→L→W, история звена per-sample, reset = перезапуск прогона (runId) с сохранением истории сессии до reload; супрессии: вертикальный рельс и полоса 2/6/4 (D-25), таблица весов UX-06 и weightSnapshots (01.1-03). UX-06 переписан в обоих REQUIREMENTS (Phase mapping → 01.2), DESIGN.md §4/§9 отражают каркас «формула-строка + горизонтальная лента + main 8/4» и linked-highlighting; глоссарий PROJECT.md дополнен (chain link, formula strip, link history, SampleRecord); e2e — 9 проверок, двойной прогон бит-идентичен (baseline 28)
+- [01.2 → закрытие, 2026-11-09]: верификация цикла 2 — 39/39 must-haves, 101 юнит/11 e2e зелёные, движок не тронут (diff bc9fa0c..HEAD по src/tensor = 0); UAT 3/3 принят владельцем без визуального просмотра на основании автоматических контрактов — фаза 01.2 закрыта (01.2-UAT.md complete, 01.2-VERIFICATION.md passed)
+- [Ревью планов фазы 2, 2026-11-09]: D-27 ревизован владельцем — строгий линтер = **только oxlint** (categories suspicious/pedantic/perf + frozen-список исключений в .oxlintrc.json; ESLint/airbnb НЕ вводится, 0 новых npm-пакетов); мотиваторы: отказ от 9 dev-пакетов и eslintrc-моста; type-aware в oxlint (tsgolint, 59/61 правил tseslint) требует TypeScript 7+ — проект на 5.9.3, пересмотр после стабилизации TS7. 02-01 переработан под oxlint-only; 02-06/02-CONTEXT/ROADMAP точечно скорректированы. Подтверждены владельцем: 02-02 (колокация), 02-07 (сплит runState+D-33); 02-08 (README+экспорты) принят по умолчанию (вопрос пропущен)
 
 ### Pending Todos
 
@@ -132,6 +135,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-11-05T16:30:00Z
-Stopped at: Вставка 01.2 «формула-хребет» готова к исполнению (/gsd-execute-phase, wave 1 = 01.2-01); фаза 2 нетронута
+Last session: 2026-11-09T14:29:24Z
+Stopped at: Фаза 01.2 закрыта; ревью планов фазы 2 — подтверждены 02-02/02-07, 02-01 переработан под oxlint-only (D-27 ревизия), 02-08 по умолчанию; остались пункты 02-03/02-04/02-05/02-09/02-06 → после подтверждения /gsd-execute-phase (волна 1 = 02-01)
 Resume file: None

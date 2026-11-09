@@ -10,7 +10,7 @@
 4. [`REQUIREMENTS.md`](REQUIREMENTS.md) — канонические требования с acceptance criteria (DOCS-01…06, UX-\*, NFR-01…03).
 5. [`DESIGN.md`](DESIGN.md) — дизайн-система.
 6. Папка текущей фазы: `.planning/phases/<current-phase>/` — PLAN/SUMMARY/UI-SPEC/VERIFICATION/UAT.
-7. [`DECISIONS.md`](DECISIONS.md) — журнал решений D-01…D-23 с обоснованиями; не принимать решений, противоречащих журналу.
+7. [`DECISIONS.md`](DECISIONS.md) — журнал решений D-01…D-33 с обоснованиями; не принимать решений, противоречащих журналу.
 
 Для GSD-воркфлоу контекст грузится автоматически в `.claude/CLAUDE.md` (PROJECT/STACK/CONVENTIONS).
 
