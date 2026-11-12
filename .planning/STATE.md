@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 02
 current_phase_name: Движок и MVP-walkthrough на одном нейроне
 status: executing
-stopped_at: Completed 02-08-PLAN.md (README+named exports); далее 02-04
-last_updated: "2026-11-12T18:12:02.221Z"
+stopped_at: Completed 02-04-PLAN.md (D-30 tracer+expansion); далее 02-05
+last_updated: "2026-11-12T18:29:15.006Z"
 last_activity: 2026-11-12
 last_activity_desc: Phase 02 execution started
-state_head: ea93c547a3106fd9934318924d56693381deeff6
+state_head: be3b925b4136392c703820668b5c13f353f0ca1f
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 25
-  completed_plans: 21
+  completed_plans: 22
   percent: 50
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-03)
 ## Current Position
 
 Phase: 02 (Движок и MVP-walkthrough на одном нейроне) — EXECUTING
-Plan: 6 of 9
+Plan: 7 of 9
 Status: Ready to execute
 Last activity: 2026-11-12 — Phase 02 execution started
 
@@ -71,6 +71,7 @@ Progress: [█████░░░░░] 50%
 | Phase 02 P03 | 3 min | 2 tasks | 4 files |
 | Phase 02 P07 | 6 min | 1 tasks | 23 files |
 | Phase 02 P08 | 4 min | 1 tasks | 21 files |
+| Phase 02 P04 | 42 min | 2 tasks | 15 files |
 
 ## Accumulated Context
 
@@ -121,6 +122,7 @@ Recent decisions affecting current work:
 - [Phase 02]: [02-03] D-29 реализован: Value и Tensor декомпозированы на класс-контейнер + чистые функции — обратный шаг = данные (BackwardPlan tagged union через TensorInit.plan, без post-hoc-сеттеров) + диспетчеры runBackwardPlan/value-grads; замыкания setBackward/defineBackward/backwardFn удалены (0 вхождений); числовые выражения один-в-один с замыканиями — бит-идентичность доказана инвариантами после каждого файлового хода — Стандарт владельца D-29 «большие файлы → маленькие чистые функции» применён к движку; чистые ядра ops.ts готовы к переиспользованию ScenarioModel (02-04); index.ts не менялся (defineBackward никогда не экспортировался)
 - [Phase 02]: [02-07] Сплит runState.ts → types/stepRecords/trainingRun/run/useRunSlice (D-28б) + D-33: window.__run и declare global удалены, DevTools-замена — сниппет dynamic import в src/run/README.md; runState.test.ts → trainingRun.test.ts; 1 модуль на файл, поведение прогона бит-идентично — Структура «модуль = папка с кодом + тесты + README» — постоянный стандарт владельца; сплит готовит run-слой к ScenarioModel (02-04)
 - [Phase 02]: [02-08] D-28б/в завершены: 16 UI-компонентов на именованных экспортах (ноль export default в src), README в src/{tensor,run,ui,format}; селекторы e2e и RU-строки не менялись — Стандарт владельца «модуль = папка с кодом + тесты + README» соблюдён на всей кодовой базе
+- [Phase 02]: [02-04] D-30 реализован: ScenarioModel/render — единственный источник топологии/формул/нарративов/рендер-меток; buildModel(spec)+ScenarioNet (params() без входов) + walked-опы buildWalk; buildStepRecord генерическая из opMeta; UI (формула/граф/звенья/серии) читает spec.render, NodeBinding для живых чисел; XOR бит-идентичен (etalon без правки, e2e двойной прогон); MLP/OPS_PER_SAMPLE удалены — Трейсер-план фазы: смена носителя (02-05) становится добавлением данных, а не нового UI-слоя; XOR-MLP фазы 3 подключается без дублирования
 
 ### Pending Todos
 
@@ -145,6 +147,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-11-12T18:12:01.983Z
-Stopped at: Completed 02-08-PLAN.md (README+named exports); далее 02-04
+Last session: 2026-11-12T18:29:14.753Z
+Stopped at: Completed 02-04-PLAN.md (D-30 tracer+expansion); далее 02-05
 Resume file: None
