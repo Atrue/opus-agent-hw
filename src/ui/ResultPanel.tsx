@@ -1,7 +1,7 @@
 import { useRunSlice } from '../run/useRunSlice'
 import { XOR_SCENARIO } from '../run/scenario'
 import { formatKey } from '../format/numbers'
-import SubscriptText from './SubscriptText'
+import { SubscriptText } from './SubscriptText'
 
 /**
  * «Результат — текущий пример» (01.2-05, пункты 3/8 UAT): фокус-карточка
@@ -16,7 +16,7 @@ import SubscriptText from './SubscriptText'
  * через --num-size. Данные — только опубликованные срезы прогона, новых
  * вычислений нет.
  */
-export default function ResultPanel() {
+export function ResultPanel() {
   const sampleIndex = useRunSlice((r) => r.sampleIndex)
   const values = useRunSlice((r) => r.sampleOpValues)
   const lossPoints = useRunSlice((r) => r.epochLossPoints)

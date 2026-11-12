@@ -5,8 +5,8 @@ import { SEGMENTS, SEGMENT_NUMBER_SYMS } from './chainLinks'
 import { XOR_SCENARIO } from '../run/scenario'
 import type { Tensor } from '../tensor'
 import { formatKey } from '../format/numbers'
-import SubscriptText from './SubscriptText'
-import LinkHistory from './LinkHistory'
+import { SubscriptText } from './SubscriptText'
+import { LinkHistory } from './LinkHistory'
 
 /**
  * Панель звена (01.2-01): раскрывается под формульной строкой, когда выбран
@@ -78,7 +78,7 @@ function LinkNumberRow({ sym }: { sym: string }) {
   )
 }
 
-export default function LinkPanel() {
+export function LinkPanel() {
   const selection = useRunSlice((r) => r.selection)
 
   // Esc закрывает панель звена; capture-фаза — раньше bubble-слушателя Esc

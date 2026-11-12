@@ -354,7 +354,7 @@ const ZOOM_MIN = 0.5
 const ZOOM_MAX = 2
 const ZOOM_STEP = 0.25
 
-export default function ComputationGraph({ record }: { record: StepRecord | null }) {
+export function ComputationGraph({ record }: { record: StepRecord | null }) {
   // версия прогона: перерисовка на каждую операцию (параметры мутируются на месте)
   const version = useRunSlice((r) => r.version)
   const selection = useRunSlice((r) => r.selection)

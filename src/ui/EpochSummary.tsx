@@ -1,6 +1,6 @@
 import { useRunSlice } from '../run/useRunSlice'
 import { formatKey } from '../format/numbers'
-import SubscriptText from './SubscriptText'
+import { SubscriptText } from './SubscriptText'
 
 /**
  * Экран завершения эпохи (R3): замещает содержимое слота панели (как
@@ -11,7 +11,7 @@ import SubscriptText from './SubscriptText'
  * primary-кнопка «Следующая эпоха» в контролах (btn-epoch-next): эпохи
  * следуют бесконечно, терминального состояния нет.
  */
-export default function EpochSummary() {
+export function EpochSummary() {
   const summaries = useRunSlice((r) => r.completedEpochs)
   const sampleCount = useRunSlice((r) => r.scenario.samples.length)
   // экран открывается только с завершённой эпохой — сводка всегда есть

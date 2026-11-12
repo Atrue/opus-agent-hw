@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { useRunSlice } from '../run/useRunSlice'
 import { XOR_SCENARIO } from '../run/scenario'
 import { formatKey } from '../format/numbers'
-import SubscriptText from './SubscriptText'
+import { SubscriptText } from './SubscriptText'
 
 /**
  * Лента шагов (DESIGN.md §4/§9; 01.2-01 пункт 5 ТЗ) — ОДНА горизонтальная
@@ -31,7 +31,7 @@ function pillLabel(formula: string): string {
   return formula.split('=')[0]!.trim()
 }
 
-export default function StepperBand() {
+export function StepperBand() {
   const stepInSample = useRunSlice((r) => r.stepInSample)
   const screen = useRunSlice((r) => r.screen)
   const values = useRunSlice((r) => r.sampleOpValues)

@@ -1,7 +1,7 @@
 import { useRunSlice } from '../run/useRunSlice'
 import { XOR_SCENARIO } from '../run/scenario'
 import { formatKey } from '../format/numbers'
-import SubscriptText from './SubscriptText'
+import { SubscriptText } from './SubscriptText'
 
 /**
  * «Примеры» (01.2-05; таблица-датасет — 01.2-07, пункт 8 цикла 2): обучающая
@@ -15,7 +15,7 @@ import SubscriptText from './SubscriptText'
  * e2e-теста 9. Данные — только опубликованные срезы прогона (sampleHistory
  * текущего runId+epoch); новых вычислений нет.
  */
-export default function ExamplesPanel() {
+export function ExamplesPanel() {
   const sampleIndex = useRunSlice((r) => r.sampleIndex)
   const runId = useRunSlice((r) => r.runId)
   const epoch = useRunSlice((r) => r.epoch)

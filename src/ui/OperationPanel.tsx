@@ -4,10 +4,10 @@ import { XOR_SCENARIO } from '../run/scenario'
 import type { StepRecord } from '../tensor'
 import { formatKey } from '../format/numbers'
 import { buildOperationRows, type NumberRow } from './operationRows'
-import NarrativeLine from './NarrativeLine'
-import NumberHint from './NumberHint'
+import { NarrativeLine } from './NarrativeLine'
+import { NumberHint } from './NumberHint'
 import { buildHintData } from './hintData'
-import SubscriptText from './SubscriptText'
+import { SubscriptText } from './SubscriptText'
 
 /**
  * Панель операции — дефолтный вид: формула + входы/выходы/градиенты операции,
@@ -52,7 +52,7 @@ function NumberRowView({ row, joiner, record }: { row: NumberRow; joiner: string
   )
 }
 
-export default function OperationPanel({ record }: { record: StepRecord | null }) {
+export function OperationPanel({ record }: { record: StepRecord | null }) {
   // До первого шага: предстоящая операция — без чисел (они появятся после «Шага»)
   if (record === null) {
     return (

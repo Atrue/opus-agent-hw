@@ -3,7 +3,7 @@ import type { Drill } from '../run/types'
 import type { StepRecord } from '../tensor'
 import { exactRepr, formatKey } from '../format/numbers'
 import { flattenTensorValues, resolveRef, type ResolvedNumber } from './hintData'
-import SubscriptText from './SubscriptText'
+import { SubscriptText } from './SubscriptText'
 
 /**
  * NumberDrilldown (Interaction Contract): открывается в слоте панели
@@ -54,7 +54,7 @@ function TerminalPanel({ resolved }: { resolved: ResolvedNumber }) {
   )
 }
 
-export default function NumberDrilldown({ record, drill }: { record: StepRecord; drill: Drill }) {
+export function NumberDrilldown({ record, drill }: { record: StepRecord; drill: Drill }) {
   const resolved = resolveRef(record, drill.ref)
   const terminal = resolved !== null && resolved.sym === '∂L/∂x'
   const isBackward = record.phase === 'backward'

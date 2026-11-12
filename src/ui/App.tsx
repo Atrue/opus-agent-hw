@@ -3,17 +3,17 @@ import { useRunSlice } from '../run/useRunSlice'
 import { XOR_SCENARIO } from '../run/scenario'
 import { parseHash, toHash } from '../run/url'
 import type { Phase } from '../tensor'
-import ComputationGraph from './ComputationGraph'
-import EpochSummary from './EpochSummary'
-import ExamplesPanel from './ExamplesPanel'
-import FormulaStrip from './FormulaStrip'
-import LinkPanel from './LinkPanel'
-import LossChart from './LossChart'
-import NumberDrilldown from './NumberDrilldown'
-import OperationPanel from './OperationPanel'
-import ResultPanel from './ResultPanel'
-import StepControls from './StepControls'
-import StepperBand from './StepperBand'
+import { ComputationGraph } from './ComputationGraph'
+import { EpochSummary } from './EpochSummary'
+import { ExamplesPanel } from './ExamplesPanel'
+import { FormulaStrip } from './FormulaStrip'
+import { LinkPanel } from './LinkPanel'
+import { LossChart } from './LossChart'
+import { NumberDrilldown } from './NumberDrilldown'
+import { OperationPanel } from './OperationPanel'
+import { ResultPanel } from './ResultPanel'
+import { StepControls } from './StepControls'
+import { StepperBand } from './StepperBand'
 
 /**
  * Воркбенч walkthrough (01.2-01 «формула-хребет»): шапка-транспорт →
@@ -55,7 +55,7 @@ if (window.location.hash !== toHash(initialScenario)) {
   window.history.replaceState(null, '', toHash(initialScenario))
 }
 
-export default function App() {
+export function App() {
   const epoch = useRunSlice((r) => r.epoch)
   const sampleNumber = useRunSlice((r) => r.sampleIndex + 1)
   const stepNumber = useRunSlice((r) => r.stepInSample)

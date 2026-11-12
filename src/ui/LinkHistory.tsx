@@ -2,7 +2,7 @@ import { useRunSlice } from '../run/useRunSlice'
 import { capLinkHistory, linkHistoryOf, type LinkHistoryPoint, type LinkSeries } from '../run/history'
 import { liveValues } from './LinkPanel'
 import { formatKey } from '../format/numbers'
-import SubscriptText from './SubscriptText'
+import { SubscriptText } from './SubscriptText'
 import type { SegmentId } from './chainLinks'
 
 /**
@@ -139,7 +139,7 @@ function MultiSeries({ series }: { series: readonly LinkSeries[] }) {
   )
 }
 
-export default function LinkHistory({ segment, symbol }: { segment: SegmentId; symbol: string }) {
+export function LinkHistory({ segment, symbol }: { segment: SegmentId; symbol: string }) {
   const history = useRunSlice((r) => r.sampleHistory)
   const { series } = linkHistoryOf(history, segment, symbol)
   const live = liveValues(symbol)

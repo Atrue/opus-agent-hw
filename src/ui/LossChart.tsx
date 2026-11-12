@@ -22,7 +22,7 @@ const PAD_T = 14
 // место под отметки эпох
 const PAD_B = 22
 
-export default function LossChart() {
+export function LossChart() {
   const lossPoints = useRunSlice((r) => r.epochLossPoints)
   const summaries = useRunSlice((r) => r.completedEpochs)
   const history = useRunSlice((r) => r.sampleHistory)

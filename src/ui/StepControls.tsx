@@ -11,7 +11,7 @@ import { useRunSlice } from '../run/useRunSlice'
  * ни клавиатурой. Клавиатура: → / Space / PgDn → следующая операция (с экрана
  * эпохи — следующая эпоха), Esc → закрыть drill. Focus-ring — в CSS.
  */
-export default function StepControls() {
+export function StepControls() {
   const screen = useRunSlice((r) => r.screen)
 
   useEffect(() => {

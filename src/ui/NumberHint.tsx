@@ -13,7 +13,7 @@ import {
 } from '@floating-ui/react'
 import { formatKey } from '../format/numbers'
 import type { HintData } from './hintData'
-import SubscriptText from './SubscriptText'
+import { SubscriptText } from './SubscriptText'
 
 /**
  * NumberHint (R5 §4.5) — tier 1 прогрессивного оголения чисел: hover/focus на
@@ -29,7 +29,7 @@ import SubscriptText from './SubscriptText'
 
 const GRAD_PREFIX = '∂L/∂'
 
-export default function NumberHint({ hint, children }: { hint: HintData | null; children: ReactElement }) {
+export function NumberHint({ hint, children }: { hint: HintData | null; children: ReactElement }) {
   const [open, setOpen] = useState(false)
   const [anchor, setAnchor] = useState<Element | null>(null)
   const [floatingEl, setFloatingEl] = useState<HTMLDivElement | null>(null)

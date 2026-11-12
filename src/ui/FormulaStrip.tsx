@@ -1,7 +1,7 @@
 import { run } from '../run/run'
 import { useRunSlice } from '../run/useRunSlice'
 import { symbolToSegment, type SegmentId } from './chainLinks'
-import SubscriptText from './SubscriptText'
+import { SubscriptText } from './SubscriptText'
 
 /**
  * Формула-строка (01.2-01) — навигационное ядро экрана: полная формула
@@ -44,7 +44,7 @@ function FormulaSym({ sym, selected, onToggle }: { sym: string; selected: boolea
   )
 }
 
-export default function FormulaStrip() {
+export function FormulaStrip() {
   const selection = useRunSlice((r) => r.selection)
   const toggle = (segment: SegmentId, sym: string): void => {
     if (selection !== null && selection.segment === segment && selection.symbol === sym) run.clearLink()
