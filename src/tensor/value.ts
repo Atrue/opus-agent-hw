@@ -129,10 +129,8 @@ export class Value {
       case 'log': {
         const [g] = localGradLog(a!.data, this.grad)
         a!.grad += g
-        return
       }
-      case '':
-        return
+      // лист (op '') не имеет родителей — обратный шаг пуст
     }
   }
 
