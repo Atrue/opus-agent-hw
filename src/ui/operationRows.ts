@@ -7,14 +7,18 @@ import type { StepRecord, TensorValues } from '../tensor'
  * цифр»): ≤7 ключевых чисел в дефолтном виде, ≤30 на всём экране.
  */
 
-const KEY_NUMBER_CAP = 7 // жёсткий потолок ключевых чисел на операцию
-const PER_TENSOR_CAP = 3 // значений тензора в дефолтном виде; остальное — drill-down
+// жёсткий потолок ключевых чисел на операцию
+const KEY_NUMBER_CAP = 7
+// значений тензора в дефолтном виде; остальное — drill-down
+const PER_TENSOR_CAP = 3
 
 export interface NumberRow {
   kind: 'result' | 'grad' | 'input'
   sym: string
-  values: number[] // показанные значения
-  hidden: number // скрыто до drill-down
+  // показанные значения
+  values: number[]
+  // скрыто до drill-down
+  hidden: number
   changed: boolean
 }
 
@@ -55,7 +59,8 @@ export function buildOperationRows(step: StepRecord): NumberRow[] {
   pushKey(step.outputs.sym, step.outputs.values, 'result')
   if (step.grads !== null) {
     for (const [sym, values] of Object.entries(step.grads)) {
-      if (sym === step.outputs.sym) continue // дубль выхода — уже показан
+      // дубль выхода — уже показан
+      if (sym === step.outputs.sym) continue
       pushKey(sym, values, 'grad')
     }
   }

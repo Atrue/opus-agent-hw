@@ -174,11 +174,13 @@ describe('инвариант «drill-down = движок» per-op (backward-гр
   })
 
   it('sgd: W2[i] после = W2[i] − η·∂L/∂W2[i] (снапшоты «до» + градиенты)', () => {
-    const { model, cursor } = engineTo(12) // sgd ещё не исполнена
+    // sgd ещё не исполнена
+    const { model, cursor } = engineTo(12)
     const wBefore = snapOp('W2', tensorValuesOf(model.W2) as number[][])
     const g = snapOp('∂L/∂W2', Array.from(model.W2.grad!))
     const wBeforeValues = Array.from(model.W2.data)
-    cursor.advance() // оп 12: sgd мутирует веса
+    // оп 12: sgd мутирует веса
+    cursor.advance()
     for (let i = 0; i < 3; i++) {
       const exp = expandScalar({ kind: 'sgd', w: wBefore.op, g: g.op, lr: cursor.lr, index: i })
       expectClose(exp.value, model.W2.data[i]!, `W2[${String(i)}] после sgd`)
@@ -238,7 +240,8 @@ describe('скалярное ядро Value (micrograd-механика)', () =>
   it('backward топологически раскручивает граф; повторное использование узла даёт сумму путей', () => {
     const a = new Value(2, { label: 'a' })
     const b = new Value(-3, { label: 'b' })
-    const c = a.mul(b).add(a) // c = a·b + a = −4
+    // c = a·b + a = −4
+    const c = a.mul(b).add(a)
     c.backward()
     expect(c.data).toBe(-4)
     expect(a.grad, 'dc/da = b + 1').toBe(-2)
@@ -252,6 +255,7 @@ describe('скалярное ядро Value (micrograd-механика)', () =>
 
     const u = new Value(0.5, { label: 'u' })
     u.sigmoid().log().backward()
-    expect(u.grad).toBeCloseTo(1 - 1 / (1 + Math.exp(-0.5)), 15) // d/du ln(σ(u)) = 1−σ(u)
+    // d/du ln(σ(u)) = 1−σ(u)
+    expect(u.grad).toBeCloseTo(1 - 1 / (1 + Math.exp(-0.5)), 15)
   })
 })

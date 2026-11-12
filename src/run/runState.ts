@@ -313,7 +313,8 @@ export class TrainingRun {
   constructor() {
     this.model = new MLP(XOR_SCENARIO.startWeights)
     this.cursor = this.newCursor(0)
-    this.appendStartRecord() // стартовые константы — первая запись истории
+    // стартовые константы — первая запись истории
+    this.appendStartRecord()
   }
 
   /** Номер следующей операции в сэмпле, 1-based (курсор индикатора R3);
@@ -334,7 +335,8 @@ export class TrainingRun {
     const cursor = this.cursor
     const op = cursor.opIndex
     this.recording = record
-    cursor.advance() // onOp-рекордер пишет currentRecord только при recording
+    // onOp-рекордер пишет currentRecord только при recording
+    cursor.advance()
     if (op === 6) {
       // лосс-точка сэмпла пишется на его bce-опе — в любом режиме (R3)
       this.epochLossPoints = [...this.epochLossPoints, cursor.tensors.L!.data[0]!]
@@ -403,7 +405,8 @@ export class TrainingRun {
     if (!this.cursor.done) return
     const next = this.sampleIndex + 1
     if (next >= SAMPLE_COUNT) {
-      this.finalizeEpoch() // экран завершения эпохи — продолжение по advance()
+      // экран завершения эпохи — продолжение по advance()
+      this.finalizeEpoch()
     } else {
       this.sampleIndex = next
       this.cursor = this.newCursor(next)

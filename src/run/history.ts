@@ -92,7 +92,8 @@ export function sessionGeometryOf(
       prevRun = null
       continue
     }
-    if (prevRun !== null && rec.runId !== prevRun) runBounds.push(samples) // защита
+    // защита
+    if (prevRun !== null && rec.runId !== prevRun) runBounds.push(samples)
     prevRun = rec.runId
     if (rec.runId !== groupRun || rec.epoch !== groupEpoch) {
       closeGroup()

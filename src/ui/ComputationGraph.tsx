@@ -123,23 +123,23 @@ function nodeValue(id: string): number | undefined {
     case 'W1x[0]':
     case 'W1x[1]':
     case 'W1x[2]':
-      return done[0] !== undefined ? dotW1(idx(id)) : undefined
+      return done[0] === undefined ? undefined : dotW1(idx(id))
     case 'z1[0]':
     case 'z1[1]':
     case 'z1[2]':
-      return done[1] !== undefined ? tensorAt(t.z1, idx(id)) : undefined
+      return done[1] === undefined ? undefined : tensorAt(t.z1, idx(id))
     case 'a1[0]':
     case 'a1[1]':
     case 'a1[2]':
-      return done[2] !== undefined ? tensorAt(t.a1, idx(id)) : undefined
+      return done[2] === undefined ? undefined : tensorAt(t.a1, idx(id))
     case 'W2a1':
-      return done[3] !== undefined ? dotW2() : undefined
+      return done[3] === undefined ? undefined : dotW2()
     case 'z2':
-      return done[4] !== undefined ? tensorAt(t.z2, 0) : undefined
+      return done[4] === undefined ? undefined : tensorAt(t.z2, 0)
     case 'ŷ':
-      return done[5] !== undefined ? tensorAt(t.yhat, 0) : undefined
+      return done[5] === undefined ? undefined : tensorAt(t.yhat, 0)
     case 'L':
-      return done[6] !== undefined ? tensorAt(t.L, 0) : undefined
+      return done[6] === undefined ? undefined : tensorAt(t.L, 0)
     // операции несут значение своего результата
     case 'op:matvec[0]':
     case 'op:matvec[1]':
@@ -360,8 +360,10 @@ export default function ComputationGraph({ record }: { record: StepRecord | null
   const [zoom, setZoom] = useState(1)
   const { view } = buildGraph()
   const stepIdx = stepIndexOf(record)
-  const activeGroup = stepIdx !== null ? STEP_GROUPS[stepIdx]! : null
-  const sel = selection !== null ? geometryOf(selection.segment) : { nodes: new Set<string>(), edges: new Set<string>(), plates: new Set<string>(), biases: new Set<string>() }
+  const activeGroup = stepIdx === null ? null : STEP_GROUPS[stepIdx]!
+  const sel = selection === null
+    ? { nodes: new Set<string>(), edges: new Set<string>(), plates: new Set<string>(), biases: new Set<string>() }
+    : geometryOf(selection.segment)
   const updateActive = stepIdx === 12
 
   const runClick = (node: GraphNode): void => {

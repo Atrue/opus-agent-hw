@@ -40,8 +40,10 @@ describe('compGraph: инвентарь звеньев XOR 2-3-1', () => {
     expect(ops).toHaveLength(14)
     expect(ops.filter((n) => n.id === 'op:update')).toHaveLength(1)
     expect(ops.filter((n) => n.label === 'tanh')).toHaveLength(3)
-    expect(ops.filter((n) => n.label === '·')).toHaveLength(4) // matvec×3 + matvec2
-    expect(ops.filter((n) => n.label === '+')).toHaveLength(4) // add×3 + add2
+    // matvec×3 + matvec2
+    expect(ops.filter((n) => n.label === '·')).toHaveLength(4)
+    // add×3 + add2
+    expect(ops.filter((n) => n.label === '+')).toHaveLength(4)
   })
 
   it('промежуточные значения — отдельные звенья: W1x×3, z1×3, a1×3, W2a1, z2, ŷ, L', () => {

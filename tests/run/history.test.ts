@@ -119,10 +119,12 @@ describe('История звена цепи: linkHistoryOf (01.2-02)', () => {
     const short = capLinkHistory(mk(9))
     expect(short.shown).toHaveLength(9)
     expect(short.hidden).toBe(0)
-    const long = capLinkHistory(mk(49)) // 12 эпох × 4 + старт
+    // 12 эпох × 4 + старт
+    const long = capLinkHistory(mk(49))
     expect(long.shown).toHaveLength(40)
     expect(long.hidden).toBe(9)
-    expect(long.shown[0]!.sampleIndex).toBe(9) // последние точки, не первые
+    // последние точки, не первые
+    expect(long.shown[0]!.sampleIndex).toBe(9)
     expect(long.shown.at(-1)!.sampleIndex).toBe(48)
   })
 })
@@ -137,7 +139,8 @@ describe('Геометрия сессии: sessionGeometryOf + buildLossChartDat
       samples: SAMPLE_COUNT,
       samplesBefore: SAMPLE_COUNT,
     })
-    run.advance() // старт эпохи 2
+    // старт эпохи 2
+    run.advance()
     run.runEpoch()
     expect(sessionGeometryOf(run.sampleHistory, run.completedEpochs.length)).toEqual({
       runBounds: [],
@@ -154,8 +157,10 @@ describe('Геометрия сессии: sessionGeometryOf + buildLossChartDat
     expect(afterReset.runBounds).toEqual([SAMPLE_COUNT * 2])
     expect(afterReset.epochEndXs).toEqual([SAMPLE_COUNT, SAMPLE_COUNT * 2])
     expect(afterReset.samples).toBe(SAMPLE_COUNT * 2)
-    expect(afterReset.samplesBefore).toBe(SAMPLE_COUNT * 2) // сэмплов прогона 2 ещё нет
-    run.runEpoch() // эпоха 1 прогона 2
+    // сэмплов прогона 2 ещё нет
+    expect(afterReset.samplesBefore).toBe(SAMPLE_COUNT * 2)
+    // эпоха 1 прогона 2
+    run.runEpoch()
     const afterRun2 = sessionGeometryOf(run.sampleHistory, run.completedEpochs.length, {
       runId: run.runId,
       epoch: run.epoch,
@@ -167,7 +172,8 @@ describe('Геометрия сессии: sessionGeometryOf + buildLossChartDat
   })
 
   it('сброс внутри эпохи: граница прогона без точки эпохи (эпоха не завершена)', () => {
-    for (let i = 0; i < 2 * OPS_PER_SAMPLE; i++) run.advance() // сэмплы 1–2 эпохи 1
+    // сэмплы 1–2 эпохи 1
+    for (let i = 0; i < 2 * OPS_PER_SAMPLE; i++) run.advance()
     run.reset()
     const g = sessionGeometryOf(run.sampleHistory, run.completedEpochs.length)
     expect(g.runBounds).toEqual([2])
@@ -186,7 +192,8 @@ describe('Геометрия сессии: sessionGeometryOf + buildLossChartDat
     expect(chart.dots.map((p) => p.x)).toEqual([SAMPLE_COUNT, SAMPLE_COUNT * 2])
     expect(chart.dots[1]!.y).toBe(run.completedEpochs[1]!.lossAfter)
     expect(chart.runBounds).toEqual([SAMPLE_COUNT * 2])
-    expect(chart.line).toHaveLength(0) // текущая эпоха прогона 2 чиста
+    // текущая эпоха прогона 2 чиста
+    expect(chart.line).toHaveLength(0)
     // первый сэмпл прогона 2: линия растёт правее границы 8
     for (let i = 0; i < 13; i++) run.advance()
     const geometry2 = sessionGeometryOf(run.sampleHistory, run.completedEpochs.length, {

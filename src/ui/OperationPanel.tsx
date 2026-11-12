@@ -33,7 +33,7 @@ function NumberRowView({ row, joiner, record }: { row: NumberRow; joiner: string
         <SubscriptText text={row.sym} /> =
       </span>
       {row.values.map((v, i) => (
-        <Fragment key={i}>
+        <Fragment key={`${row.sym}[${i}]`}>
           {i > 0 && <span aria-hidden="true">{joiner}</span>}
           <NumberHint hint={buildHintData(record, `${row.sym}[${i}]`)}>
             <button

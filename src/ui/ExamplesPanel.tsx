@@ -64,7 +64,7 @@ export default function ExamplesPanel() {
               const current = i === sampleIndex
               return (
                 <tr
-                  key={i}
+                  key={`${sample.x[0]}-${sample.x[1]}`}
                   aria-current={current ? 'true' : undefined}
                   data-testid="sample-row"
                   data-index={i}

@@ -15,10 +15,12 @@ import { formatKey } from '../format/numbers'
 
 const VIEW_W = 600
 const VIEW_H = 150
-const PAD_L = 64 // место под подписи оси Y
+// место под подписи оси Y
+const PAD_L = 64
 const PAD_R = 16
 const PAD_T = 14
-const PAD_B = 22 // место под отметки эпох
+// место под отметки эпох
+const PAD_B = 22
 
 export default function LossChart() {
   const lossPoints = useRunSlice((r) => r.epochLossPoints)
@@ -37,7 +39,8 @@ export default function LossChart() {
     SAMPLE_COUNT,
     ...chart.dots.map((p) => p.x),
     ...chart.line.map((p) => p.x),
-    ...chart.runBounds.map((b) => b + 1), // место под разделитель и первый сэмпл нового прогона
+    // место под разделитель и первый сэмпл нового прогона
+    ...chart.runBounds.map((b) => b + 1),
   )
   const px = (x: number): number => PAD_L + ((VIEW_W - PAD_L - PAD_R) * x) / maxX
   const py = (y: number): number => VIEW_H - PAD_B - ((VIEW_H - PAD_T - PAD_B) * (y - yLo)) / (yHi - yLo)
@@ -51,11 +54,7 @@ export default function LossChart() {
       viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
       preserveAspectRatio="xMidYMid meet"
     >
-      {!hasData ? (
-        <text x={VIEW_W / 2} y={VIEW_H / 2} textAnchor="middle" className="chart-label">
-          Лосс появится после первой операции loss (L) текущего сэмпла
-        </text>
-      ) : (
+      {hasData ? (
         <>
           {/* ось Y: подписи отформатированными числами (UX-05) */}
           <text x={0} y={PAD_T + 4} className="chart-label">
@@ -107,6 +106,10 @@ export default function LossChart() {
             сэмплы
           </text>
         </>
+      ) : (
+        <text x={VIEW_W / 2} y={VIEW_H / 2} textAnchor="middle" className="chart-label">
+          Лосс появится после первой операции loss (L) текущего сэмпла
+        </text>
       )}
     </svg>
   )

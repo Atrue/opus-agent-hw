@@ -41,12 +41,12 @@ export default function StepperBand() {
   // автоскролл к активной пилюле (центр полосы); reduced-motion → auto
   useEffect(() => {
     const band = bandRef.current
-    if (band === null) return
-    const active = band.querySelector('[aria-current="step"]')
-    if (active === null) return
+    if (band === null || epochDone) return
+    const active = band.children[stepInSample - 1]
+    if (active === undefined) return
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     active.scrollIntoView({ block: 'nearest', inline: 'center', behavior: reduce ? 'auto' : 'smooth' })
-  }, [stepInSample])
+  }, [stepInSample, epochDone])
 
   return (
     <div ref={bandRef} data-testid="step-band" role="list" aria-label={`Лента шагов сэмпла: ${String(stepInSample)} из 13`} className="step-band">

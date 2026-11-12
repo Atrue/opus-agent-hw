@@ -71,7 +71,13 @@ describe('граница src/tensor/ (R2) — сканирование исхо�
   })
 
   it('граница enforce дважды: oxlint no-restricted-imports настроен (patterns + override src/tensor)', () => {
-    const config = JSON.parse(readFileSync(OXLINTRC, 'utf8')) as {
+    // .oxlintrc.json — jsonc (D-27): полнострочные комментарии вырезаем перед JSON.parse
+    // (построчно — glob-паттерны вида **/tensor/* содержат /* и */, регекс по символам их бы съел)
+    const raw = readFileSync(OXLINTRC, 'utf8')
+      .split('\n')
+      .filter((line) => !/^\s*\/\//.test(line))
+      .join('\n')
+    const config = JSON.parse(raw) as {
       rules?: Record<string, unknown>
       overrides?: { files?: string[]; rules?: Record<string, unknown> }[]
     }

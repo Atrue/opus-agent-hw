@@ -167,7 +167,8 @@ export class Tensor {
     }
     visit(this)
     if (this.grad === null) this.grad = new Float64Array(1)
-    this.grad[0] = 1 // micrograd: сеем ∂L/∂L = 1
+    // micrograd: сеем ∂L/∂L = 1
+    this.grad[0] = 1
     for (let k = topo.length - 1; k >= 0; k--) topo[k]!.runBackward()
   }
 

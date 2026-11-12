@@ -113,18 +113,23 @@ describe('per-op сверка с контрольными константами
     const cursor = new SampleCursor(model, sample.x, sample.y, XOR_SCENARIO.lr)
     for (let op = 0; op <= 6; op++) cursor.advance()
     const t = cursor.tensors
-    cursor.advance() // 7: bce-grad
+    // 7: bce-grad
+    cursor.advance()
     flatten(ETALON_SAMPLE_1[7]!.outputs as number[]).forEach((e, i) => expectClose(t.yhat!.grad![i]!, e, 'оп 7 dyhat'))
-    cursor.advance() // 8: sigmoid-grad
+    // 8: sigmoid-grad
+    cursor.advance()
     flatten(ETALON_SAMPLE_1[8]!.outputs as number[]).forEach((e, i) => expectClose(t.z2!.grad![i]!, e, 'оп 8 dz2'))
-    cursor.advance() // 9: matvec-grad L2
+    // 9: matvec-grad L2
+    cursor.advance()
     const g9 = ETALON_SAMPLE_1[9]!.grads!
     flatten(g9['∂L/∂W2']!).forEach((e, i) => expectClose(model.W2.grad![i]!, e, `оп 9 dW2[${String(i)}]`))
     flatten(g9['∂L/∂b2']!).forEach((e, i) => expectClose(model.b2.grad![i]!, e, `оп 9 db2[${String(i)}]`))
     flatten(g9['∂L/∂a1']!).forEach((e, i) => expectClose(t.a1!.grad![i]!, e, `оп 9 da1[${String(i)}]`))
-    cursor.advance() // 10: tanh-grad
+    // 10: tanh-grad
+    cursor.advance()
     flatten(ETALON_SAMPLE_1[10]!.outputs as number[]).forEach((e, i) => expectClose(t.z1!.grad![i]!, e, `оп 10 dz1[${String(i)}]`))
-    cursor.advance() // 11: matvec-grad L1
+    // 11: matvec-grad L1
+    cursor.advance()
     const g11 = ETALON_SAMPLE_1[11]!.grads!
     flatten(g11['∂L/∂W1']!).forEach((e, i) => expectClose(model.W1.grad![i]!, e, `оп 11 dW1[${String(i)}]`))
     flatten(g11['∂L/∂b1']!).forEach((e, i) => expectClose(model.b1.grad![i]!, e, `оп 11 db1[${String(i)}]`))

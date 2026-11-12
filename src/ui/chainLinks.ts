@@ -42,14 +42,16 @@ export const SEGMENTS: readonly ChainSegment[] = [
   {
     id: 'z1',
     title: 'z1 — взвешенная сумма скрытого слоя',
-    formula: `${op(0)} + b1`, // «z1 = W1·x» + «z1 = z1 + b1» → «z1 = W1·x + b1»
+    // «z1 = W1·x» + «z1 = z1 + b1» → «z1 = W1·x + b1»
+    formula: `${op(0)} + b1`,
     symbols: ['W1', 'b1'],
   },
   { id: 'a1', title: 'a1 — активация tanh', formula: op(2), symbols: ['tanh'] },
   {
     id: 'z2',
     title: 'z2 — взвешенная сумма выхода',
-    formula: `${op(3)} + b2`, // «z2 = W2·a1» + «z2 = z2 + b2» → «z2 = W2·a1 + b2»
+    // «z2 = W2·a1» + «z2 = z2 + b2» → «z2 = W2·a1 + b2»
+    formula: `${op(3)} + b2`,
     symbols: ['W2', 'b2'],
   },
   { id: 'yhat', title: 'ŷ — прогноз (σ)', formula: op(5), symbols: ['σ', 'ŷ'] },
@@ -57,7 +59,8 @@ export const SEGMENTS: readonly ChainSegment[] = [
   {
     id: 'W',
     title: 'W — обновление весов (SGD)',
-    formula: op(12).replace('=', '←'), // «W = W − η·∂L/∂W» → «W ← W − η·∂L/∂W»
+    // «W = W − η·∂L/∂W» → «W ← W − η·∂L/∂W»
+    formula: op(12).replace('=', '←'),
     symbols: ['η', '∂L/∂W'],
   },
 ]

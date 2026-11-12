@@ -120,7 +120,8 @@ test('2) полная эпоха 1 пошагово: без NaN, в конце �
   await expect(summary).toContainText('Эпоха 1 завершена')
   await expect(summary, 'L до — эталонный bce первого сэмпла').toContainText(formatKey(etalonOutput(6)))
   await expect(summary).toContainText('Точность')
-  await page.screenshot({ path: 'e2e/screenshots/epoch-end.png' }) // 14-й из default-набора
+  // 14-й из default-набора
+  await page.screenshot({ path: 'e2e/screenshots/epoch-end.png' })
   stepwiseEpochText = await summary.textContent()
 })
 
@@ -157,9 +158,12 @@ test('5) честный reload: индикатор на первой опера�
 
 test('6) история звена: FF двух эпох → история W1 по сэмплам; reset сохраняет историю', async ({ page }) => {
   await page.goto('/')
-  await page.getByTestId('btn-epoch').click() // эпоха 1 — FF
-  await page.getByTestId('btn-epoch-next').click() // старт эпохи 2
-  await page.getByTestId('btn-epoch').click() // эпоха 2 — FF
+  // эпоха 1 — FF
+  await page.getByTestId('btn-epoch').click()
+  // старт эпохи 2
+  await page.getByTestId('btn-epoch-next').click()
+  // эпоха 2 — FF
+  await page.getByTestId('btn-epoch').click()
   await expect(page.getByTestId('epoch-summary')).toContainText('Эпоха 2 завершена')
 
   const points = await page.getByTestId('loss-line').getAttribute('points')
@@ -174,7 +178,8 @@ test('6) история звена: FF двух эпох → история W1 �
   await expect(history).toBeAttached()
   await expect(history).not.toHaveAttribute('open', '')
   await expect(history.locator('summary'), 'заголовок истории содержит символ').toContainText('W1')
-  await history.locator('summary').click() // раскрыть
+  // раскрыть
+  await history.locator('summary').click()
   expect(
     await history.locator('[data-testid="link-value"]').count(),
     '2×4 сэмпла + стартовые: ≥ 9 значений W1',
@@ -190,7 +195,8 @@ test('6) история звена: FF двух эпох → история W1 �
 
   // reset = перезапуск прогона, не стирание сессии: разделитель прогона на
   // графике, история звена (уже W1… сейчас L) не пуста, обучение продолжается
-  await page.getByTestId('formula-sym-W1').click() // выбор W1 обратно
+  // выбор W1 обратно
+  await page.getByTestId('formula-sym-W1').click()
   await page.getByTestId('btn-reset').click()
   await expect(page.getByTestId('step-indicator')).toHaveText('Эпоха 1 · пример 1 · шаг 1')
   await expect(page.getByTestId('run-dividers').locator('line'), 'разделитель прогона после сброса').toHaveCount(1)
@@ -199,7 +205,8 @@ test('6) история звена: FF двух эпох → история W1 �
     await page.getByTestId('link-history').locator('[data-testid="link-value"]').count(),
     'история звена пережила сброс',
   ).toBeGreaterThanOrEqual(9)
-  await page.getByTestId('formula-sym-W1').click() // повторный клик снимает выбор
+  // повторный клик снимает выбор
+  await page.getByTestId('formula-sym-W1').click()
 
   // «Примеры и результат» (пункт 3 ТЗ): вся выборка с входом и меткой
   await expect(page.getByTestId('sample-row'), '4 строки выборки').toHaveCount(4)
@@ -311,7 +318,8 @@ test('9) samples-panel: колонки-переменные; текущий по
   await expect(panel.locator('[data-index="0"]')).toHaveClass(/sample-row-current/)
   await expect(panel.locator('.sample-verdict-ok, .sample-verdict-miss'), 'вердиктов до прохода нет').toHaveCount(0)
 
-  await page.getByTestId('btn-epoch').click() // эпоха 1 — FF
+  // эпоха 1 — FF
+  await page.getByTestId('btn-epoch').click()
   await expect(page.getByTestId('epoch-summary')).toContainText('Эпоха 1 завершена')
   await expect(
     panel.locator('.sample-verdict-ok, .sample-verdict-miss'),
@@ -334,7 +342,8 @@ test('9) samples-panel: колонки-переменные; текущий по
     await history.locator('[data-testid="link-value"]').count(),
     'история звена пережила reset (4 сэмпла + стартовые)',
   ).toBeGreaterThanOrEqual(5)
-  await page.getByTestId('formula-sym-W1').click() // снимаем выбор
+  // снимаем выбор
+  await page.getByTestId('formula-sym-W1').click()
 })
 
 test('10) result-zone: все входы текущего примера + ŷ/L/LR; футер без LOSS/LR', async ({ page }) => {

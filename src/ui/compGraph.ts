@@ -170,7 +170,7 @@ export const GRAPH_EDGES: readonly GraphEdge[] = EDGE_SEEDS
 
 /** Полный граф с координатами и рамками (чистая функция структуры). */
 export function buildGraph(): { nodes: readonly GraphNode[]; view: { w: number; h: number } } {
-  const nodes = NODE_SEEDS.map((s) => ({ ...s, x: PAD_X + s.col * PITCH_X, y: PAD_Y + s.row * PITCH_Y }))
+  const nodes = NODE_SEEDS.map((s) => Object.assign({}, s, { x: PAD_X + s.col * PITCH_X, y: PAD_Y + s.row * PITCH_Y }))
   return { nodes, view: graphBounds() }
 }
 

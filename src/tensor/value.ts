@@ -112,7 +112,8 @@ export class Value {
       topo.push(v)
     }
     visit(this)
-    this.grad = 1 // сеем ∂L/∂L = 1
+    // сеем ∂L/∂L = 1
+    this.grad = 1
     for (let k = topo.length - 1; k >= 0; k--) topo[k]!.backwardFn()
   }
 }

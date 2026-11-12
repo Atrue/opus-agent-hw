@@ -103,7 +103,8 @@ describe('TrainingRun: курсор прогона', () => {
   it('лосс-точка добавляется на bce-опе (7-я операция сэмпла)', () => {
     for (let i = 0; i < 6; i++) run.advance()
     expect(run.epochLossPoints).toHaveLength(0)
-    run.advance() // оп 6 — bce
+    // оп 6 — bce
+    run.advance()
     expect(run.epochLossPoints).toHaveLength(1)
     expect(run.epochLossPoints[0]).toBeCloseTo(0.7097208011495857, 15)
   })
@@ -188,7 +189,8 @@ describe('TrainingRun: эпохи и fast-forward (R3)', () => {
     expect(run.sampleIndex).toBe(0)
     expect(run.stepInSample).toBe(1)
     expect(run.epochLossPoints).toHaveLength(0)
-    run.advance() // обучение продолжается: эпохи бесконечны
+    // обучение продолжается: эпохи бесконечны
+    run.advance()
     expect(run.stepInSample).toBe(2)
   })
 
@@ -303,7 +305,8 @@ describe('TrainingRun: SampleRecord-история сессии (01.2-02)', () =
     const stepwise = new TrainingRun()
     for (let e = 0; e < 2; e++) {
       for (let i = 0; i < SAMPLE_COUNT * OPS_PER_SAMPLE; i++) stepwise.advance()
-      stepwise.advance() // экран завершения эпохи → следующая эпоха
+      // экран завершения эпохи → следующая эпоха
+      stepwise.advance()
     }
     const ff = new TrainingRun()
     for (let e = 0; e < 2; e++) {

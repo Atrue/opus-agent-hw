@@ -1,9 +1,24 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": ["react", "typescript", "oxc"],
+  // D-27 (ревизия владельца 2026-11-09, oxlint-only): категории строгости включаются ОДИН раз;
+  // correctness/suspicious = error (явные и вероятные баги — жёстко), pedantic/perf = warn
+  // (extra-строгость без блокировки гейта), style/restriction — off (точечные правила явно).
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error",
+    "pedantic": "warn",
+    "perf": "warn"
+  },
+  // D-27: скоуп линта — код проекта; вендорный GSD-тулинг .claude/** регенерируется
+  // установщиком GSD и не подлежит ручным стилевым правкам.
+  "ignorePatterns": [".claude/**"],
   "rules": {
     "react/rules-of-hooks": "error",
     "react/only-export-components": ["warn", { "allowConstantExport": true }],
+    // eslint/no-console — точечное правило style-группы (первый кандидат из плана 02-01):
+    // консоль-логи в статик-SPA не для пользователя.
+    "eslint/no-console": "warn",
     "no-restricted-imports": [
       "error",
       {
@@ -14,7 +29,30 @@
           }
         ]
       }
-    ]
+    ],
+    // ═══ НАЧАЛО ЗАМОРОЖЕННОГО БЛОКА ИСКЛЮЧЕНИЙ (bring-up 02-01) ═══
+    // D-27: изменения конфига линтера и этого списка исключений — только с явным апрува владельца.
+    // Список зафиксирован по факту первого прогона bring-up (oxlint 1.92.0); каждое исключение —
+    // с однострочным обоснованием. Новые кандидаты выносятся на апрув, а не добавляются молча.
+    "react/react-in-jsx-scope": "off",
+    "eslint/max-lines-per-function": "off",
+    "eslint/max-lines": "off",
+    "eslint/require-unicode-regexp": "off",
+    "eslint/no-underscore-dangle": ["error", { "allow": ["__run"] }]
+    // ═══ КОНЕЦ ЗАМОРОЖЕННОГО БЛОКА ИСКЛЮЧЕНИЙ ═══
+    //
+    // Обоснования исключений (заморожено, D-27):
+    //  - react/react-in-jsx-scope: off — ложное срабатывание на automatic JSX runtime
+    //    (tsconfig jsx: "react-jsx", React 19 + @vitejs/plugin-react): React в scope не нужен.
+    //  - eslint/max-lines-per-function / max-lines: off — движок/UI/тесты несут длинные
+    //    табличные provenance-функции by design; рефакторинг ради длины рискует бит-точность
+    //    вычислений (NFR-02) и e2e-детерминизм.
+    //  - eslint/require-unicode-regexp: off — regexы живут в парсерах URL/формул/индексов:
+    //    смена флагов меняет матчинг edge-кейсов — не стилевая правка, риск поведения.
+    //  - eslint/no-underscore-dangle allow ["__run"]: window.__run — DevTools-хендл прогона
+    //    (runState.ts: отладочная прозрачность), e2e/tests его не читают.
+    //  - e2e-override no-await-in-loop: см. overrides — пошаговые Playwright-тесты обязаны
+    //    ждать последовательно (Promise.all ломает тестируемый порядок шагов).
   },
   "overrides": [
     {
@@ -35,6 +73,14 @@
             ]
           }
         ]
+      }
+    },
+    {
+      // e2e — пошаговые Playwright-сценарии: await в цикле — сам тестируемый паттерн
+      // (последовательный проход по шагам UI), Promise.all ломает семантику теста.
+      "files": ["e2e/**"],
+      "rules": {
+        "eslint/no-await-in-loop": "off"
       }
     }
   ]

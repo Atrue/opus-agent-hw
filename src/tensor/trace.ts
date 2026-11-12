@@ -120,18 +120,24 @@ export class SampleCursor {
         break
       }
       case 8:
-        t.yhat!.runBackward() // sigmoid: ∂L/∂z2
+        // sigmoid: ∂L/∂z2
+        t.yhat!.runBackward()
         break
       case 9:
-        t.z2!.runBackward() // add: ∂L/∂z2_pre, ∂L/∂b2
-        t.z2p!.runBackward() // matmul: ∂L/∂W2, ∂L/∂a1
+        // add: ∂L/∂z2_pre, ∂L/∂b2
+        t.z2!.runBackward()
+        // matmul: ∂L/∂W2, ∂L/∂a1
+        t.z2p!.runBackward()
         break
       case 10:
-        t.a1!.runBackward() // tanh: ∂L/∂z1
+        // tanh: ∂L/∂z1
+        t.a1!.runBackward()
         break
       case 11:
-        t.z1!.runBackward() // add: ∂L/∂z1_pre, ∂L/∂b1
-        t.z1p!.runBackward() // matmul: ∂L/∂W1, ∂L/∂x
+        // add: ∂L/∂z1_pre, ∂L/∂b1
+        t.z1!.runBackward()
+        // matmul: ∂L/∂W1, ∂L/∂x
+        t.z1p!.runBackward()
         break
       case 12: {
         this.sgdBefore = this.model.W2.data[0]!
