@@ -12,25 +12,11 @@
 
 import type { EpochSummaryData, HistoryRecord, SampleRecord } from './types'
 import { isSampleRecord } from './types'
-import { SAMPLE_COUNT } from './scenario'
+import { SAMPLE_COUNT, XOR_SCENARIO } from './scenario'
 import type { SegmentId } from '../ui/chainLinks'
 
-/** Метки 13 весов — порядок плоского среза (row-major): W1 (6), b1 (3), W2 (3), b2 (1). */
-export const WEIGHT_ROWS: readonly string[] = [
-  'W1[0,0]',
-  'W1[0,1]',
-  'W1[1,0]',
-  'W1[1,1]',
-  'W1[2,0]',
-  'W1[2,1]',
-  'b1[0]',
-  'b1[1]',
-  'b1[2]',
-  'W2[0,0]',
-  'W2[0,1]',
-  'W2[0,2]',
-  'b2[0]',
-]
+/** Метки плоских весов (порядок среза) — данные спека: series.weight. */
+export const WEIGHT_ROWS: readonly string[] = Object.values(XOR_SCENARIO.render.series.weight).flatMap((w) => w.labels)
 
 export interface LossPoint {
   x: number
@@ -162,37 +148,21 @@ export interface LinkSeries {
 /** Извлечение узлового поля записи (по символу формулы). */
 type NodePick = (r: SampleRecord) => readonly number[]
 
-/** Узловые символы: поля SampleRecord; tanh/σ — выходы своих плашек. */
-const NODE_SERIES: Record<string, { labels: readonly string[]; pick: NodePick }> = {
-  x: { labels: ['x₁', 'x₂'], pick: (r) => r.x },
-  y: { labels: ['y'], pick: (r) => [r.y] },
-  z1: { labels: ['z1[0]', 'z1[1]', 'z1[2]'], pick: (r) => r.z1 },
-  a1: { labels: ['a1[0]', 'a1[1]', 'a1[2]'], pick: (r) => r.a1 },
-  tanh: { labels: ['a1[0]', 'a1[1]', 'a1[2]'], pick: (r) => r.a1 },
-  z2: { labels: ['z2[0]'], pick: (r) => r.z2 },
-  σ: { labels: ['ŷ'], pick: (r) => [r.yhat] },
-  ŷ: { labels: ['ŷ'], pick: (r) => [r.yhat] },
-  L: { labels: ['L'], pick: (r) => [r.loss] },
-}
+/** Узловые символы — данные спека (series.node): поле SampleRecord (+обёртка скаляра). */
+const NODE_SERIES: Record<string, { labels: readonly string[]; pick: NodePick }> = Object.fromEntries(
+  Object.entries(XOR_SCENARIO.render.series.node).map(([sym, n]) => [
+    sym,
+    { labels: n.labels, pick: (r: SampleRecord): readonly number[] => (n.scalar ? [r[n.field] as number] : (r[n.field] as readonly number[])) },
+  ]),
+)
 
-/** Весовые символы: срезы плоских 13 весов записи. */
-const WEIGHT_SERIES: Record<string, { labels: readonly string[]; from: number; to: number }> = {
-  W1: { labels: WEIGHT_ROWS.slice(0, 6), from: 0, to: 6 },
-  b1: { labels: WEIGHT_ROWS.slice(6, 9), from: 6, to: 9 },
-  W2: { labels: WEIGHT_ROWS.slice(9, 12), from: 9, to: 12 },
-  b2: { labels: WEIGHT_ROWS.slice(12, 13), from: 12, to: 13 },
-}
+/** Весовые символы — данные спека (series.weight): срезы плоских весов записи. */
+const WEIGHT_SERIES: Record<string, { labels: readonly string[]; from: number; to: number }> = Object.fromEntries(
+  Object.entries(XOR_SCENARIO.render.series.weight).map(([sym, w]) => [sym, { labels: w.labels, from: w.from, to: w.to }]),
+)
 
-/** Символ звена по умолчанию, если выбор без символа. */
-const SEGMENT_DEFAULT_SYMBOL: Record<SegmentId, string> = {
-  x: 'x',
-  z1: 'W1',
-  a1: 'a1',
-  z2: 'W2',
-  yhat: 'ŷ',
-  L: 'L',
-  W: '∂L/∂W',
-}
+/** Символ звена по умолчанию, если выбор без символа (series.defaultSymbol). */
+const SEGMENT_DEFAULT_SYMBOL: Record<SegmentId, string> = { ...XOR_SCENARIO.render.series.defaultSymbol }
 
 /** Ряды плоских весов по записям истории (включая стартовые записи прогонов). */
 function weightSeries(history: readonly HistoryRecord[], from: number, to: number, labels: readonly string[]): LinkSeries[] {

@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { run } from '../run/run'
 import { useRunSlice } from '../run/useRunSlice'
-import type { StepRecord, Tensor } from '../tensor'
+import { XOR_SCENARIO, type NodeBinding, type RenderNode } from '../run/scenario'
+import type { SampleCursor, StepRecord, Tensor } from '../tensor'
 import { formatKey } from '../format/numbers'
 import { GRAPH_EDGES, GRAPH_NODES, NODE_H, NODE_W, STEP_GROUPS, buildGraph, type GraphNode } from './compGraph'
 import { geometryOf } from './chainLinks'
@@ -30,28 +31,9 @@ import { geometryOf } from './chainLinks'
 const OP_LABEL_RADIUS: Record<string, number> = { tanh: 17, BCE: 16, σ: 15 }
 
 
-/** Индекс шага ленты 0–12 по (op, layer) записи — для STEP_GROUPS. */
-const STEP_INDEX: Record<string, number> = {
-  'matvec:1': 0,
-  'add:1': 1,
-  'tanh:1': 2,
-  'matvec:2': 3,
-  'add:2': 4,
-  'sigmoid:2': 5,
-  'bce:2': 6,
-  'bce-grad:2': 7,
-  'sigmoid-grad:2': 8,
-  'matvec-grad:2': 9,
-  'tanh-grad:1': 10,
-  'matvec-grad:1': 11,
-  'sgd:0': 12,
-}
-
+/** Индекс шага ленты — index записи (walked-опа спека; для STEP_GROUPS). */
 function stepIndexOf(record: StepRecord | null): number | null {
-  if (record === null) return null
-  const key = `${record.op}:${record.layer}`
-  const idx = STEP_INDEX[key]
-  return idx === undefined ? null : idx
+  return record === null ? null : record.index
 }
 
 /** Направление потока по фазе шага (контракт e2e 1/2: data-flow корня). */
@@ -68,243 +50,99 @@ function flowOf(record: StepRecord | null): 'forward' | 'backward' | undefined {
   }
 }
 
-const tensorAt = (t: Tensor | null | undefined, i: number): number | undefined => {
-  if (t === null || t === undefined) return undefined
-  return t.data[i]
+/** Тензор слота сэмпла по биндингу (zPre/zPost/h по слою; L — скаляр лосса). */
+function tensorOf(cursor: SampleCursor, b: NodeBinding): Tensor | null | undefined {
+  if (b.kind !== 'tensor') return undefined
+  return b.slot === 'L' ? cursor.tensors.L : cursor.tensors[b.slot][b.layer]
 }
 
-const gradAt = (t: Tensor | null | undefined, i: number): number | undefined => {
-  if (t === null || t === undefined || t.grad === null) return undefined
-  return t.grad[i]
-}
-
-/** Числовой индекс из id вида 'W1x[2]' / 'op:tanh[1]' → 2 / 1. */
-const idx = (id: string): number => Number(id.slice(id.indexOf('[') + 1, -1))
-
-/** Живое значение звена по id (число доступно, когда операция исполнена). */
-function nodeValue(id: string): number | undefined {
+/** Живое значение по биндингу (гейт: число доступно, когда операция шага
+ *  исполнена в текущем сэмпле — done[step] !== undefined). */
+function bindingValue(b: NodeBinding): number | undefined {
   const cursor = run.activeCursor
-  const t = cursor.tensors
-  const done = run.sampleOpValues
-  const W1 = run.model.weights[0]!
-  const W2 = run.model.weights[1]!
-  const dotW1 = (j: number): number | undefined => {
-    const x0 = cursor.x.data[0]!
-    const x1 = cursor.x.data[1]!
-    return W1.data[j * 2]! * x0 + W1.data[j * 2 + 1]! * x1
-  }
-  const dotW2 = (): number | undefined => {
-    if (t.h[0] === null) return undefined
-    let s = 0
-    for (let j = 0; j < 3; j++) s += W2.data[j]! * t.h[0].data[j]!
-    return s
-  }
-  switch (id) {
-    case 'x[0]':
-      return cursor.x.data[0]
-    case 'x[1]':
-      return cursor.x.data[1]
-    case 'y[0]':
+  switch (b.kind) {
+    case 'input':
+      return cursor.x.data[b.index]
+    case 'target':
       return cursor.y.data[0]
-    case 'W1[0]':
-    case 'W1[1]':
-    case 'W1[2]':
-    case 'W1[3]':
-    case 'W1[4]':
-    case 'W1[5]':
-      return W1.data[idx(id)]
-    case 'b1[0]':
-    case 'b1[1]':
-    case 'b1[2]':
-      return run.model.biases[0]!.data[idx(id)]
-    case 'W2[0]':
-    case 'W2[1]':
-    case 'W2[2]':
-      return W2.data[idx(id)]
-    case 'b2[0]':
-      return run.model.biases[1]!.data[0]
-    case 'W1x[0]':
-    case 'W1x[1]':
-    case 'W1x[2]':
-      return done[0] === undefined ? undefined : dotW1(idx(id))
-    case 'z1[0]':
-    case 'z1[1]':
-    case 'z1[2]':
-      return done[1] === undefined ? undefined : tensorAt(t.zPost[0], idx(id))
-    case 'a1[0]':
-    case 'a1[1]':
-    case 'a1[2]':
-      return done[2] === undefined ? undefined : tensorAt(t.h[0], idx(id))
-    case 'W2a1':
-      return done[3] === undefined ? undefined : dotW2()
-    case 'z2':
-      return done[4] === undefined ? undefined : tensorAt(t.zPost[1], 0)
-    case 'ŷ':
-      return done[5] === undefined ? undefined : tensorAt(t.h[1], 0)
-    case 'L':
-      return done[6] === undefined ? undefined : tensorAt(t.L, 0)
-    // операции несут значение своего результата
-    case 'op:matvec[0]':
-    case 'op:matvec[1]':
-    case 'op:matvec[2]':
-      return nodeValue(`W1x[${idx(id)}]`)
-    case 'op:add[0]':
-    case 'op:add[1]':
-    case 'op:add[2]':
-      return nodeValue(`z1[${idx(id)}]`)
-    case 'op:tanh[0]':
-    case 'op:tanh[1]':
-    case 'op:tanh[2]':
-      return nodeValue(`a1[${idx(id)}]`)
-    case 'op:matvec2':
-      return nodeValue('W2a1')
-    case 'op:add2':
-      return nodeValue('z2')
-    case 'op:sigmoid':
-      return nodeValue('ŷ')
-    case 'op:bce':
-      return nodeValue('L')
-    default:
-      return undefined
+    case 'weight':
+      return run.model.weights[b.layer]!.data[b.index]
+    case 'bias':
+      return run.model.biases[b.layer]!.data[b.index]
+    case 'tensor': {
+      if (b.step !== undefined && run.sampleOpValues[b.step] === undefined) return undefined
+      const t = tensorOf(cursor, b)
+      return t === null || t === undefined ? undefined : t.data[b.index]
+    }
+    case 'dot': {
+      if (run.sampleOpValues[b.step] === undefined) return undefined
+      const src: Tensor | null = b.layer === 0 ? cursor.x : cursor.tensors.h[b.layer - 1] ?? null
+      if (src === null) return undefined
+      const w = run.model.weights[b.layer]!
+      const cols = src.data.length
+      let acc = 0
+      for (let i = 0; i < cols; i++) acc += w.data[b.row * cols + i]! * src.data[i]!
+      return acc
+    }
   }
+}
+
+/** Градиент ∂L/∂· по биндингу — после соответствующей backward-опы; иначе undefined. */
+function bindingGrad(b: NodeBinding): number | undefined {
+  const cursor = run.activeCursor
+  const g = (t: Tensor | null | undefined, i: number): number | undefined =>
+    t === null || t === undefined || t.grad === null ? undefined : t.grad[i]
+  switch (b.kind) {
+    case 'input':
+      return g(cursor.x, b.index)
+    case 'target':
+      return undefined
+    case 'weight':
+      return g(run.model.weights[b.layer]!, b.index)
+    case 'bias':
+      return g(run.model.biases[b.layer]!, b.index)
+    case 'tensor':
+      return g(tensorOf(cursor, b), b.index)
+    case 'dot':
+      return g(b.layer === 0 ? cursor.tensors.zPost[0] : cursor.tensors.zPost[b.layer], b.row)
+  }
+}
+
+/** Спека-узел по id графа (биндинги живых чисел и клика — данные рендера). */
+const renderNodeById = new Map<string, RenderNode>(XOR_SCENARIO.render.nodes.map((n) => [n.id, n]))
+
+/** Живое значение звена (число доступно, когда операция исполнена). */
+function nodeValue(id: string): number | undefined {
+  const rn = renderNodeById.get(id)
+  return rn?.value === undefined ? undefined : bindingValue(rn.value)
 }
 
 /** Градиент звена (∂L/∂·) — после соответствующей backward-опы; иначе undefined. */
 function nodeGrad(id: string): number | undefined {
-  const cursor = run.activeCursor
-  const t = cursor.tensors
-  const g1 = (k: number): number | undefined => gradAt(run.model.weights[0]!, k)
-  switch (id) {
-    case 'W1[0]':
-    case 'W1[1]':
-    case 'W1[2]':
-    case 'W1[3]':
-    case 'W1[4]':
-    case 'W1[5]':
-      return g1(idx(id))
-    case 'b1[0]':
-    case 'b1[1]':
-    case 'b1[2]':
-      return gradAt(run.model.biases[0]!, idx(id))
-    case 'W2[0]':
-    case 'W2[1]':
-    case 'W2[2]':
-      return gradAt(run.model.weights[1]!, idx(id))
-    case 'b2[0]':
-      return gradAt(run.model.biases[1]!, 0)
-    case 'x[0]':
-      return gradAt(cursor.x, 0)
-    case 'x[1]':
-      return gradAt(cursor.x, 1)
-    case 'W1x[0]':
-    case 'W1x[1]':
-    case 'W1x[2]':
-    case 'z1[0]':
-    case 'z1[1]':
-    case 'z1[2]':
-      return gradAt(t.zPost[0], Number(id.slice(id.indexOf('[') + 1, -1)))
-    case 'a1[0]':
-    case 'a1[1]':
-    case 'a1[2]':
-      return gradAt(t.h[0], idx(id))
-    case 'W2a1':
-    case 'z2':
-      return gradAt(t.zPost[1], 0)
-    case 'ŷ':
-      return gradAt(t.h[1], 0)
-    // операции несут градиент своего результата
-    case 'op:matvec[0]':
-    case 'op:matvec[1]':
-    case 'op:matvec[2]':
-      return nodeGrad(`W1x[${idx(id)}]`)
-    case 'op:add[0]':
-    case 'op:add[1]':
-    case 'op:add[2]':
-      return nodeGrad(`z1[${idx(id)}]`)
-    case 'op:tanh[0]':
-    case 'op:tanh[1]':
-    case 'op:tanh[2]':
-      return nodeGrad(`a1[${idx(id)}]`)
-    case 'op:matvec2':
-      return nodeGrad('W2a1')
-    case 'op:add2':
-      return nodeGrad('z2')
-    case 'op:sigmoid':
-      return nodeGrad('ŷ')
-    case 'op:bce':
-      return nodeGrad('L')
-    default:
-      return undefined
-  }
+  const rn = renderNodeById.get(id)
+  return rn?.grad === undefined ? undefined : bindingGrad(rn.grad)
 }
 
-/** Куда смотрит клик узла: drill-ref | выбор звена цепи | нет. */
-type ClickAction = { kind: 'drill'; ref: string } | { kind: 'link'; segment: 'a1' | 'yhat' | 'L' | 'W' | 'z1' | 'z2'; symbol: string } | null
+/** Куда смотрит клик узла: drill-ref | выбор звена цепи | нет (данные спека). */
+type ClickAction = { kind: 'drill'; ref: string } | { kind: 'link'; segment: string; symbol: string } | null
 
 function clickOf(node: GraphNode): ClickAction {
-  if (node.kind === 'op' || node.kind === 'update') {
-    switch (node.id) {
-      case 'op:tanh[0]':
-      case 'op:tanh[1]':
-      case 'op:tanh[2]':
-        return { kind: 'link', segment: 'a1', symbol: 'tanh' }
-      case 'op:matvec[0]':
-      case 'op:matvec[1]':
-      case 'op:matvec[2]':
-        return { kind: 'link', segment: 'z1', symbol: 'W1' }
-      case 'op:add[0]':
-      case 'op:add[1]':
-      case 'op:add[2]':
-        return { kind: 'link', segment: 'z1', symbol: 'b1' }
-      case 'op:matvec2':
-        return { kind: 'link', segment: 'z2', symbol: 'W2' }
-      case 'op:add2':
-        return { kind: 'link', segment: 'z2', symbol: 'b2' }
-      case 'op:sigmoid':
-        return { kind: 'link', segment: 'yhat', symbol: 'σ' }
-      case 'op:bce':
-        return { kind: 'link', segment: 'L', symbol: 'L' }
-      case 'op:update':
-        return { kind: 'link', segment: 'W', symbol: 'η' }
-      default:
-        return null
-    }
-  }
-  // drill: входы/метка/параметры и вычисленные значения с drill-рефами
-  switch (node.id) {
-    case 'x[0]':
-    case 'x[1]':
-    case 'y[0]':
-    case 'W1[0]':
-    case 'W1[1]':
-    case 'W1[2]':
-    case 'W1[3]':
-    case 'W1[4]':
-    case 'W1[5]':
-    case 'b1[0]':
-    case 'b1[1]':
-    case 'b1[2]':
-    case 'W2[0]':
-    case 'W2[1]':
-    case 'W2[2]':
-    case 'b2[0]':
-    case 'a1[0]':
-    case 'a1[1]':
-    case 'a1[2]':
-    case 'ŷ':
-      return { kind: 'drill', ref: node.id }
-    default:
-      return null
-  }
+  const click = renderNodeById.get(node.id)?.click
+  if (click === undefined) return null
+  if ('drill' in click) return { kind: 'drill', ref: click.drill }
+  return { kind: 'link', segment: click.segment, symbol: click.symbol }
 }
 
-/** aria-метка узла (контракт e2e: биасы — «Биас b1[0] = …»). */
+/** aria-метка узла (контракт e2e: биасы — «Биас b1[0] = …»; роль — по биндингу). */
 function ariaOf(node: GraphNode, value: number | undefined): string {
   const v = value === undefined ? 'н/д' : formatKey(value)
   if (node.kind === 'update') return 'Обновление весов: W ← W − η·∂L/∂W'
   if (node.kind === 'op') return `Операция ${node.label}`
-  if (node.role === 'const') return node.id === 'y[0]' ? `Метка y = ${v}` : `Вход ${node.label} = ${v}`
-  if (node.role === 'param') return node.id.startsWith('b') ? `Биас ${node.id} = ${v}` : `Параметр ${node.label} = ${v}`
+  const b = renderNodeById.get(node.id)?.value
+  if (b?.kind === 'target') return `Метка y = ${v}`
+  if (node.role === 'const') return `Вход ${node.label} = ${v}`
+  if (b?.kind === 'bias') return `Биас ${node.id} = ${v}`
+  if (node.role === 'param') return `Параметр ${node.label} = ${v}`
   return `Значение ${node.label} = ${v}`
 }
 
@@ -367,7 +205,7 @@ export function ComputationGraph({ record }: { record: StepRecord | null }) {
   const sel = selection === null
     ? { nodes: new Set<string>(), edges: new Set<string>(), plates: new Set<string>(), biases: new Set<string>() }
     : geometryOf(selection.segment)
-  const updateActive = stepIdx === 12
+  const updateActive = stepIdx === STEP_GROUPS.length - 1
 
   const runClick = (node: GraphNode): void => {
     const action = clickOf(node)

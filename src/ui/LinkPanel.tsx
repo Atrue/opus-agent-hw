@@ -2,7 +2,6 @@ import { useEffect } from 'react'
 import { run } from '../run/run'
 import { useRunSlice } from '../run/useRunSlice'
 import { SEGMENTS, SEGMENT_NUMBER_SYMS } from './chainLinks'
-import { XOR_SCENARIO } from '../run/scenario'
 import type { Tensor } from '../tensor'
 import { formatKey } from '../format/numbers'
 import { SubscriptText } from './SubscriptText'
@@ -23,45 +22,33 @@ function tensorValues(t: Tensor | null): number[] | null {
   return t === null ? null : Array.from(t.data)
 }
 
-/** Живые значения по символу звена: веса/вход/метка/промежуточные тензоры
- *  курсора + η из сценария; градиент — после backward-опы (до — null).
- *  Экспортируется для live-строки истории звена (LinkHistory, 01.2-02). */
+/** Живые значения по символу звена: разрешение через layerSymbols спека
+ *  (D-30) — веса/биасы/слои по символу w/b/z/h, входы/метка/η напрямую;
+ *  градиент — после backward-опы (до — null). Экспортируется для live-строки
+ *  истории звена (LinkHistory, 01.2-02). */
 export function liveValues(sym: string): number[] | null {
-  const t = run.activeCursor.tensors
-  switch (sym) {
-    case 'x':
-      return Array.from(run.activeCursor.x.data)
-    case 'y':
-      return Array.from(run.activeCursor.y.data)
-    case 'W1':
-      return Array.from(run.model.weights[0]!.data)
-    case 'b1':
-      return Array.from(run.model.biases[0]!.data)
-    case 'W2':
-      return Array.from(run.model.weights[1]!.data)
-    case 'b2':
-      return Array.from(run.model.biases[1]!.data)
-    case 'η':
-      return [XOR_SCENARIO.lr]
-    case 'z1':
-      return tensorValues(t.zPost[0])
-    case 'a1':
-      return tensorValues(t.h[0])
-    case 'z2':
-      return tensorValues(t.zPost[1])
-    case 'ŷ':
-      return tensorValues(t.h[1])
-    case 'L':
-      return tensorValues(t.L)
-    case '∂L/∂W2': {
-      const g = run.model.weights[1]!.grad
+  const cursor = run.activeCursor
+  const t = cursor.tensors
+  const spec = run.scenario
+  const syms = spec.render.layerSymbols
+  if (sym === 'x') return Array.from(cursor.x.data)
+  if (sym === 'y') return Array.from(cursor.y.data)
+  if (sym === 'η') return [spec.lr]
+  if (sym === 'L') return tensorValues(t.L)
+  for (let k = 0; k < syms.length; k++) {
+    if (sym === syms[k]!.w) return Array.from(run.model.weights[k]!.data)
+    if (sym === syms[k]!.b) return Array.from(run.model.biases[k]!.data)
+    if (sym === syms[k]!.z) return tensorValues(t.zPost[k])
+    if (sym === syms[k]!.h) return tensorValues(t.h[k])
+    if (sym === `∂L/∂${syms[k]!.w}`) {
+      const g = run.model.weights[k]!.grad
       return g === null ? null : Array.from(g)
     }
-    case 'W2[0,0]':
-      return [run.model.weights[1]!.data[0]!]
-    default:
-      return null
   }
+  // показательный вес update-станции: [0,0] последнего слоя
+  const K = syms.length
+  if (sym === `${syms[K - 1]!.w}[0,0]`) return [run.model.weights[K - 1]!.data[0]!]
+  return null
 }
 
 /** Живые числа звена: ≤3 значений на символ, остаток — «+N» (анти-«стена

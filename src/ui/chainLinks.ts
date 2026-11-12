@@ -1,23 +1,26 @@
 /**
- * Модель звеньев «формулы-хребта» (01.2-01; граф вычислений — 01.2-06):
- * цепь из 7 звеньев x → z1 → a1 → z2 → ŷ → L → W — чистый view-слой над
- * прогоном (без React, fast-refresh-safe; движок не меняется). Звено = группа
- * звеньев графа вычислений (compGraph.SEGMENT_GROUPS): клик по символу
- * формулы подсвечивает группу (узлы-значения/операции + рёбра между ними).
- * Заголовки — символ формулы первым (Gap 6). Пользовательские строки (RU)
- * изолированы здесь (D-10, RU-first).
+ * Модель звеньев «формулы-хребта» (01.2-01; граф вычислений — 01.2-06;
+ * данные — spec.render с D-30): цепь звеньев (XOR: x → z1 → a1 → z2 → ŷ →
+ * L → W) — чистый view-слой над прогоном (без React, fast-refresh-safe;
+ * движок не меняется). Звено = группа звеньев графа вычислений
+ * (compGraph.SEGMENT_GROUPS): клик по символу формулы подсвечивает группу
+ * (узлы-значения/операции + рёбра между ними). Заголовки — символ формулы
+ * первым (Gap 6). Пользовательские строки (RU) изолированы в данных спека
+ * (D-10, RU-first). Идентификаторы звеньев — строки спека (набор звеньев —
+ * данные сценария; нейрон-сценарий сжимает цепь до 5 звеньев).
  */
 
 import { GRAPH_EDGES, GRAPH_NODES, SEGMENT_GROUPS } from './compGraph'
 import { XOR_SCENARIO } from '../run/scenario'
 
-export type SegmentId = 'x' | 'z1' | 'a1' | 'z2' | 'yhat' | 'L' | 'W'
+/** Идентификатор звена — строка спека (render.segments[].id). */
+export type SegmentId = string
 
 export interface ChainSegment {
   id: SegmentId
   /** Заголовок звена (RU, символ формулы первым) — шапка панели звена. */
   title: string
-  /** Формула звена — из opMeta сценария (z1/z2: склейка matvec+add). */
+  /** Формула звена — данные спека (XOR: склейка формул opMeta matvec+add). */
   formula: string
   /** Символы формулы-строки, выбирающие это звено. */
   symbols: readonly string[]
@@ -34,36 +37,13 @@ export interface SegmentGeometry {
   biases: Set<string>
 }
 
-/** Формула операции opMeta по индексу. */
-const op = (i: number): string => XOR_SCENARIO.ops[i]!.formula
-
-export const SEGMENTS: readonly ChainSegment[] = [
-  { id: 'x', title: 'x — вход примера', formula: 'x = (x1, x2)', symbols: ['x'] },
-  {
-    id: 'z1',
-    title: 'z1 — взвешенная сумма скрытого слоя',
-    // «z1 = W1·x» + «z1 = z1 + b1» → «z1 = W1·x + b1»
-    formula: `${op(0)} + b1`,
-    symbols: ['W1', 'b1'],
-  },
-  { id: 'a1', title: 'a1 — активация tanh', formula: op(2), symbols: ['tanh'] },
-  {
-    id: 'z2',
-    title: 'z2 — взвешенная сумма выхода',
-    // «z2 = W2·a1» + «z2 = z2 + b2» → «z2 = W2·a1 + b2»
-    formula: `${op(3)} + b2`,
-    symbols: ['W2', 'b2'],
-  },
-  { id: 'yhat', title: 'ŷ — прогноз (σ)', formula: op(5), symbols: ['σ', 'ŷ'] },
-  { id: 'L', title: 'L — лосс (binary cross-entropy)', formula: op(6), symbols: ['y', 'L'] },
-  {
-    id: 'W',
-    title: 'W — обновление весов (SGD)',
-    // «W = W − η·∂L/∂W» → «W ← W − η·∂L/∂W»
-    formula: op(12).replace('=', '←'),
-    symbols: ['η', '∂L/∂W'],
-  },
-]
+/** Звенья цепи из spec.render (порядок = цепь). */
+export const SEGMENTS: readonly ChainSegment[] = XOR_SCENARIO.render.segments.map((seg) => ({
+  id: seg.id,
+  title: seg.title,
+  formula: seg.formula,
+  symbols: seg.symbols,
+}))
 
 /** Каждый символ формулы сети — ровно в одно звено (источник: SEGMENTS). */
 export const symbolToSegment: Readonly<Record<string, SegmentId>> = Object.fromEntries(
@@ -71,15 +51,9 @@ export const symbolToSegment: Readonly<Record<string, SegmentId>> = Object.fromE
 )
 
 /** Символы живых чисел панели звена (значения — живые тензоры прогона). */
-export const SEGMENT_NUMBER_SYMS: Record<SegmentId, readonly string[]> = {
-  x: ['x'],
-  z1: ['W1', 'b1', 'z1'],
-  a1: ['z1', 'a1'],
-  z2: ['W2', 'b2', 'z2'],
-  yhat: ['z2', 'ŷ'],
-  L: ['ŷ', 'y', 'L'],
-  W: ['η', '∂L/∂W2', 'W2[0,0]'],
-}
+export const SEGMENT_NUMBER_SYMS: Readonly<Record<SegmentId, readonly string[]>> = Object.fromEntries(
+  XOR_SCENARIO.render.segments.map((seg) => [seg.id, seg.numberSyms]),
+)
 
 /** Контракт графа: все узлы/рёбра вычислительного графа (сверка с рендером). */
 export const CHAIN_GEOMETRY_IDS = {
@@ -101,25 +75,17 @@ function groupGeometry(nodes: ReadonlySet<string>): SegmentGeometry {
   return toGeometry(nodes, edges)
 }
 
-/** Точечные подмножества символа внутри его звена (для geometryOf(seg, sym)). */
-const SYMBOL_NODES: Readonly<Record<string, readonly string[]>> = {
-  x: ['x[0]', 'x[1]'],
-  W1: ['W1[0]', 'W1[1]', 'W1[2]', 'W1[3]', 'W1[4]', 'W1[5]'],
-  b1: ['b1[0]', 'b1[1]', 'b1[2]'],
-  tanh: ['op:tanh[0]', 'op:tanh[1]', 'op:tanh[2]', 'a1[0]', 'a1[1]', 'a1[2]'],
-  W2: ['W2[0]', 'W2[1]', 'W2[2]'],
-  b2: ['b2[0]'],
-  σ: ['op:sigmoid', 'ŷ'],
-  ŷ: ['ŷ'],
-  y: ['y[0]'],
-  L: ['op:bce', 'y[0]', 'L', 'ŷ'],
-  η: ['op:update', 'W1[0]', 'W1[1]', 'W1[2]', 'W1[3]', 'W1[4]', 'W1[5]', 'b1[0]', 'b1[1]', 'b1[2]', 'W2[0]', 'W2[1]', 'W2[2]', 'b2[0]'],
-  '∂L/∂W': ['op:update', 'W1[0]', 'W1[1]', 'W1[2]', 'W1[3]', 'W1[4]', 'W1[5]', 'b1[0]', 'b1[1]', 'b1[2]', 'W2[0]', 'W2[1]', 'W2[2]', 'b2[0]'],
-}
+/** Точечные подмножества символа внутри его звена (symbolNodes спека). */
+const SYMBOL_NODES: Readonly<Record<string, readonly string[]>> = Object.assign(
+  {},
+  ...XOR_SCENARIO.render.segments.map((seg) => seg.symbolNodes),
+)
 
 /** Геометрия подсветки: точечная для символа его звена, целиком для звена. */
 export function geometryOf(segment: SegmentId, symbol?: string): SegmentGeometry {
-  const whole = groupGeometry(SEGMENT_GROUPS[segment]!.nodes)
+  const groupEntry = SEGMENT_GROUPS[segment]
+  if (groupEntry === undefined) return toGeometry([], [])
+  const whole = groupGeometry(groupEntry.nodes)
   if (symbol !== undefined) {
     const subset = SYMBOL_NODES[symbol]
     if (subset !== undefined && symbolToSegment[symbol] === segment) {
