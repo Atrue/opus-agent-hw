@@ -7,7 +7,23 @@
  *
  * Семантика как в Python: forward создаёт новые узлы, grad аккумулируется
  * на месте (+=), backward сеет ∂L/∂L = 1 в корне и идёт по topo-порядку.
+ *
+ * Декомпозиция D-29: op-методы только записывают данные (op-метка +
+ * родители); локальные градиенты считают чистые функции value-grads.ts,
+ * метод runBackward умножает их на входящий grad и аккумулирует в том же
+ * порядке побочных эффектов, что исходные замыкания (бит-идентичность).
  */
+
+import {
+  localGradAdd,
+  localGradDiv,
+  localGradLog,
+  localGradMul,
+  localGradNeg,
+  localGradSigmoid,
+  localGradSub,
+  localGradTanh,
+} from './value-grads'
 
 export type ScalarOp = '' | '+' | '-' | '*' | '/' | 'neg' | 'tanh' | 'sigmoid' | 'log'
 
@@ -23,7 +39,6 @@ export class Value {
   readonly op: ScalarOp
   readonly label: string
   readonly parents: readonly Value[]
-  private backwardFn: () => void = () => {}
 
   constructor(data: number, init: ValueInit = {}) {
     this.data = data
@@ -33,72 +48,92 @@ export class Value {
   }
 
   add(o: Value): Value {
-    const out = new Value(this.data + o.data, { op: '+', parents: [this, o] })
-    out.backwardFn = () => {
-      this.grad += out.grad
-      o.grad += out.grad
-    }
-    return out
+    return new Value(this.data + o.data, { op: '+', parents: [this, o] })
   }
 
   sub(o: Value): Value {
-    const out = new Value(this.data - o.data, { op: '-', parents: [this, o] })
-    out.backwardFn = () => {
-      this.grad += out.grad
-      o.grad += -out.grad
-    }
-    return out
+    return new Value(this.data - o.data, { op: '-', parents: [this, o] })
   }
 
   mul(o: Value): Value {
-    const out = new Value(this.data * o.data, { op: '*', parents: [this, o] })
-    out.backwardFn = () => {
-      this.grad += out.grad * o.data
-      o.grad += out.grad * this.data
-    }
-    return out
+    return new Value(this.data * o.data, { op: '*', parents: [this, o] })
   }
 
   div(o: Value): Value {
-    const out = new Value(this.data / o.data, { op: '/', parents: [this, o] })
-    out.backwardFn = () => {
-      this.grad += out.grad / o.data
-      o.grad += (-out.grad * this.data) / (o.data * o.data)
-    }
-    return out
+    return new Value(this.data / o.data, { op: '/', parents: [this, o] })
   }
 
   neg(): Value {
-    const out = new Value(-this.data, { op: 'neg', parents: [this] })
-    out.backwardFn = () => {
-      this.grad += -out.grad
-    }
-    return out
+    return new Value(-this.data, { op: 'neg', parents: [this] })
   }
 
   tanh(): Value {
-    const out = new Value(Math.tanh(this.data), { op: 'tanh', parents: [this] })
-    out.backwardFn = () => {
-      this.grad += out.grad * (1 - out.data * out.data)
-    }
-    return out
+    return new Value(Math.tanh(this.data), { op: 'tanh', parents: [this] })
   }
 
   sigmoid(): Value {
-    const s = 1 / (1 + Math.exp(-this.data))
-    const out = new Value(s, { op: 'sigmoid', parents: [this] })
-    out.backwardFn = () => {
-      this.grad += out.grad * s * (1 - s)
-    }
-    return out
+    return new Value(1 / (1 + Math.exp(-this.data)), { op: 'sigmoid', parents: [this] })
   }
 
   log(): Value {
-    const out = new Value(Math.log(this.data), { op: 'log', parents: [this] })
-    out.backwardFn = () => {
-      this.grad += out.grad / this.data
+    return new Value(Math.log(this.data), { op: 'log', parents: [this] })
+  }
+
+  /** Исполняет обратный шаг этой op (вызывается topo-обходом backward):
+   *  чистые локальные градиенты (value-grads.ts) на входящий this.grad
+   *  аккумулируются в родителей в порядке родитель A → родитель B — тот же
+   *  порядок побочных эффектов и числовые выражения, что исходные замыкания. */
+  runBackward(): void {
+    const a = this.parents[0]
+    const b = this.parents[1]
+    switch (this.op) {
+      case '+': {
+        const [ga, gb] = localGradAdd(this.grad)
+        a!.grad += ga
+        b!.grad += gb
+        return
+      }
+      case '-': {
+        const [ga, gb] = localGradSub(this.grad)
+        a!.grad += ga
+        b!.grad += gb
+        return
+      }
+      case '*': {
+        const [ga, gb] = localGradMul(a!.data, b!.data, this.grad)
+        a!.grad += ga
+        b!.grad += gb
+        return
+      }
+      case '/': {
+        const [ga, gb] = localGradDiv(a!.data, b!.data, this.grad)
+        a!.grad += ga
+        b!.grad += gb
+        return
+      }
+      case 'neg': {
+        const [g] = localGradNeg(this.grad)
+        a!.grad += g
+        return
+      }
+      case 'tanh': {
+        const [g] = localGradTanh(this.data, this.grad)
+        a!.grad += g
+        return
+      }
+      case 'sigmoid': {
+        const [g] = localGradSigmoid(this.data, this.grad)
+        a!.grad += g
+        return
+      }
+      case 'log': {
+        const [g] = localGradLog(a!.data, this.grad)
+        a!.grad += g
+        return
+      }
+      case '':
+        return
     }
-    return out
   }
 
   /** Топологическая развёртка графа + обратный проход (micrograd-канон). */
@@ -114,6 +149,6 @@ export class Value {
     visit(this)
     // сеем ∂L/∂L = 1
     this.grad = 1
-    for (let k = topo.length - 1; k >= 0; k--) topo[k]!.backwardFn()
+    for (let k = topo.length - 1; k >= 0; k--) topo[k]!.runBackward()
   }
 }
