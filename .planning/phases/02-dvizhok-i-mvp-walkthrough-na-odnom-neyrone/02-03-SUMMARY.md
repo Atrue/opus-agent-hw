@@ -135,7 +135,7 @@ Each task was committed atomically:
 - **Fix:** убраны return в последних кейсах (log/bce) + пустой case '' заменён комментарием; семантика не изменилась (конец switch = конец функции)
 - **Files modified:** src/tensor/value.ts, src/tensor/tensor.ts
 - **Verification:** pnpm lint — 0 предупреждений в src/tensor/**; pnpm test 101 зелёные
-- **Committed in:** 6a35dfe
+- **Committed in:** 6a35dfe (tensor.ts) + `4528f9f` (value.ts — правка после финального lint-гейта)
 
 **2. [Rule 2 - Documentation] index.ts заявлен в files_modified, но правка не потребовалась**
 - **Found during:** Task 2 (шаг 5)
