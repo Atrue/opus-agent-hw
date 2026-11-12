@@ -1,10 +1,14 @@
 /**
- * XOR-сценарий уровня приложения (R3): фиксированные стартовые веса
- * (воспроизводимость демо), lr, 4 сэмпла XOR (первый — [1,0]→1, эталонный),
- * формулы и нарративы RU всех 13 операций walkthrough.
+ * Сценарий = декларативная модель (D-30): единственный источник топологии
+ * сети (net), лосса, lr, датасета, стартовых весов (детерминированный старт,
+ * DOGS-05 воспроизводимость), метаданных операций walkthrough (формулы и
+ * нарративы RU) и рендер-меток (render: формула-строка, символы слоёв).
+ * Сеть строится из модели: buildModel(spec) → граф → SampleCursor; UI читает
+ * метки из render. XOR — первый носитель; сценарий «один нейрон» (D-31) и
+ * MLP фазы 3 подключаются данными, без нового UI-слоя.
  */
 
-import type { Phase } from '../tensor'
+import type { LayerSpec, Phase } from '../tensor'
 
 export interface ScenarioOpMeta {
   op: string
@@ -14,18 +18,76 @@ export interface ScenarioOpMeta {
   narrative: string
 }
 
-export interface XorScenario {
-  id: 'xor'
-  layers: readonly number[]
-  lr: number
-  samples: readonly { x: readonly number[]; y: number }[]
-  startWeights: { w1: number[][]; b1: number[]; w2: number[][]; b2: number[] }
-  opMeta: readonly ScenarioOpMeta[]
+/** Рендер-метки слоя (D-30): символы z/h/w/b для формул, панелей и графа. */
+export interface LayerSymbols {
+  /** Пребиас-значение слоя (z1/z2) и его производные (∂L/∂z1). */
+  z: string
+  /** Активация слоя (a1 — скрытый, ŷ — выходной). */
+  h: string
+  /** Матрица весов слоя (W1/W2). */
+  w: string
+  /** Биас слоя (b1/b2). */
+  b: string
 }
 
-export const XOR_SCENARIO: XorScenario = {
+/** Токен формулы-строки: интерактивный символ или статический текст. */
+export type FormulaToken = { kind: 'sym'; sym: string } | { kind: 'text'; text: string }
+
+/** Сегмент формулы-строки с фазной окраской разделителей (D-26). */
+export interface FormulaSeg {
+  phase: 'forward' | 'loss' | 'update'
+  tokens: readonly FormulaToken[]
+}
+
+/** Рендер-метки сценария (D-30): «часть полей вычисляется рендером». */
+export interface ScenarioRender {
+  /** Формула-строка: последовательность сегментов с интерактивными символами. */
+  formula: readonly FormulaSeg[]
+  /** Символы слоёв по индексу слоя (топология → подписи). */
+  layerSymbols: readonly LayerSymbols[]
+}
+
+export interface ScenarioModel {
+  /** URL #scenario= (url.ts KNOWN_SCENARIOS). */
+  id: 'neuron' | 'xor'
+  /** Декларативная структура сети — источник топологии. */
+  net: readonly LayerSpec[]
+  /** Модель + функция потерь в одном объекте (D-30). */
+  loss: { kind: 'bce' }
+  lr: number
+  samples: readonly { x: readonly number[]; y: number }[]
+  /** Стартовые веса по слоям: ключи `w1`/`b1`… — 1-based номер слоя. */
+  startWeights: Readonly<Record<string, number[][] | number[]>>
+  /** Метаданы операций walkthrough: формулы/нарративы RU (длина = walked-опы). */
+  ops: readonly ScenarioOpMeta[]
+  /** Рендер-метки. */
+  render: ScenarioRender
+}
+
+/** Стартовые веса XOR в узкой типизации (тесты берут w1/b1/w2/b2 без кастов). */
+export const XOR_START_WEIGHTS: {
+  w1: number[][]
+  b1: number[]
+  w2: number[][]
+  b2: number[]
+} = {
+  w1: [
+    [-0.9228963213252399, 0.3924486452741056],
+    [-0.712133557209278, -0.0749354903418249],
+    [0.34329352823553405, 0.5859025433105887],
+  ],
+  b1: [-0.09362154306757531, -0.0034555404038976167, -0.9616857839513044],
+  w2: [[-0.1352223220971196, -0.25525063835814765, 0.704577266381706]],
+  b2: [0.09396780858201126],
+}
+
+export const XOR_SCENARIO: ScenarioModel = {
   id: 'xor',
-  layers: [2, 3, 1],
+  net: [
+    { inputs: 2, units: 3, activation: 'tanh' },
+    { inputs: 3, units: 1, activation: 'sigmoid' },
+  ],
+  loss: { kind: 'bce' },
   lr: 0.5,
   samples: [
     { x: [1, 0], y: 1 },
@@ -33,17 +95,8 @@ export const XOR_SCENARIO: XorScenario = {
     { x: [0, 0], y: 0 },
     { x: [1, 1], y: 0 },
   ],
-  startWeights: {
-    w1: [
-      [-0.9228963213252399, 0.3924486452741056],
-      [-0.712133557209278, -0.0749354903418249],
-      [0.34329352823553405, 0.5859025433105887],
-    ],
-    b1: [-0.09362154306757531, -0.0034555404038976167, -0.9616857839513044],
-    w2: [[-0.1352223220971196, -0.25525063835814765, 0.704577266381706]],
-    b2: [0.09396780858201126],
-  },
-  opMeta: [
+  startWeights: XOR_START_WEIGHTS,
+  ops: [
     {
       op: 'matvec',
       layer: 1,
@@ -136,6 +189,59 @@ export const XOR_SCENARIO: XorScenario = {
       narrative: 'SGD: каждый вес шагает против своего градиента (η = 0.5). Показан один вес явно, остальные обновляются той же формулой.',
     },
   ],
+  render: {
+    formula: [
+      {
+        phase: 'forward',
+        tokens: [
+          { kind: 'sym', sym: 'ŷ' },
+          { kind: 'text', text: ' = ' },
+          { kind: 'sym', sym: 'σ' },
+          { kind: 'text', text: '(' },
+          { kind: 'sym', sym: 'W2' },
+          { kind: 'text', text: '·' },
+          { kind: 'sym', sym: 'tanh' },
+          { kind: 'text', text: '(' },
+          { kind: 'sym', sym: 'W1' },
+          { kind: 'text', text: '·' },
+          { kind: 'sym', sym: 'x' },
+          { kind: 'text', text: ' + ' },
+          { kind: 'sym', sym: 'b1' },
+          { kind: 'text', text: ') + ' },
+          { kind: 'sym', sym: 'b2' },
+          { kind: 'text', text: ')' },
+        ],
+      },
+      {
+        phase: 'loss',
+        tokens: [
+          { kind: 'sym', sym: 'L' },
+          { kind: 'text', text: ' = −[' },
+          { kind: 'sym', sym: 'y' },
+          { kind: 'text', text: '·ln ' },
+          { kind: 'sym', sym: 'ŷ' },
+          { kind: 'text', text: ' + (1−' },
+          { kind: 'sym', sym: 'y' },
+          { kind: 'text', text: ')·ln(1−' },
+          { kind: 'sym', sym: 'ŷ' },
+          { kind: 'text', text: ')]' },
+        ],
+      },
+      {
+        phase: 'update',
+        tokens: [
+          { kind: 'text', text: 'W ← W − ' },
+          { kind: 'sym', sym: 'η' },
+          { kind: 'text', text: '·' },
+          { kind: 'sym', sym: '∂L/∂W' },
+        ],
+      },
+    ],
+    layerSymbols: [
+      { z: 'z1', h: 'a1', w: 'W1', b: 'b1' },
+      { z: 'z2', h: 'ŷ', w: 'W2', b: 'b2' },
+    ],
+  },
 }
 
 export const SAMPLE_COUNT = XOR_SCENARIO.samples.length

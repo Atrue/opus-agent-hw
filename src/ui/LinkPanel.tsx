@@ -34,31 +34,31 @@ export function liveValues(sym: string): number[] | null {
     case 'y':
       return Array.from(run.activeCursor.y.data)
     case 'W1':
-      return Array.from(run.model.W1.data)
+      return Array.from(run.model.weights[0]!.data)
     case 'b1':
-      return Array.from(run.model.b1.data)
+      return Array.from(run.model.biases[0]!.data)
     case 'W2':
-      return Array.from(run.model.W2.data)
+      return Array.from(run.model.weights[1]!.data)
     case 'b2':
-      return Array.from(run.model.b2.data)
+      return Array.from(run.model.biases[1]!.data)
     case 'η':
       return [XOR_SCENARIO.lr]
     case 'z1':
-      return tensorValues(t.z1)
+      return tensorValues(t.zPost[0])
     case 'a1':
-      return tensorValues(t.a1)
+      return tensorValues(t.h[0])
     case 'z2':
-      return tensorValues(t.z2)
+      return tensorValues(t.zPost[1])
     case 'ŷ':
-      return tensorValues(t.yhat)
+      return tensorValues(t.h[1])
     case 'L':
       return tensorValues(t.L)
     case '∂L/∂W2': {
-      const g = run.model.W2.grad
+      const g = run.model.weights[1]!.grad
       return g === null ? null : Array.from(g)
     }
     case 'W2[0,0]':
-      return [run.model.W2.data[0]!]
+      return [run.model.weights[1]!.data[0]!]
     default:
       return null
   }

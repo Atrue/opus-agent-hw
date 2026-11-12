@@ -63,7 +63,7 @@ export function App() {
   const screen = useRunSlice((r) => r.screen)
   const record = useRunSlice((r) => r.currentRecord)
   const drill = useRunSlice((r) => r.drill)
-  const phase = record?.phase ?? XOR_SCENARIO.opMeta[0]!.phase
+  const phase = record?.phase ?? XOR_SCENARIO.ops[0]!.phase
   const phaseVar = PHASE_COLOR_VAR[phase]
 
   return (

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { buildStepRecord } from './stepRecords'
-import { XOR_SCENARIO } from './scenario'
-import { MLP, SampleCursor, type StepRecord, type TensorValues } from '../tensor'
+import { XOR_SCENARIO, XOR_START_WEIGHTS } from './scenario'
+import { buildModel, SampleCursor, type StepRecord, type TensorValues } from '../tensor'
 import { ETALON_SAMPLE_1 } from './etalon-constants'
 
 /**
@@ -36,7 +36,7 @@ interface EpochResult {
  *  record:true — пошаговый режим UI (рекордер пишет StepRecord после каждой оп);
  *  record:false — пакетный fast-forward без записи. */
 function runEpoch(record: boolean): EpochResult {
-  const model = new MLP(XOR_SCENARIO.startWeights)
+  const model = buildModel(XOR_SCENARIO)
   const losses: number[] = []
   const records: StepRecord[] = []
   for (const sample of XOR_SCENARIO.samples) {
@@ -71,7 +71,7 @@ describe('инвариант «пошагово = fast-forward» (R1/R3)', () =>
 
   it('запись шагов не возмущает числа: 52 StepRecord за эпоху', () => {
     const stepwise = runEpoch(true)
-    expect(stepwise.records).toHaveLength(XOR_SCENARIO.samples.length * 13)
+    expect(stepwise.records).toHaveLength(XOR_SCENARIO.samples.length * XOR_SCENARIO.ops.length)
   })
 })
 
@@ -88,17 +88,17 @@ describe('детерминизм прогона (R3)', () => {
 
 describe('per-op сверка с контрольными константами (пакетный путь, без записи)', () => {
   it('forward-опы 0..6: промежуточные тензоры совпадают (rel ≤ 1e-6)', () => {
-    const model = new MLP(XOR_SCENARIO.startWeights)
+    const model = buildModel(XOR_SCENARIO)
     const sample = XOR_SCENARIO.samples[0]!
     const cursor = new SampleCursor(model, sample.x, sample.y, XOR_SCENARIO.lr)
     const t = cursor.tensors
     const forwardChecks: (() => void)[] = [
-      () => flatten(ETALON_SAMPLE_1[0]!.outputs as number[]).forEach((e, i) => expectClose(t.z1p!.data[i]!, e, `оп 0 z1[${String(i)}]`)),
-      () => flatten(ETALON_SAMPLE_1[1]!.outputs as number[]).forEach((e, i) => expectClose(t.z1!.data[i]!, e, `оп 1 z1[${String(i)}]`)),
-      () => flatten(ETALON_SAMPLE_1[2]!.outputs as number[]).forEach((e, i) => expectClose(t.a1!.data[i]!, e, `оп 2 a1[${String(i)}]`)),
-      () => expectClose(t.z2p!.data[0]!, (ETALON_SAMPLE_1[3]!.outputs as number[])[0]!, 'оп 3 z2'),
-      () => expectClose(t.z2!.data[0]!, (ETALON_SAMPLE_1[4]!.outputs as number[])[0]!, 'оп 4 z2'),
-      () => expectClose(t.yhat!.data[0]!, (ETALON_SAMPLE_1[5]!.outputs as number[])[0]!, 'оп 5 yhat'),
+      () => flatten(ETALON_SAMPLE_1[0]!.outputs as number[]).forEach((e, i) => expectClose(t.zPre[0]!.data[i]!, e, `оп 0 z1[${String(i)}]`)),
+      () => flatten(ETALON_SAMPLE_1[1]!.outputs as number[]).forEach((e, i) => expectClose(t.zPost[0]!.data[i]!, e, `оп 1 z1[${String(i)}]`)),
+      () => flatten(ETALON_SAMPLE_1[2]!.outputs as number[]).forEach((e, i) => expectClose(t.h[0]!.data[i]!, e, `оп 2 a1[${String(i)}]`)),
+      () => expectClose(t.zPre[1]!.data[0]!, (ETALON_SAMPLE_1[3]!.outputs as number[])[0]!, 'оп 3 z2'),
+      () => expectClose(t.zPost[1]!.data[0]!, (ETALON_SAMPLE_1[4]!.outputs as number[])[0]!, 'оп 4 z2'),
+      () => expectClose(t.h[1]!.data[0]!, (ETALON_SAMPLE_1[5]!.outputs as number[])[0]!, 'оп 5 yhat'),
       () => expectClose(t.L!.data[0]!, (ETALON_SAMPLE_1[6]!.outputs as number[])[0]!, 'оп 6 L'),
     ]
     for (const check of forwardChecks) {
@@ -108,48 +108,48 @@ describe('per-op сверка с контрольными константами
   })
 
   it('backward-опы 7..11: градиенты живых тензоров совпадают (rel ≤ 1e-6)', () => {
-    const model = new MLP(XOR_SCENARIO.startWeights)
+    const model = buildModel(XOR_SCENARIO)
     const sample = XOR_SCENARIO.samples[0]!
     const cursor = new SampleCursor(model, sample.x, sample.y, XOR_SCENARIO.lr)
     for (let op = 0; op <= 6; op++) cursor.advance()
     const t = cursor.tensors
     // 7: bce-grad
     cursor.advance()
-    flatten(ETALON_SAMPLE_1[7]!.outputs as number[]).forEach((e, i) => expectClose(t.yhat!.grad![i]!, e, 'оп 7 dyhat'))
+    flatten(ETALON_SAMPLE_1[7]!.outputs as number[]).forEach((e, i) => expectClose(t.h[1]!.grad![i]!, e, 'оп 7 dyhat'))
     // 8: sigmoid-grad
     cursor.advance()
-    flatten(ETALON_SAMPLE_1[8]!.outputs as number[]).forEach((e, i) => expectClose(t.z2!.grad![i]!, e, 'оп 8 dz2'))
+    flatten(ETALON_SAMPLE_1[8]!.outputs as number[]).forEach((e, i) => expectClose(t.zPost[1]!.grad![i]!, e, 'оп 8 dz2'))
     // 9: matvec-grad L2
     cursor.advance()
     const g9 = ETALON_SAMPLE_1[9]!.grads!
-    flatten(g9['∂L/∂W2']!).forEach((e, i) => expectClose(model.W2.grad![i]!, e, `оп 9 dW2[${String(i)}]`))
-    flatten(g9['∂L/∂b2']!).forEach((e, i) => expectClose(model.b2.grad![i]!, e, `оп 9 db2[${String(i)}]`))
-    flatten(g9['∂L/∂a1']!).forEach((e, i) => expectClose(t.a1!.grad![i]!, e, `оп 9 da1[${String(i)}]`))
+    flatten(g9['∂L/∂W2']!).forEach((e, i) => expectClose(model.weights[1]!.grad![i]!, e, `оп 9 dW2[${String(i)}]`))
+    flatten(g9['∂L/∂b2']!).forEach((e, i) => expectClose(model.biases[1]!.grad![i]!, e, `оп 9 db2[${String(i)}]`))
+    flatten(g9['∂L/∂a1']!).forEach((e, i) => expectClose(t.h[0]!.grad![i]!, e, `оп 9 da1[${String(i)}]`))
     // 10: tanh-grad
     cursor.advance()
-    flatten(ETALON_SAMPLE_1[10]!.outputs as number[]).forEach((e, i) => expectClose(t.z1!.grad![i]!, e, `оп 10 dz1[${String(i)}]`))
+    flatten(ETALON_SAMPLE_1[10]!.outputs as number[]).forEach((e, i) => expectClose(t.zPost[0]!.grad![i]!, e, `оп 10 dz1[${String(i)}]`))
     // 11: matvec-grad L1
     cursor.advance()
     const g11 = ETALON_SAMPLE_1[11]!.grads!
-    flatten(g11['∂L/∂W1']!).forEach((e, i) => expectClose(model.W1.grad![i]!, e, `оп 11 dW1[${String(i)}]`))
-    flatten(g11['∂L/∂b1']!).forEach((e, i) => expectClose(model.b1.grad![i]!, e, `оп 11 db1[${String(i)}]`))
+    flatten(g11['∂L/∂W1']!).forEach((e, i) => expectClose(model.weights[0]!.grad![i]!, e, `оп 11 dW1[${String(i)}]`))
+    flatten(g11['∂L/∂b1']!).forEach((e, i) => expectClose(model.biases[0]!.grad![i]!, e, `оп 11 db1[${String(i)}]`))
     flatten(g11['∂L/∂x']!).forEach((e, i) => expectClose(cursor.x.grad![i]!, e, `оп 11 dx[${String(i)}]`))
   })
 
   it('sgd-оп 12: все параметры обновлены по W = W − η·∂L/∂W (из контрольных градиентов)', () => {
-    const model = new MLP(XOR_SCENARIO.startWeights)
+    const model = buildModel(XOR_SCENARIO)
     const sample = XOR_SCENARIO.samples[0]!
     const cursor = new SampleCursor(model, sample.x, sample.y, XOR_SCENARIO.lr)
     while (!cursor.done) cursor.advance()
     const g11 = ETALON_SAMPLE_1[11]!.grads!
     const g9 = ETALON_SAMPLE_1[9]!.grads!
     const lr = XOR_SCENARIO.lr
-    flatten(g11['∂L/∂W1']!).forEach((g, i) => expectClose(model.W1.data[i]!, XOR_SCENARIO.startWeights.w1.flat()[i]! - lr * g, `W1[${String(i)}]`))
-    flatten(g11['∂L/∂b1']!).forEach((g, i) => expectClose(model.b1.data[i]!, XOR_SCENARIO.startWeights.b1[i]! - lr * g, `b1[${String(i)}]`))
-    flatten(g9['∂L/∂W2']!).forEach((g, i) => expectClose(model.W2.data[i]!, XOR_SCENARIO.startWeights.w2.flat()[i]! - lr * g, `W2[${String(i)}]`))
-    flatten(g9['∂L/∂b2']!).forEach((g, i) => expectClose(model.b2.data[i]!, XOR_SCENARIO.startWeights.b2[i]! - lr * g, `b2[${String(i)}]`))
+    flatten(g11['∂L/∂W1']!).forEach((g, i) => expectClose(model.weights[0]!.data[i]!, XOR_START_WEIGHTS.w1.flat()[i]! - lr * g, `W1[${String(i)}]`))
+    flatten(g11['∂L/∂b1']!).forEach((g, i) => expectClose(model.biases[0]!.data[i]!, XOR_START_WEIGHTS.b1[i]! - lr * g, `b1[${String(i)}]`))
+    flatten(g9['∂L/∂W2']!).forEach((g, i) => expectClose(model.weights[1]!.data[i]!, XOR_START_WEIGHTS.w2.flat()[i]! - lr * g, `W2[${String(i)}]`))
+    flatten(g9['∂L/∂b2']!).forEach((g, i) => expectClose(model.biases[1]!.data[i]!, XOR_START_WEIGHTS.b2[i]! - lr * g, `b2[${String(i)}]`))
     // контрольное «до → после» W2[0,0]
     const sgd = ETALON_SAMPLE_1[12]!.outputs as number[]
-    expectClose(model.W2.data[0]!, sgd[1]!, 'W2[0,0] после sgd')
+    expectClose(model.weights[1]!.data[0]!, sgd[1]!, 'W2[0,0] после sgd')
   })
 })

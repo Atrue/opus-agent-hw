@@ -1,7 +1,10 @@
 /**
  * Пошаговая запись walkthrough (R1, вариант D — recorder-стратегия):
  * StepRecord — форма записи шага прототипа (schemaVersion 1); SampleCursor
- * исполняет 13 операций одного сэмпла НА ЖИВОМ движке по одной за advance().
+ * исполняет walked-опы одного сэмпла НА ЖИВОМ движке по одной за advance().
+ * Walked-опы строит buildWalk из спека сети (порядок = топология):
+ * forward 3K (matvec/add/activate на слой) → loss → bce-grad →
+ * backward парами (activate-grad + affine-grad от выхода ко входу) → sgd.
  *
  * Recorder-флаг: onOp-колбэк = режим record:true (пошаговый UI пишет
  * StepRecord после каждой операции); без колбэка = record:false (пакетный
@@ -9,7 +12,7 @@
  */
 
 import { F } from './functional'
-import type { MLP } from './model'
+import type { LayerSpec, ScenarioNet } from './model'
 import { SGD } from './optim'
 import { Tensor } from './tensor'
 
@@ -37,40 +40,75 @@ export interface StepRecord {
   changed: string[]
 }
 
+/** Промежуточные тензоры сэмпла по слоям (индекс слоя 0-based). */
 export interface SampleTensors {
-  z1p: Tensor | null
-  z1: Tensor | null
-  a1: Tensor | null
-  z2p: Tensor | null
-  z2: Tensor | null
-  yhat: Tensor | null
+  /** zPre[k] = W_k·h_{k-1} — до биаса (h_{-1} = x). */
+  zPre: (Tensor | null)[]
+  /** zPost[k] = zPre[k] + b_k — после биаса. */
+  zPost: (Tensor | null)[]
+  /** h[k] = act(zPost[k]) — активация; h[K-1] = ŷ. */
+  h: (Tensor | null)[]
   L: Tensor | null
 }
 
 export type SampleRecorder = (cursor: SampleCursor, opIndex: number) => void
 
-/** Операций в одном сэмпле walkthrough: 6 forward + bce + 5 backward + sgd. */
-export const OPS_PER_SAMPLE = 13
+/** Walked-оп walkthrough: одна «кнопка Шаг» = один примитив живого движка
+ *  (или сгруппированная пара backward-замыканий affine-градиентов — как в
+ *  прототипе: add-grad и matvec-grad исполняются одной операцией). */
+export type WalkOp =
+  | { kind: 'matvec'; layer: number }
+  | { kind: 'add'; layer: number }
+  | { kind: 'activate'; layer: number; activation: 'tanh' | 'sigmoid' }
+  | { kind: 'loss' }
+  | { kind: 'bce-grad' }
+  | { kind: 'activate-grad'; layer: number }
+  | { kind: 'affine-grad'; layer: number }
+  | { kind: 'sgd' }
+
+/** Walked-опы из спека (порядок = топология; длина = spec.ops.length). */
+export function buildWalk(net: readonly LayerSpec[]): readonly WalkOp[] {
+  const walk: WalkOp[] = []
+  for (let k = 0; k < net.length; k++) {
+    walk.push({ kind: 'matvec', layer: k }, { kind: 'add', layer: k }, { kind: 'activate', layer: k, activation: net[k]!.activation })
+  }
+  walk.push({ kind: 'loss' }, { kind: 'bce-grad' })
+  for (let k = net.length - 1; k >= 0; k--) {
+    walk.push({ kind: 'activate-grad', layer: k }, { kind: 'affine-grad', layer: k })
+  }
+  walk.push({ kind: 'sgd' })
+  return walk
+}
 
 export class SampleCursor {
-  readonly model: MLP
+  readonly model: ScenarioNet
   readonly x: Tensor
   readonly y: Tensor
   readonly lr: number
-  readonly tensors: SampleTensors = { z1p: null, z1: null, a1: null, z2p: null, z2: null, yhat: null, L: null }
-  /** W2[0,0] до обновления — снимок для записи sgd-шага («до → после»). */
+  /** Маршрут сэмпла: примитивы движка в порядке топологии (из спека). */
+  readonly walk: readonly WalkOp[]
+  readonly tensors: SampleTensors
+  /** Значение показательного веса (последний слой, [0,0]) до обновления —
+   *  снимок для записи sgd-шага («до → после»). */
   sgdBefore: number | null = null
   private nextOp = 0
   private readonly onOp: SampleRecorder | undefined
   private readonly opt: SGD
 
-  constructor(model: MLP, x: readonly number[], y: number, lr: number, onOp?: SampleRecorder) {
+  constructor(model: ScenarioNet, x: readonly number[], y: number, lr: number, onOp?: SampleRecorder) {
     this.model = model
     this.x = Tensor.of(x)
     this.y = Tensor.of([y])
     this.lr = lr
+    this.walk = buildWalk(model.layers)
     this.onOp = onOp
     this.opt = new SGD(model.params(), lr)
+    this.tensors = {
+      zPre: new Array(model.layers.length).fill(null),
+      zPost: new Array(model.layers.length).fill(null),
+      h: new Array(model.layers.length).fill(null),
+      L: null,
+    }
     // чистые градиенты на каждом сэмпле (zero_grad перед backward, micrograd-цикл)
     for (const p of model.params()) p.zeroGrad()
   }
@@ -80,7 +118,7 @@ export class SampleCursor {
   }
 
   get done(): boolean {
-    return this.nextOp >= OPS_PER_SAMPLE
+    return this.nextOp >= this.walk.length
   }
 
   /** Исполняет СЛЕДУЮЩУЮ операцию живого движка (единый код пошагово/пакетно). */
@@ -88,30 +126,29 @@ export class SampleCursor {
     if (this.done) throw new Error('SampleCursor: сэмпл завершён — создайте новый курсор')
     const op = this.nextOp
     this.nextOp += 1
+    this.execWalk(this.walk[op]!)
+    this.onOp?.(this, op)
+  }
+
+  private execWalk(w: WalkOp): void {
     const t = this.tensors
-    switch (op) {
-      case 0:
-        t.z1p = this.model.W1.matmul(this.x)
+    const K = this.model.layers.length
+    switch (w.kind) {
+      case 'matvec': {
+        const src = w.layer === 0 ? this.x : t.h[w.layer - 1]!
+        t.zPre[w.layer] = this.model.weights[w.layer]!.matmul(src)
         break
-      case 1:
-        t.z1 = t.z1p!.add(this.model.b1)
+      }
+      case 'add':
+        t.zPost[w.layer] = t.zPre[w.layer]!.add(this.model.biases[w.layer]!)
         break
-      case 2:
-        t.a1 = t.z1!.tanh()
+      case 'activate':
+        t.h[w.layer] = w.activation === 'tanh' ? t.zPost[w.layer]!.tanh() : t.zPost[w.layer]!.sigmoid()
         break
-      case 3:
-        t.z2p = this.model.W2.matmul(t.a1!)
+      case 'loss':
+        t.L = F.bce(t.h[K - 1]!, this.y)
         break
-      case 4:
-        t.z2 = t.z2p!.add(this.model.b2)
-        break
-      case 5:
-        t.yhat = t.z2!.sigmoid()
-        break
-      case 6:
-        t.L = F.bce(t.yhat!, this.y)
-        break
-      case 7: {
+      case 'bce-grad': {
         // старт backward: сеем ∂L/∂L = 1 и исполняем обратное замыкание bce
         const L = t.L!
         L.grad = new Float64Array(1)
@@ -119,35 +156,20 @@ export class SampleCursor {
         L.runBackward()
         break
       }
-      case 8:
-        // sigmoid: ∂L/∂z2
-        t.yhat!.runBackward()
+      case 'activate-grad':
+        t.h[w.layer]!.runBackward()
         break
-      case 9:
-        // add: ∂L/∂z2_pre, ∂L/∂b2
-        t.z2!.runBackward()
-        // matmul: ∂L/∂W2, ∂L/∂a1
-        t.z2p!.runBackward()
+      case 'affine-grad':
+        // add: градиенты биаса и pre-bias-суммы; затем matvec: веса и вход слоя
+        t.zPost[w.layer]!.runBackward()
+        t.zPre[w.layer]!.runBackward()
         break
-      case 10:
-        // tanh: ∂L/∂z1
-        t.a1!.runBackward()
-        break
-      case 11:
-        // add: ∂L/∂z1_pre, ∂L/∂b1
-        t.z1!.runBackward()
-        // matmul: ∂L/∂W1, ∂L/∂x
-        t.z1p!.runBackward()
-        break
-      case 12: {
-        this.sgdBefore = this.model.W2.data[0]!
+      case 'sgd': {
+        this.sgdBefore = this.model.weights[K - 1]!.data[0]!
         this.opt.step()
         break
       }
-      default:
-        throw new Error(`SampleCursor: неизвестная операция ${String(op)}`)
     }
-    this.onOp?.(this, op)
   }
 }
 

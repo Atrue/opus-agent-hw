@@ -26,17 +26,22 @@ export function flattenTensorValues(values: TensorValues): number[] {
   return [...(values as number[])]
 }
 
-/** Живые глобальные тензоры прогона: веса модели + вход/метка активного сэмпла. */
+/** Живые глобальные тензоры прогона: веса модели (символы — render-метки
+ *  слоёв спека) + вход/метка активного сэмпла. */
 function globalTensors(): Record<string, { values: TensorValues; provenance: string }> {
   const cursor = run.activeCursor
-  return {
-    W1: { values: matrixRowsOf(run.model.W1.data, run.model.W1.shape[0]!), provenance: PROV_WEIGHT },
-    b1: { values: Array.from(run.model.b1.data), provenance: PROV_WEIGHT },
-    W2: { values: matrixRowsOf(run.model.W2.data, run.model.W2.shape[0]!), provenance: PROV_WEIGHT },
-    b2: { values: Array.from(run.model.b2.data), provenance: PROV_WEIGHT },
+  const out: Record<string, { values: TensorValues; provenance: string }> = {
     x: { values: Array.from(cursor.x.data), provenance: PROV_INPUT },
     y: { values: Array.from(cursor.y.data), provenance: PROV_TARGET },
   }
+  const syms = run.scenario.render.layerSymbols
+  for (let k = 0; k < run.model.weights.length; k++) {
+    const w = run.model.weights[k]!
+    const b = run.model.biases[k]!
+    out[syms[k]!.w] = { values: matrixRowsOf(w.data, w.shape[0]!), provenance: PROV_WEIGHT }
+    out[syms[k]!.b] = { values: Array.from(b.data), provenance: PROV_WEIGHT }
+  }
+  return out
 }
 
 /** Float64Array [rows*cols] → вложенные строки (как tensorValuesOf записи). */

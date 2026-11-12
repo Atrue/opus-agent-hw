@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { XOR_SCENARIO } from '../run/scenario'
-import { expandScalar, MLP, SampleCursor, tensorValuesOf, Value, type Operand } from './index'
+import { buildModel, expandScalar, SampleCursor, ScenarioNet, tensorValuesOf, Value, type Operand } from './index'
 
 /**
  * Инвариант «drill-down = движок» per-op (R1 §4.4 Р-1, NFR-02): ленивое
@@ -26,8 +26,8 @@ function snapOp(sym: string, values: number[] | number[][]): { op: Operand; read
 }
 
 /** Живой движок: операции 0..opCount-1 сэмпла 1 (курсор с записью, как в UI). */
-function engineTo(opCount: number): { model: MLP; cursor: SampleCursor } {
-  const model = new MLP(XOR_SCENARIO.startWeights)
+function engineTo(opCount: number): { model: ScenarioNet; cursor: SampleCursor } {
+  const model = buildModel(XOR_SCENARIO)
   const sample = XOR_SCENARIO.samples[0]!
   const cursor = new SampleCursor(model, sample.x, sample.y, XOR_SCENARIO.lr)
   for (let k = 0; k < opCount; k++) cursor.advance()
@@ -41,59 +41,59 @@ function expectClose(actual: number, expected: number, ctx: string): void {
 describe('инвариант «drill-down = движок» per-op (forward)', () => {
   it('matvec (слой 1): z1[j] — все строки', () => {
     const { model, cursor } = engineTo(1)
-    const w = snapOp('W1', tensorValuesOf(model.W1) as number[][])
+    const w = snapOp('W1', tensorValuesOf(model.weights[0]!) as number[][])
     const x = snapOp('x', Array.from(cursor.x.data))
     for (let j = 0; j < 3; j++) {
       const exp = expandScalar({ kind: 'matvec', w: w.op, x: x.op, row: j })
-      expectClose(exp.value, cursor.tensors.z1p!.data[j]!, `z1[${String(j)}]`)
+      expectClose(exp.value, cursor.tensors.zPre[0]!.data[j]!, `z1[${String(j)}]`)
     }
   })
 
   it('add (слой 1): z1[i] = z1_pre[i] + b1[i]', () => {
     const { model, cursor } = engineTo(2)
-    const a = snapOp('z1', Array.from(cursor.tensors.z1p!.data))
-    const b = snapOp('b1', tensorValuesOf(model.b1) as number[])
+    const a = snapOp('z1', Array.from(cursor.tensors.zPre[0]!.data))
+    const b = snapOp('b1', tensorValuesOf(model.biases[0]!) as number[])
     for (let i = 0; i < 3; i++) {
       const exp = expandScalar({ kind: 'add', a: a.op, b: b.op, index: i })
-      expectClose(exp.value, cursor.tensors.z1!.data[i]!, `z1[${String(i)}]`)
+      expectClose(exp.value, cursor.tensors.zPost[0]!.data[i]!, `z1[${String(i)}]`)
     }
   })
 
   it('tanh: a1[i] — все три активации', () => {
     const { cursor } = engineTo(3)
-    const z = snapOp('z1', Array.from(cursor.tensors.z1!.data))
+    const z = snapOp('z1', Array.from(cursor.tensors.zPost[0]!.data))
     for (let i = 0; i < 3; i++) {
       const exp = expandScalar({ kind: 'tanh', z: z.op, index: i })
-      expectClose(exp.value, cursor.tensors.a1!.data[i]!, `a1[${String(i)}]`)
+      expectClose(exp.value, cursor.tensors.h[0]!.data[i]!, `a1[${String(i)}]`)
     }
   })
 
   it('matvec (слой 2): z2 = W2·a1', () => {
     const { model, cursor } = engineTo(4)
-    const w = snapOp('W2', tensorValuesOf(model.W2) as number[][])
-    const a1 = snapOp('a1', Array.from(cursor.tensors.a1!.data))
+    const w = snapOp('W2', tensorValuesOf(model.weights[1]!) as number[][])
+    const a1 = snapOp('a1', Array.from(cursor.tensors.h[0]!.data))
     const exp = expandScalar({ kind: 'matvec', w: w.op, x: a1.op, row: 0 })
-    expectClose(exp.value, cursor.tensors.z2p!.data[0]!, 'z2')
+    expectClose(exp.value, cursor.tensors.zPre[1]!.data[0]!, 'z2')
   })
 
   it('add (слой 2): z2 = z2_pre + b2', () => {
     const { model, cursor } = engineTo(5)
-    const a = snapOp('z2', Array.from(cursor.tensors.z2p!.data))
-    const b = snapOp('b2', tensorValuesOf(model.b2) as number[])
+    const a = snapOp('z2', Array.from(cursor.tensors.zPre[1]!.data))
+    const b = snapOp('b2', tensorValuesOf(model.biases[1]!) as number[])
     const exp = expandScalar({ kind: 'add', a: a.op, b: b.op, index: 0 })
-    expectClose(exp.value, cursor.tensors.z2!.data[0]!, 'z2')
+    expectClose(exp.value, cursor.tensors.zPost[1]!.data[0]!, 'z2')
   })
 
   it('sigmoid: ŷ = σ(z2)', () => {
     const { cursor } = engineTo(6)
-    const z = snapOp('z2', Array.from(cursor.tensors.z2!.data))
+    const z = snapOp('z2', Array.from(cursor.tensors.zPost[1]!.data))
     const exp = expandScalar({ kind: 'sigmoid', z: z.op, index: 0 })
-    expectClose(exp.value, cursor.tensors.yhat!.data[0]!, 'yhat')
+    expectClose(exp.value, cursor.tensors.h[1]!.data[0]!, 'yhat')
   })
 
   it('bce: L = −[y·ln ŷ + (1−y)·ln(1−ŷ)]', () => {
     const { cursor } = engineTo(7)
-    const p = snapOp('ŷ', Array.from(cursor.tensors.yhat!.data))
+    const p = snapOp('ŷ', Array.from(cursor.tensors.h[1]!.data))
     const t = snapOp('y', Array.from(cursor.y.data))
     const exp = expandScalar({ kind: 'bce', p: p.op, t: t.op })
     expectClose(exp.value, cursor.tensors.L!.data[0]!, 'L')
@@ -103,70 +103,70 @@ describe('инвариант «drill-down = движок» per-op (forward)', ()
 describe('инвариант «drill-down = движок» per-op (backward-градиенты)', () => {
   it('bce-grad: ∂L/∂ŷ = (ŷ−y)/(ŷ(1−ŷ))', () => {
     const { cursor } = engineTo(8)
-    const p = snapOp('ŷ', Array.from(cursor.tensors.yhat!.data))
+    const p = snapOp('ŷ', Array.from(cursor.tensors.h[1]!.data))
     const t = snapOp('y', Array.from(cursor.y.data))
     const exp = expandScalar({ kind: 'bce-grad', p: p.op, t: t.op })
-    expectClose(exp.value, cursor.tensors.yhat!.grad![0]!, 'dyhat')
+    expectClose(exp.value, cursor.tensors.h[1]!.grad![0]!, 'dyhat')
   })
 
   it('sigmoid-grad: ∂L/∂z2 = ∂L/∂ŷ · ŷ(1−ŷ)', () => {
     const { cursor } = engineTo(9)
-    const out = snapOp('ŷ', Array.from(cursor.tensors.yhat!.data))
-    const gOut = snapOp('∂L/∂ŷ', Array.from(cursor.tensors.yhat!.grad!))
+    const out = snapOp('ŷ', Array.from(cursor.tensors.h[1]!.data))
+    const gOut = snapOp('∂L/∂ŷ', Array.from(cursor.tensors.h[1]!.grad!))
     const exp = expandScalar({ kind: 'sigmoid-grad', out: out.op, gOut: gOut.op, index: 0 })
-    expectClose(exp.value, cursor.tensors.z2!.grad![0]!, 'dz2')
+    expectClose(exp.value, cursor.tensors.zPost[1]!.grad![0]!, 'dz2')
   })
 
   it('matvec-grad (слой 2): ∂L/∂W2[j,i] = ∂L/∂z2[j]·a1[i] — все 3 веса; add-grad: ∂L/∂b2', () => {
     const { model, cursor } = engineTo(10)
-    const gOut = snapOp('∂L/∂z2', Array.from(cursor.tensors.z2!.grad!))
-    const a1 = snapOp('a1', Array.from(cursor.tensors.a1!.data))
+    const gOut = snapOp('∂L/∂z2', Array.from(cursor.tensors.zPost[1]!.grad!))
+    const a1 = snapOp('a1', Array.from(cursor.tensors.h[0]!.data))
     for (let i = 0; i < 3; i++) {
       const exp = expandScalar({ kind: 'matvec-grad-w', gOut: gOut.op, x: a1.op, row: 0, col: i })
-      expectClose(exp.value, model.W2.grad![i]!, `dW2[0,${String(i)}]`)
+      expectClose(exp.value, model.weights[1]!.grad![i]!, `dW2[0,${String(i)}]`)
     }
     const db2 = expandScalar({ kind: 'add-grad', gOut: gOut.op, index: 0 })
-    expectClose(db2.value, model.b2.grad![0]!, 'db2')
+    expectClose(db2.value, model.biases[1]!.grad![0]!, 'db2')
   })
 
   it('matvec-grad-x (слой 2): ∂L/∂a1[i] = Σ_j W2[j,i]·∂L/∂z2[j]', () => {
     const { model, cursor } = engineTo(10)
-    const w = snapOp('W2', tensorValuesOf(model.W2) as number[][])
-    const gOut = snapOp('∂L/∂z2', Array.from(cursor.tensors.z2!.grad!))
+    const w = snapOp('W2', tensorValuesOf(model.weights[1]!) as number[][])
+    const gOut = snapOp('∂L/∂z2', Array.from(cursor.tensors.zPost[1]!.grad!))
     for (let i = 0; i < 3; i++) {
       const exp = expandScalar({ kind: 'matvec-grad-x', w: w.op, gOut: gOut.op, col: i })
-      expectClose(exp.value, cursor.tensors.a1!.grad![i]!, `da1[${String(i)}]`)
+      expectClose(exp.value, cursor.tensors.h[0]!.grad![i]!, `da1[${String(i)}]`)
     }
   })
 
   it('tanh-grad: ∂L/∂z1[i] = ∂L/∂a1[i]·(1−a1[i]²)', () => {
     const { cursor } = engineTo(11)
-    const a = snapOp('a1', Array.from(cursor.tensors.a1!.data))
-    const gOut = snapOp('∂L/∂a1', Array.from(cursor.tensors.a1!.grad!))
+    const a = snapOp('a1', Array.from(cursor.tensors.h[0]!.data))
+    const gOut = snapOp('∂L/∂a1', Array.from(cursor.tensors.h[0]!.grad!))
     for (let i = 0; i < 3; i++) {
       const exp = expandScalar({ kind: 'tanh-grad', a: a.op, gOut: gOut.op, index: i })
-      expectClose(exp.value, cursor.tensors.z1!.grad![i]!, `dz1[${String(i)}]`)
+      expectClose(exp.value, cursor.tensors.zPost[0]!.grad![i]!, `dz1[${String(i)}]`)
     }
   })
 
   it('matvec-grad (слой 1): ∂L/∂W1 — все 6 весов; ∂L/∂b1; add-grad', () => {
     const { model, cursor } = engineTo(12)
-    const gOut = snapOp('∂L/∂z1', Array.from(cursor.tensors.z1!.grad!))
+    const gOut = snapOp('∂L/∂z1', Array.from(cursor.tensors.zPost[0]!.grad!))
     const x = snapOp('x', Array.from(cursor.x.data))
     for (let j = 0; j < 3; j++) {
       for (let i = 0; i < 2; i++) {
         const exp = expandScalar({ kind: 'matvec-grad-w', gOut: gOut.op, x: x.op, row: j, col: i })
-        expectClose(exp.value, model.W1.grad![j * 2 + i]!, `dW1[${String(j)},${String(i)}]`)
+        expectClose(exp.value, model.weights[0]!.grad![j * 2 + i]!, `dW1[${String(j)},${String(i)}]`)
       }
       const db1 = expandScalar({ kind: 'add-grad', gOut: gOut.op, index: j })
-      expectClose(db1.value, model.b1.grad![j]!, `db1[${String(j)}]`)
+      expectClose(db1.value, model.biases[0]!.grad![j]!, `db1[${String(j)}]`)
     }
   })
 
   it('matvec-grad-x (слой 1): ∂L/∂x[i] = Σ_j W1[j,i]·∂L/∂z1[j]', () => {
     const { model, cursor } = engineTo(12)
-    const w = snapOp('W1', tensorValuesOf(model.W1) as number[][])
-    const gOut = snapOp('∂L/∂z1', Array.from(cursor.tensors.z1!.grad!))
+    const w = snapOp('W1', tensorValuesOf(model.weights[0]!) as number[][])
+    const gOut = snapOp('∂L/∂z1', Array.from(cursor.tensors.zPost[0]!.grad!))
     for (let i = 0; i < 2; i++) {
       const exp = expandScalar({ kind: 'matvec-grad-x', w: w.op, gOut: gOut.op, col: i })
       expectClose(exp.value, cursor.x.grad![i]!, `dx[${String(i)}]`)
@@ -176,24 +176,24 @@ describe('инвариант «drill-down = движок» per-op (backward-гр
   it('sgd: W2[i] после = W2[i] − η·∂L/∂W2[i] (снапшоты «до» + градиенты)', () => {
     // sgd ещё не исполнена
     const { model, cursor } = engineTo(12)
-    const wBefore = snapOp('W2', tensorValuesOf(model.W2) as number[][])
-    const g = snapOp('∂L/∂W2', Array.from(model.W2.grad!))
-    const wBeforeValues = Array.from(model.W2.data)
+    const wBefore = snapOp('W2', tensorValuesOf(model.weights[1]!) as number[][])
+    const g = snapOp('∂L/∂W2', Array.from(model.weights[1]!.grad!))
+    const wBeforeValues = Array.from(model.weights[1]!.data)
     // оп 12: sgd мутирует веса
     cursor.advance()
     for (let i = 0; i < 3; i++) {
       const exp = expandScalar({ kind: 'sgd', w: wBefore.op, g: g.op, lr: cursor.lr, index: i })
-      expectClose(exp.value, model.W2.data[i]!, `W2[${String(i)}] после sgd`)
+      expectClose(exp.value, model.weights[1]!.data[i]!, `W2[${String(i)}] после sgd`)
     }
     // «до»-снапшот не совпадает с «после» — раскрытие действительно пересчитывает update
-    expect(wBeforeValues[0]).not.toBe(model.W2.data[0]!)
+    expect(wBeforeValues[0]).not.toBe(model.weights[1]!.data[0]!)
   })
 })
 
 describe('ленивость экспандеров (R1 §4.4 Р-4)', () => {
   it('цепочка не строится до первого запроса .value; снапшоты читаются один раз и кэшируются', () => {
     const { model, cursor } = engineTo(1)
-    const w = snapOp('W1', tensorValuesOf(model.W1) as number[][])
+    const w = snapOp('W1', tensorValuesOf(model.weights[0]!) as number[][])
     const x = snapOp('x', Array.from(cursor.x.data))
     const exp = expandScalar({ kind: 'matvec', w: w.op, x: x.op, row: 1 })
     expect(exp.computed, 'запрос раскрытия ничего не вычисляет').toBe(false)
@@ -213,7 +213,7 @@ describe('ленивость экспандеров (R1 §4.4 Р-4)', () => {
 describe('формулы с подстановкой чисел (данные тултипов 01.1-04)', () => {
   it('matvec: символы + подставленные числа в порядке суммирования + результат', () => {
     const { model, cursor } = engineTo(1)
-    const w = snapOp('W1', tensorValuesOf(model.W1) as number[][])
+    const w = snapOp('W1', tensorValuesOf(model.weights[0]!) as number[][])
     const x = snapOp('x', Array.from(cursor.x.data))
     const exp = expandScalar({ kind: 'matvec', w: w.op, x: x.op, row: 1 })
     expect(exp.formula).toBe('W1[1,0]·x[0] + W1[1,1]·x[1] = −0.7121·1 + −0.07494·0 = −0.7121')
@@ -221,7 +221,7 @@ describe('формулы с подстановкой чисел (данные т
 
   it('градиент matvec: цепочка «∂L/∂W1[j,i] = ∂L/∂z1[j] · x[i]» с числами', () => {
     const { cursor } = engineTo(12)
-    const gOut = snapOp('∂L/∂z1', Array.from(cursor.tensors.z1!.grad!))
+    const gOut = snapOp('∂L/∂z1', Array.from(cursor.tensors.zPost[0]!.grad!))
     const x = snapOp('x', Array.from(cursor.x.data))
     const exp = expandScalar({ kind: 'matvec-grad-w', gOut: gOut.op, x: x.op, row: 0, col: 0 })
     expect(exp.formula).toBe('∂L/∂z1[0]·x[0] = 0.02814·1 = 0.02814')
@@ -229,8 +229,8 @@ describe('формулы с подстановкой чисел (данные т
 
   it('sgd: W = W − η·∂L/∂W с числами (η = 0.5)', () => {
     const { model } = engineTo(12)
-    const w = snapOp('W2', tensorValuesOf(model.W2) as number[][])
-    const g = snapOp('∂L/∂W2', Array.from(model.W2.grad!))
+    const w = snapOp('W2', tensorValuesOf(model.weights[1]!) as number[][])
+    const g = snapOp('∂L/∂W2', Array.from(model.weights[1]!.grad!))
     const exp = expandScalar({ kind: 'sgd', w: w.op, g: g.op, lr: 0.5, index: 0 })
     expect(exp.formula).toBe('W2[0] − η·∂L/∂W2[0] = −0.1352 − 0.5·0.3905 = −0.3305')
   })

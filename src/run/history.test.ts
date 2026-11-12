@@ -11,7 +11,6 @@ import {
 import { TrainingRun } from './trainingRun'
 import { isSampleRecord, type SampleRecord } from './types'
 import { XOR_SCENARIO, SAMPLE_COUNT } from './scenario'
-import { OPS_PER_SAMPLE } from '../tensor'
 
 /**
  * История обучения (UX-05/UX-06, планы 01.1-03 → 01.2-02): per-sample
@@ -174,7 +173,7 @@ describe('Геометрия сессии: sessionGeometryOf + buildLossChartDat
 
   it('сброс внутри эпохи: граница прогона без точки эпохи (эпоха не завершена)', () => {
     // сэмплы 1–2 эпохи 1
-    for (let i = 0; i < 2 * OPS_PER_SAMPLE; i++) run.advance()
+    for (let i = 0; i < 2 * XOR_SCENARIO.ops.length; i++) run.advance()
     run.reset()
     const g = sessionGeometryOf(run.sampleHistory, run.completedEpochs.length)
     expect(g.runBounds).toEqual([2])

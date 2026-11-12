@@ -50,7 +50,7 @@ export function StepperBand() {
 
   return (
     <div ref={bandRef} data-testid="step-band" role="list" aria-label={`Лента шагов сэмпла: ${String(stepInSample)} из 13`} className="step-band">
-      {XOR_SCENARIO.opMeta.map((meta, i) => {
+      {XOR_SCENARIO.ops.map((meta, i) => {
         const step = i + 1
         const done = epochDone || step < stepInSample
         const active = !epochDone && step === stepInSample

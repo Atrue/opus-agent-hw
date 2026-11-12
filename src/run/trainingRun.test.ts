@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { TrainingRun } from './trainingRun'
+import { flatWeights } from './stepRecords'
 import { isSampleRecord, type HistoryRecord, type SampleRecord, type StartRecord } from './types'
-import { XOR_SCENARIO, SAMPLE_COUNT } from './scenario'
-import { OPS_PER_SAMPLE } from '../tensor'
+import { XOR_SCENARIO, XOR_START_WEIGHTS, SAMPLE_COUNT } from './scenario'
 
 /**
  * Корень прогона (R3/R4): курсор (эпоха/пример/шаг), границы сэмпла и эпохи,
@@ -18,13 +18,13 @@ import { OPS_PER_SAMPLE } from '../tensor'
  * экземпляром TrainingRun (reload = честный сброс), а не синглтоном.
  */
 
-const START_W1 = XOR_SCENARIO.startWeights.w1.flat()
-const START_FLAT = [
-  ...XOR_SCENARIO.startWeights.w1.flat(),
-  ...XOR_SCENARIO.startWeights.b1,
-  ...XOR_SCENARIO.startWeights.w2.flat(),
-  ...XOR_SCENARIO.startWeights.b2,
-]
+const START_W1 = XOR_START_WEIGHTS.w1.flat()
+const START_FLAT = [...XOR_START_WEIGHTS.w1.flat(), ...XOR_START_WEIGHTS.b1, ...XOR_START_WEIGHTS.w2.flat(), ...XOR_START_WEIGHTS.b2]
+
+/** Плоские веса живой модели (layer-major: W1, b1, W2, b2). */
+function flatModelWeightsOf(): number[] {
+  return flatWeights(run.model)
+}
 
 /** Свежий прогон на каждый тест — сессия без истории (семантика reload). */
 let run: TrainingRun
@@ -36,10 +36,7 @@ beforeEach(() => {
 /** Плоские веса живой модели в порядке снапшота (W1, b1, W2, b2). */
 function flatModelWeights(): number[] {
   return [
-    ...Array.from(run.model.W1.data),
-    ...Array.from(run.model.b1.data),
-    ...Array.from(run.model.W2.data),
-    ...Array.from(run.model.b2.data),
+    ...flatModelWeightsOf(),
   ]
 }
 
@@ -90,7 +87,7 @@ describe('TrainingRun: курсор прогона', () => {
     expect(run.stepInSample).toBe(1)
     expect(run.currentRecord).toBeNull()
     expect(run.epochLossPoints).toHaveLength(0)
-    expect(Array.from(run.model.W1.data)).toEqual(START_W1)
+    expect(Array.from(run.model.weights[0]!.data)).toEqual(START_W1)
   })
 
   it('смена операции сбрасывает drill', () => {
@@ -196,7 +193,7 @@ describe('TrainingRun: эпохи и fast-forward (R3)', () => {
   })
 
   it('инвариант: прогон эпохи по-операционно и runEpoch() дают идентичные веса и лосс-точки', () => {
-    for (let i = 0; i < SAMPLE_COUNT * OPS_PER_SAMPLE; i++) run.advance()
+    for (let i = 0; i < SAMPLE_COUNT * XOR_SCENARIO.ops.length; i++) run.advance()
     const stepwiseWeights = flatModelWeights()
     const stepwisePoints = [...run.epochLossPoints]
     const stepwiseSummary = run.completedEpochs[0]
@@ -212,11 +209,11 @@ describe('TrainingRun: эпохи и fast-forward (R3)', () => {
   })
 
   it('пошаговое завершение эпохи открывает экран: 4×13 операций, счётчик эпохи ещё не двинулся', () => {
-    for (let i = 0; i < SAMPLE_COUNT * OPS_PER_SAMPLE; i++) run.advance()
+    for (let i = 0; i < SAMPLE_COUNT * XOR_SCENARIO.ops.length; i++) run.advance()
     expect(run.screen).toBe('epoch-end')
     expect(run.epoch).toBe(1)
     expect(run.sampleIndex).toBe(SAMPLE_COUNT - 1)
-    expect(run.stepInSample).toBe(OPS_PER_SAMPLE)
+    expect(run.stepInSample).toBe(XOR_SCENARIO.ops.length)
     expect(run.completedEpochs).toHaveLength(1)
   })
 
@@ -236,11 +233,11 @@ describe('TrainingRun: эпохи и fast-forward (R3)', () => {
 
   it('FF с середины эпохи досчитывает только остаток: результат идентичен чистому прогону', () => {
     // чистая пошаговая эпоха 1 — эталон весов
-    for (let i = 0; i < SAMPLE_COUNT * OPS_PER_SAMPLE; i++) run.advance()
+    for (let i = 0; i < SAMPLE_COUNT * XOR_SCENARIO.ops.length; i++) run.advance()
     const stepwiseWeights = flatModelWeights()
     // смешанный путь: сэмпл 1 полностью + 5 операций сэмпла 2 пошагово, остаток — FF
     run.reset()
-    for (let i = 0; i < OPS_PER_SAMPLE + 5; i++) run.advance()
+    for (let i = 0; i < XOR_SCENARIO.ops.length + 5; i++) run.advance()
     expect(run.stepInSample).toBe(6)
     run.runEpoch()
     expect(run.screen).toBe('epoch-end')
@@ -305,7 +302,7 @@ describe('TrainingRun: SampleRecord-история сессии (01.2-02)', () =
   it('(в) инвариант R3 на истории: две эпохи пошагово и FF — идентичные sampleHistory', () => {
     const stepwise = new TrainingRun()
     for (let e = 0; e < 2; e++) {
-      for (let i = 0; i < SAMPLE_COUNT * OPS_PER_SAMPLE; i++) stepwise.advance()
+      for (let i = 0; i < SAMPLE_COUNT * XOR_SCENARIO.ops.length; i++) stepwise.advance()
       // экран завершения эпохи → следующая эпоха
       stepwise.advance()
     }

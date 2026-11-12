@@ -35,7 +35,7 @@ export interface SegmentGeometry {
 }
 
 /** Формула операции opMeta по индексу. */
-const op = (i: number): string => XOR_SCENARIO.opMeta[i]!.formula
+const op = (i: number): string => XOR_SCENARIO.ops[i]!.formula
 
 export const SEGMENTS: readonly ChainSegment[] = [
   { id: 'x', title: 'x — вход примера', formula: 'x = (x1, x2)', symbols: ['x'] },

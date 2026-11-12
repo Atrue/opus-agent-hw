@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { buildStepRecord } from './stepRecords'
 import { XOR_SCENARIO } from './scenario'
-import { MLP, SampleCursor, type StepRecord, type TensorValues } from '../tensor'
+import { buildModel, SampleCursor, type StepRecord, type TensorValues } from '../tensor'
 import { ETALON_SAMPLE_1 } from './etalon-constants'
 
 /**
@@ -32,7 +32,7 @@ function expectValuesClose(actual: TensorValues, expected: TensorValues, ctx: st
 
 /** Прогон сэмпла 1 пошагово на живом движке (с записью, как в UI). */
 function runEtalonSample(): StepRecord[] {
-  const model = new MLP(XOR_SCENARIO.startWeights)
+  const model = buildModel(XOR_SCENARIO)
   const sample = XOR_SCENARIO.samples[0]!
   const cursor = new SampleCursor(model, sample.x, sample.y, XOR_SCENARIO.lr)
   const records: StepRecord[] = []

@@ -86,15 +86,17 @@ function nodeValue(id: string): number | undefined {
   const cursor = run.activeCursor
   const t = cursor.tensors
   const done = run.sampleOpValues
+  const W1 = run.model.weights[0]!
+  const W2 = run.model.weights[1]!
   const dotW1 = (j: number): number | undefined => {
     const x0 = cursor.x.data[0]!
     const x1 = cursor.x.data[1]!
-    return run.model.W1.data[j * 2]! * x0 + run.model.W1.data[j * 2 + 1]! * x1
+    return W1.data[j * 2]! * x0 + W1.data[j * 2 + 1]! * x1
   }
   const dotW2 = (): number | undefined => {
-    if (t.a1 === null) return undefined
+    if (t.h[0] === null) return undefined
     let s = 0
-    for (let j = 0; j < 3; j++) s += run.model.W2.data[j]! * t.a1.data[j]!
+    for (let j = 0; j < 3; j++) s += W2.data[j]! * t.h[0].data[j]!
     return s
   }
   switch (id) {
@@ -110,17 +112,17 @@ function nodeValue(id: string): number | undefined {
     case 'W1[3]':
     case 'W1[4]':
     case 'W1[5]':
-      return run.model.W1.data[idx(id)]
+      return W1.data[idx(id)]
     case 'b1[0]':
     case 'b1[1]':
     case 'b1[2]':
-      return run.model.b1.data[idx(id)]
+      return run.model.biases[0]!.data[idx(id)]
     case 'W2[0]':
     case 'W2[1]':
     case 'W2[2]':
-      return run.model.W2.data[idx(id)]
+      return W2.data[idx(id)]
     case 'b2[0]':
-      return run.model.b2.data[0]
+      return run.model.biases[1]!.data[0]
     case 'W1x[0]':
     case 'W1x[1]':
     case 'W1x[2]':
@@ -128,17 +130,17 @@ function nodeValue(id: string): number | undefined {
     case 'z1[0]':
     case 'z1[1]':
     case 'z1[2]':
-      return done[1] === undefined ? undefined : tensorAt(t.z1, idx(id))
+      return done[1] === undefined ? undefined : tensorAt(t.zPost[0], idx(id))
     case 'a1[0]':
     case 'a1[1]':
     case 'a1[2]':
-      return done[2] === undefined ? undefined : tensorAt(t.a1, idx(id))
+      return done[2] === undefined ? undefined : tensorAt(t.h[0], idx(id))
     case 'W2a1':
       return done[3] === undefined ? undefined : dotW2()
     case 'z2':
-      return done[4] === undefined ? undefined : tensorAt(t.z2, 0)
+      return done[4] === undefined ? undefined : tensorAt(t.zPost[1], 0)
     case 'ŷ':
-      return done[5] === undefined ? undefined : tensorAt(t.yhat, 0)
+      return done[5] === undefined ? undefined : tensorAt(t.h[1], 0)
     case 'L':
       return done[6] === undefined ? undefined : tensorAt(t.L, 0)
     // операции несут значение своего результата
@@ -171,7 +173,7 @@ function nodeValue(id: string): number | undefined {
 function nodeGrad(id: string): number | undefined {
   const cursor = run.activeCursor
   const t = cursor.tensors
-  const g1 = (k: number): number | undefined => gradAt(run.model.W1, k)
+  const g1 = (k: number): number | undefined => gradAt(run.model.weights[0]!, k)
   switch (id) {
     case 'W1[0]':
     case 'W1[1]':
@@ -183,13 +185,13 @@ function nodeGrad(id: string): number | undefined {
     case 'b1[0]':
     case 'b1[1]':
     case 'b1[2]':
-      return gradAt(run.model.b1, idx(id))
+      return gradAt(run.model.biases[0]!, idx(id))
     case 'W2[0]':
     case 'W2[1]':
     case 'W2[2]':
-      return gradAt(run.model.W2, idx(id))
+      return gradAt(run.model.weights[1]!, idx(id))
     case 'b2[0]':
-      return gradAt(run.model.b2, 0)
+      return gradAt(run.model.biases[1]!, 0)
     case 'x[0]':
       return gradAt(cursor.x, 0)
     case 'x[1]':
@@ -200,16 +202,16 @@ function nodeGrad(id: string): number | undefined {
     case 'z1[0]':
     case 'z1[1]':
     case 'z1[2]':
-      return gradAt(t.z1, Number(id.slice(id.indexOf('[') + 1, -1)))
+      return gradAt(t.zPost[0], Number(id.slice(id.indexOf('[') + 1, -1)))
     case 'a1[0]':
     case 'a1[1]':
     case 'a1[2]':
-      return gradAt(t.a1, idx(id))
+      return gradAt(t.h[0], idx(id))
     case 'W2a1':
     case 'z2':
-      return gradAt(t.z2, 0)
+      return gradAt(t.zPost[1], 0)
     case 'ŷ':
-      return gradAt(t.yhat, 0)
+      return gradAt(t.h[1], 0)
     // операции несут градиент своего результата
     case 'op:matvec[0]':
     case 'op:matvec[1]':

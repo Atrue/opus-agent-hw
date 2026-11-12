@@ -1,20 +1,22 @@
 /**
- * Снимки операций в StepRecord (D-28б): buildStepRecord копирует входы/выходы/
- * градиенты из живых тензоров курсора в момент записи (заморозка чисел —
- * поздний opt.step() не испортит историю, R1 §2.2). Provenance-строки RU
- * переносятся дословно — на них завязаны etalon-тест и UI.
+ * Снимки операций в StepRecord (D-28б/D-30): buildStepRecord собирается из
+ * метаданных ops спека (формула/нарратив/провенанс) и walked-опы курсора —
+ * без сценарного switch. Входы/выходы/градиенты копируются из живых тензоров
+ * в момент записи (заморозка чисел — поздний opt.step() не испортит историю,
+ * R1 §2.2). Provenance-строки RU — константы модуля: на них завязаны
+ * etalon-тест и UI.
  */
 
-import { gradIo, tensorIo, type MLP, type Phase, type SampleCursor, type StepRecord, type Tensor, type TensorIo } from '../tensor'
-import { XOR_SCENARIO } from './scenario'
+import { gradIo, tensorIo, type Phase, type SampleCursor, type StepRecord, type Tensor, type TensorIo } from '../tensor'
+import { XOR_SCENARIO, type ScenarioModel } from './scenario'
 
 const PROV_WEIGHT = 'вес модели (стартовые константы сценария)'
 const PROV_INPUT = 'входные данные — граница графа'
 const PROV_TARGET = 'метка — граница графа'
 const PROV_LR = 'гиперпараметр SGD'
 
-function stepProv(opIndex: number): string {
-  return `шаг ${String(opIndex + 1)} (${XOR_SCENARIO.opMeta[opIndex]!.op})`
+function stepProv(opIndex: number, spec: ScenarioModel): string {
+  return `шаг ${String(opIndex + 1)} (${spec.ops[opIndex]!.op})`
 }
 
 function scalarIo(sym: string, values: readonly number[], provenance?: string): TensorIo {
@@ -29,20 +31,38 @@ function gradVec(t: Tensor): number[] {
   return Array.from(t.grad)
 }
 
-/** Плоские 13 весов модели в порядке снапшота: W1 (6), b1 (3), W2 (3), b2 (1). */
-export function flatWeights(m: MLP): number[] {
-  return [...Array.from(m.W1.data), ...Array.from(m.b1.data), ...Array.from(m.W2.data), ...Array.from(m.b2.data)]
+/** ASCII-ключ changed-маркера: «ŷ» → «yhat» (соответствие normalizeSym UI). */
+function ascii(sym: string): string {
+  return sym.replace('ŷ', 'yhat')
+}
+
+/** «∂L/∂ŷ» → «dyhat» — changed-маркер градиентного символа. */
+function dAscii(sym: string): string {
+  return `d${ascii(sym)}`
+}
+
+/** Плоские веса модели в порядке снапшота (layer-major): W1, b1, W2, b2… */
+export function flatWeights(m: { weights: readonly Tensor[]; biases: readonly Tensor[] }): number[] {
+  const out: number[] = []
+  for (let k = 0; k < m.weights.length; k++) {
+    out.push(...Array.from(m.weights[k]!.data), ...Array.from(m.biases[k]!.data))
+  }
+  return out
 }
 
 /**
  * Снимок выполненной операции opIndex в StepRecord: входы/выходы/градиенты
- * копируются из живых тензоров курсора в момент записи (заморозка чисел —
- * поздний opt.step() не испортит историю, R1 §2.2).
+ * копируются из живых тензоров курсора в момент записи. Символы —
+ * рендер-метки слоёв спека (render.layerSymbols); индексы шагов provenance
+ * выведены из топологии walked-оп (buildWalk).
  */
-export function buildStepRecord(cursor: SampleCursor, opIndex: number): StepRecord {
-  const meta = XOR_SCENARIO.opMeta[opIndex]!
+export function buildStepRecord(cursor: SampleCursor, opIndex: number, spec: ScenarioModel = XOR_SCENARIO): StepRecord {
+  const meta = spec.ops[opIndex]!
+  const walk = cursor.walk[opIndex]!
   const t = cursor.tensors
   const m = cursor.model
+  const K = m.layers.length
+  const L = spec.render.layerSymbols
   const base = {
     index: opIndex,
     op: meta.op,
@@ -51,143 +71,116 @@ export function buildStepRecord(cursor: SampleCursor, opIndex: number): StepReco
     formula: meta.formula,
     narrative: { ru: meta.narrative },
   }
-  switch (opIndex) {
-    case 0:
+  // индексы walked-оп (зеркало buildWalk): forward 3 на слой, loss, bce-grad,
+  // backward парами от выхода, sgd
+  const actIdx = (k: number): number => 3 * k + 2
+  const actGradIdx = (k: number): number => 3 * K + 2 + 2 * (K - 1 - k)
+  const affGradIdx = (k: number): number => 3 * K + 3 + 2 * (K - 1 - k)
+  switch (walk.kind) {
+    case 'matvec': {
+      const k = walk.layer
+      const input = k === 0 ? tensorIo('x', cursor.x, PROV_INPUT) : tensorIo(L[k - 1]!.h, t.h[k - 1]!, stepProv(actIdx(k - 1), spec))
       return {
         ...base,
-        inputs: [tensorIo('W1', m.W1, PROV_WEIGHT), tensorIo('x', cursor.x, PROV_INPUT)],
-        outputs: tensorIo('z1', t.z1p!),
+        inputs: [tensorIo(L[k]!.w, m.weights[k]!, PROV_WEIGHT), input],
+        outputs: tensorIo(L[k]!.z, t.zPre[k]!),
         grads: null,
-        changed: ['z1'],
+        changed: [ascii(L[k]!.z)],
       }
-    case 1:
+    }
+    case 'add': {
+      const k = walk.layer
       return {
         ...base,
-        inputs: [tensorIo('z1', t.z1p!, stepProv(0)), tensorIo('b1', m.b1, PROV_WEIGHT)],
-        outputs: tensorIo('z1', t.z1!),
+        inputs: [tensorIo(L[k]!.z, t.zPre[k]!, stepProv(3 * k, spec)), tensorIo(L[k]!.b, m.biases[k]!, PROV_WEIGHT)],
+        outputs: tensorIo(L[k]!.z, t.zPost[k]!),
         grads: null,
-        changed: ['z1'],
+        changed: [ascii(L[k]!.z)],
       }
-    case 2:
+    }
+    case 'activate': {
+      const k = walk.layer
       return {
         ...base,
-        inputs: [tensorIo('z1', t.z1!, stepProv(1))],
-        outputs: tensorIo('a1', t.a1!),
+        inputs: [tensorIo(L[k]!.z, t.zPost[k]!, stepProv(3 * k + 1, spec))],
+        outputs: tensorIo(L[k]!.h, t.h[k]!),
         grads: null,
-        changed: ['a1'],
+        changed: [ascii(L[k]!.h)],
       }
-    case 3:
+    }
+    case 'loss':
       return {
         ...base,
-        inputs: [tensorIo('W2', m.W2, PROV_WEIGHT), tensorIo('a1', t.a1!, stepProv(2))],
-        outputs: tensorIo('z2', t.z2p!),
-        grads: null,
-        changed: ['z2'],
-      }
-    case 4:
-      return {
-        ...base,
-        inputs: [tensorIo('z2', t.z2p!, stepProv(3)), tensorIo('b2', m.b2, PROV_WEIGHT)],
-        outputs: tensorIo('z2', t.z2!),
-        grads: null,
-        changed: ['z2'],
-      }
-    case 5:
-      return {
-        ...base,
-        inputs: [tensorIo('z2', t.z2!, stepProv(4))],
-        outputs: tensorIo('ŷ', t.yhat!),
-        grads: null,
-        changed: ['yhat'],
-      }
-    case 6:
-      return {
-        ...base,
-        inputs: [tensorIo('ŷ', t.yhat!, stepProv(5)), tensorIo('y', cursor.y, PROV_TARGET)],
+        inputs: [tensorIo(L[K - 1]!.h, t.h[K - 1]!, stepProv(actIdx(K - 1), spec)), tensorIo('y', cursor.y, PROV_TARGET)],
         outputs: tensorIo('L', t.L!),
         grads: null,
         changed: ['L'],
       }
-    case 7: {
-      const dyhat = gradVec(t.yhat!)
+    case 'bce-grad': {
+      const dOut = gradVec(t.h[K - 1]!)
+      const sym = `∂L/∂${L[K - 1]!.h}`
       return {
         ...base,
-        inputs: [tensorIo('ŷ', t.yhat!, stepProv(5)), tensorIo('y', cursor.y, PROV_TARGET)],
-        outputs: scalarIo('∂L/∂ŷ', dyhat),
-        grads: { '∂L/∂ŷ': dyhat },
-        changed: ['dyhat'],
+        inputs: [tensorIo(L[K - 1]!.h, t.h[K - 1]!, stepProv(actIdx(K - 1), spec)), tensorIo('y', cursor.y, PROV_TARGET)],
+        outputs: scalarIo(sym, dOut),
+        grads: { [sym]: dOut },
+        changed: [dAscii(L[K - 1]!.h)],
       }
     }
-    case 8: {
-      const dz2 = gradVec(t.z2!)
+    case 'activate-grad': {
+      const k = walk.layer
+      const dz = gradVec(t.zPost[k]!)
+      const sym = `∂L/∂${L[k]!.z}`
+      const upFrom = k === K - 1 ? 3 * K + 1 : affGradIdx(k + 1)
       return {
         ...base,
-        inputs: [scalarIo('∂L/∂ŷ', gradVec(t.yhat!), stepProv(7))],
-        outputs: scalarIo('∂L/∂z2', dz2),
-        grads: { '∂L/∂z2': dz2 },
-        changed: ['dz2'],
+        inputs: [scalarIo(`∂L/∂${L[k]!.h}`, gradVec(t.h[k]!), stepProv(upFrom, spec))],
+        outputs: scalarIo(sym, dz),
+        grads: { [sym]: dz },
+        changed: [dAscii(L[k]!.z)],
       }
     }
-    case 9: {
-      const dW2 = gradIo('∂L/∂W2', m.W2)
+    case 'affine-grad': {
+      const k = walk.layer
+      const layer = m.layers[k]!
+      const dW = gradIo(`∂L/∂${L[k]!.w}`, m.weights[k]!)
+      const inputSym = k === 0 ? 'x' : L[k - 1]!.h
+      const input =
+        k === 0 ? tensorIo('x', cursor.x, PROV_INPUT) : tensorIo(L[k - 1]!.h, t.h[k - 1]!, stepProv(actIdx(k - 1), spec))
       return {
         ...base,
-        inputs: [scalarIo('∂L/∂z2', gradVec(t.z2!), stepProv(8)), tensorIo('a1', t.a1!, stepProv(2))],
-        outputs: { sym: '∂L/∂W2', shape: [1, 3], values: dW2 },
+        inputs: [scalarIo(`∂L/∂${L[k]!.z}`, gradVec(t.zPost[k]!), stepProv(actGradIdx(k), spec)), input],
+        outputs: { sym: `∂L/∂${L[k]!.w}`, shape: [layer.units, layer.inputs], values: dW },
         grads: {
-          '∂L/∂W2': dW2,
-          '∂L/∂b2': gradVec(m.b2),
-          '∂L/∂a1': gradVec(t.a1!),
+          [`∂L/∂${L[k]!.w}`]: dW,
+          [`∂L/∂${L[k]!.b}`]: gradVec(m.biases[k]!),
+          [`∂L/∂${inputSym}`]: gradVec(k === 0 ? cursor.x : t.h[k - 1]!),
         },
-        changed: ['dW2', 'db2', 'da1'],
+        changed: [dAscii(L[k]!.w), dAscii(L[k]!.b), dAscii(inputSym)],
       }
     }
-    case 10: {
-      const dz1 = gradVec(t.z1!)
-      return {
-        ...base,
-        inputs: [scalarIo('∂L/∂a1', gradVec(t.a1!), stepProv(9))],
-        outputs: scalarIo('∂L/∂z1', dz1),
-        grads: { '∂L/∂z1': dz1 },
-        changed: ['dz1'],
-      }
-    }
-    case 11: {
-      const dW1 = gradIo('∂L/∂W1', m.W1)
-      return {
-        ...base,
-        inputs: [scalarIo('∂L/∂z1', gradVec(t.z1!), stepProv(10)), tensorIo('x', cursor.x, PROV_INPUT)],
-        outputs: { sym: '∂L/∂W1', shape: [3, 2], values: dW1 },
-        grads: {
-          '∂L/∂W1': dW1,
-          '∂L/∂b1': gradVec(m.b1),
-          '∂L/∂x': gradVec(cursor.x),
-        },
-        changed: ['dW1', 'db1', 'dx'],
-      }
-    }
-    case 12: {
-      const before = cursor.sgdBefore ?? m.W2.data[0]!
+    case 'sgd': {
+      const wOut = m.weights[K - 1]!
+      const before = cursor.sgdBefore ?? wOut.data[0]!
+      const ref = `${L[K - 1]!.w}[0,0]`
       return {
         ...base,
         inputs: [
-          scalarIo('W2[0,0]', [before], PROV_WEIGHT),
-          scalarIo('∂L/∂W2[0,0]', [m.W2.grad![0]!], stepProv(9)),
+          scalarIo(ref, [before], PROV_WEIGHT),
+          scalarIo(`∂L/∂${ref}`, [wOut.grad![0]!], stepProv(affGradIdx(K - 1), spec)),
           scalarIo('η', [cursor.lr], PROV_LR),
         ],
-        outputs: scalarIo('W2[0,0]', [before, m.W2.data[0]!]),
+        outputs: scalarIo(ref, [before, wOut.data[0]!]),
         grads: null,
         changed: ['W'],
       }
     }
-    default:
-      throw new Error(`buildStepRecord: неизвестная операция ${String(opIndex)}`)
   }
 }
 
 /** Текущая фаза для бейджа (до первого шага — фаза предстоящей операции). */
 export function currentPhase(record: StepRecord | null): Phase {
-  return record?.phase ?? XOR_SCENARIO.opMeta[0]!.phase
+  return record?.phase ?? XOR_SCENARIO.ops[0]!.phase
 }
 
 /** Ключевое число операции для ленты шагов (D-25): первый элемент выхода

@@ -23,7 +23,7 @@ import { SubscriptText } from './SubscriptText'
  */
 
 // Нарратив до первого шага — предстоящей операции
-const INTRO_NARRATIVE = XOR_SCENARIO.opMeta[0]!.narrative
+const INTRO_NARRATIVE = XOR_SCENARIO.ops[0]!.narrative
 
 function NumberRowView({ row, joiner, record }: { row: NumberRow; joiner: string; record: StepRecord }) {
   const valueClass = row.kind === 'input' || !row.changed ? 'value-unchanged' : 'value-changed'

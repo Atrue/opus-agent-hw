@@ -6,8 +6,8 @@
  * следующую операцию ЖИВОГО движка (record:true) и кладёт StepRecord.
  */
 
-import { MLP, OPS_PER_SAMPLE, SampleCursor, type StepRecord } from '../tensor'
-import { SAMPLE_COUNT, XOR_SCENARIO } from './scenario'
+import { buildModel, SampleCursor, type ScenarioNet, type StepRecord } from '../tensor'
+import { SAMPLE_COUNT, XOR_SCENARIO, type ScenarioModel } from './scenario'
 import type { SegmentId } from '../ui/chainLinks'
 import { buildStepRecord, firstOpValue, flatWeights } from './stepRecords'
 import type { Drill, EpochSummaryData, HistoryRecord, LinkSelection, Mode, RunScreen } from './types'
@@ -15,8 +15,8 @@ import type { Drill, EpochSummaryData, HistoryRecord, LinkSelection, Mode, RunSc
 type Listener = () => void
 
 export class TrainingRun {
-  readonly scenario = XOR_SCENARIO
-  model: MLP
+  readonly scenario: ScenarioModel
+  model: ScenarioNet
   epoch = 1
   sampleIndex = 0
   /** Счётчик мутаций: веса — Float64Array, Object.is их не видит (R4 §6.2). */
@@ -48,17 +48,23 @@ export class TrainingRun {
   private recording = true
   private readonly listeners = new Set<Listener>()
 
-  constructor() {
-    this.model = new MLP(XOR_SCENARIO.startWeights)
+  constructor(spec: ScenarioModel = XOR_SCENARIO) {
+    this.scenario = spec
+    this.model = buildModel(spec)
     this.cursor = this.newCursor(0)
     // стартовые константы — первая запись истории
     this.appendStartRecord()
   }
 
+  /** Операций в сэмпле walkthrough (per-scenario, длина spec.ops). */
+  get opsCount(): number {
+    return this.scenario.ops.length
+  }
+
   /** Номер следующей операции в сэмпле, 1-based (курсор индикатора R3);
    *  на завершённом сэмпле (экран эпохи) — 13, без «шага 14». */
   get stepInSample(): number {
-    return Math.min(this.cursor.opIndex + 1, OPS_PER_SAMPLE)
+    return Math.min(this.cursor.opIndex + 1, this.opsCount)
   }
 
   /** Курсор активного сэмпла — живые входы/метка для drill-down. */
@@ -75,14 +81,15 @@ export class TrainingRun {
     this.recording = record
     // onOp-рекордер пишет currentRecord только при recording
     cursor.advance()
-    if (op === 6) {
-      // лосс-точка сэмпла пишется на его bce-опе — в любом режиме (R3)
+    if (cursor.walk[op]!.kind === 'loss') {
+      // лосс-точка сэмпла пишется на его loss-опе — в любом режиме (R3)
+      const K = this.scenario.net.length
       this.epochLossPoints = [...this.epochLossPoints, cursor.tensors.L!.data[0]!]
-      const yhat = cursor.tensors.yhat!.data[0]!
+      const yhat = cursor.tensors.h[K - 1]!.data[0]!
       const y = cursor.y.data[0]!
       this.epochCorrect = [...this.epochCorrect, (yhat >= 0.5) === (y >= 0.5)]
     }
-    if (op === OPS_PER_SAMPLE - 1) {
+    if (op === this.opsCount - 1) {
       // граница сэмпла (sgd-опа, курсор done): запись истории — ЕДИНАЯ для
       // пошагового и FF режимов (общий код исполнения → числа идентичны, R3)
       const t = cursor.tensors
@@ -95,12 +102,12 @@ export class TrainingRun {
           sampleIndex: this.sampleIndex,
           x: Array.from(cursor.x.data),
           y: cursor.y.data[0]!,
-          yhat: t.yhat!.data[0]!,
+          yhat: t.h[t.h.length - 1]!.data[0]!,
           loss: t.L!.data[0]!,
-          correct: (t.yhat!.data[0]! >= 0.5) === (cursor.y.data[0]! >= 0.5),
-          a1: Array.from(t.a1!.data),
-          z1: Array.from(t.z1!.data),
-          z2: Array.from(t.z2!.data),
+          correct: (t.h[t.h.length - 1]!.data[0]! >= 0.5) === (cursor.y.data[0]! >= 0.5),
+          a1: Array.from(t.h[0]!.data),
+          z1: Array.from(t.zPost[0]!.data),
+          z2: Array.from(t.zPost[t.zPost.length - 1]!.data),
           weights: flatWeights(this.model),
         },
       ]
@@ -190,7 +197,7 @@ export class TrainingRun {
    *  прогоны на графике лосса и в истории звена. */
   reset(): void {
     this.runId += 1
-    this.model = new MLP(XOR_SCENARIO.startWeights)
+    this.model = buildModel(this.scenario)
     this.epoch = 1
     this.sampleIndex = 0
     this.cursor = this.newCursor(0)
@@ -258,13 +265,13 @@ export class TrainingRun {
   }
 
   private newCursor(sampleIndex: number): SampleCursor {
-    const sample = XOR_SCENARIO.samples[sampleIndex]!
-    return new SampleCursor(this.model, sample.x, sample.y, XOR_SCENARIO.lr, (cursor, op) => {
+    const sample = this.scenario.samples[sampleIndex]!
+    return new SampleCursor(this.model, sample.x, sample.y, this.scenario.lr, (cursor, op) => {
       // Record строится всегда: ленте шагов нужно число операции в обоих
       // режимах; полный StepRecord публикуется только в пошаговом (R1).
       // Копии маленьких массивов — пренебрежимая цена против второго
       // дублирования маппинга op→тензор.
-      const record = buildStepRecord(cursor, op)
+      const record = buildStepRecord(cursor, op, this.scenario)
       const values = [...this.sampleOpValues]
       values[op] = firstOpValue(record)
       this.sampleOpValues = values

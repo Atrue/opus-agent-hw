@@ -1,51 +1,89 @@
 /**
- * MLP 2-3-1 (R1): параметры-тензоры с requiresGrad, forward() возвращает все
- * промежуточные тензоры (z1, a1, z2, yhat) — база пошаговой записи walkthrough.
- * Ориентация matmul без транспонирований: z = W·x ↔ W.matmul(x).
+ * buildModel(spec) (D-30): сеть строится из декларативной модели — LayerSpec[]
+ * + стартовые веса → параметры-тензоры. params() возвращает ТОЛЬКО параметры
+ * (геттер без входов, PyTorch-аналогия parameters()); вход подаётся в
+ * forward(x), возвращающий все промежуточные тензоры. MLP 2-3-1 — частный
+ * случай спека (фаза 3 подключит его без нового слоя). Ориентация matvec без
+ * транспонирований: z = W·x ↔ W.matmul(x).
  */
 
 import { Tensor } from './tensor'
 
-export interface MlpStartWeights {
-  w1: number[][]
-  b1: number[]
-  w2: number[][]
-  b2: number[]
+/**
+ * Спецификация слоя сети (D-30): декларативная структура — buildModel строит
+ * из последовательности LayerSpec граф параметров и walked-опы.
+ */
+export interface LayerSpec {
+  /** Размер входа слоя (первый слой = размерность x). */
+  inputs: number
+  /** Число нейронов слоя. */
+  units: number
+  /** Активация: 'tanh' — скрытый слой, 'sigmoid' — выходной. */
+  activation: 'tanh' | 'sigmoid'
 }
 
-export interface MlpForward {
-  z1p: Tensor
-  z1: Tensor
-  a1: Tensor
-  z2p: Tensor
-  z2: Tensor
-  yhat: Tensor
+/** Структурное подмножество ScenarioModel, из которого строится граф. */
+export interface ModelSpec {
+  net: readonly LayerSpec[]
+  loss: { kind: 'bce' }
+  /** Стартовые веса по слоям: ключи `w1`/`b1`… — 1-based номер слоя. */
+  startWeights: Readonly<Record<string, number[][] | number[]>>
 }
 
-export class MLP {
-  readonly W1: Tensor
-  readonly b1: Tensor
-  readonly W2: Tensor
-  readonly b2: Tensor
+/** Промежуточные тензоры forward-прохода по слоям (индекс слоя 0-based). */
+export interface ForwardTensors {
+  /** zPre[k] = W_k·h_{k-1} — взвешенная сумма до биаса (h_{-1} = x). */
+  zPre: (Tensor | null)[]
+  /** zPost[k] = zPre[k] + b_k — после биаса. */
+  zPost: (Tensor | null)[]
+  /** h[k] = act(zPost[k]) — активация слоя; h[K-1] = ŷ. */
+  h: (Tensor | null)[]
+}
 
-  constructor(start: MlpStartWeights) {
-    this.W1 = Tensor.of(start.w1, true)
-    this.b1 = Tensor.of(start.b1, true)
-    this.W2 = Tensor.of(start.w2, true)
-    this.b2 = Tensor.of(start.b2, true)
+/** Сеть, построенная из спека: параметры отделены от входов (D-30). */
+export class ScenarioNet {
+  readonly layers: readonly LayerSpec[]
+  readonly weights: readonly Tensor[]
+  readonly biases: readonly Tensor[]
+
+  constructor(spec: ModelSpec) {
+    this.layers = spec.net
+    this.weights = spec.net.map((_, k) => Tensor.of(spec.startWeights[`w${String(k + 1)}`] as number[][], true))
+    this.biases = spec.net.map((_, k) => Tensor.of(spec.startWeights[`b${String(k + 1)}`] as number[], true))
   }
 
+  /** Только параметры сети (без входов); порядок = плоский снапшот layer-major:
+   *  W1, b1, W2, b2… */
   params(): readonly Tensor[] {
-    return [this.W1, this.b1, this.W2, this.b2]
+    const out: Tensor[] = []
+    for (let k = 0; k < this.layers.length; k++) {
+      out.push(this.weights[k]!, this.biases[k]!)
+    }
+    return out
   }
 
-  forward(x: Tensor): MlpForward {
-    const z1p = this.W1.matmul(x)
-    const z1 = z1p.add(this.b1)
-    const a1 = z1.tanh()
-    const z2p = this.W2.matmul(a1)
-    const z2 = z2p.add(this.b2)
-    const yhat = z2.sigmoid()
-    return { z1p, z1, a1, z2p, z2, yhat }
+  /** Полный forward: та же последовательность тензорных оп, что исполняет
+   *  SampleCursor пошагово (топологический порядок = порядок walked-оп). */
+  forward(x: Tensor): ForwardTensors {
+    const K = this.layers.length
+    const zPre: (Tensor | null)[] = new Array(K).fill(null)
+    const zPost: (Tensor | null)[] = new Array(K).fill(null)
+    const h: (Tensor | null)[] = new Array(K).fill(null)
+    let input: Tensor = x
+    for (let k = 0; k < K; k++) {
+      const zp = this.weights[k]!.matmul(input)
+      const z = zp.add(this.biases[k]!)
+      const a = this.layers[k]!.activation === 'tanh' ? z.tanh() : z.sigmoid()
+      zPre[k] = zp
+      zPost[k] = z
+      h[k] = a
+      input = a
+    }
+    return { zPre, zPost, h }
   }
+}
+
+/** Сеть из декларативной модели (D-30): spec → граф параметров. */
+export function buildModel(spec: ModelSpec): ScenarioNet {
+  return new ScenarioNet(spec)
 }

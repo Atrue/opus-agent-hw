@@ -7,7 +7,7 @@
 export { Tensor, type OpName, type TensorInit } from './tensor'
 export { F } from './functional'
 export { SGD } from './optim'
-export { MLP, type MlpStartWeights, type MlpForward } from './model'
+export { buildModel, ScenarioNet, type LayerSpec, type ModelSpec, type ForwardTensors } from './model'
 export { Value, type ScalarOp, type ValueInit } from './value'
 export {
   expandScalar,
@@ -18,7 +18,7 @@ export {
 } from './expanders'
 export {
   SampleCursor,
-  OPS_PER_SAMPLE,
+  buildWalk,
   tensorIo,
   tensorValuesOf,
   gradIo,
@@ -28,4 +28,5 @@ export {
   type StepRecord,
   type TensorIo,
   type TensorValues,
+  type WalkOp,
 } from './trace'

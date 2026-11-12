@@ -59,11 +59,11 @@ describe('chainLinks: звенья формулы-хребта', () => {
     expect(byId.get('z1')!.formula).toBe('z1 = W1·x + b1')
     expect(byId.get('z2')!.formula).toBe('z2 = W2·a1 + b2')
     // a1 = tanh(z1)
-    expect(byId.get('a1')!.formula).toBe(XOR_SCENARIO.opMeta[2]!.formula)
+    expect(byId.get('a1')!.formula).toBe(XOR_SCENARIO.ops[2]!.formula)
     // ŷ = σ(z2)
-    expect(byId.get('yhat')!.formula).toBe(XOR_SCENARIO.opMeta[5]!.formula)
+    expect(byId.get('yhat')!.formula).toBe(XOR_SCENARIO.ops[5]!.formula)
     // bce
-    expect(byId.get('L')!.formula).toBe(XOR_SCENARIO.opMeta[6]!.formula)
+    expect(byId.get('L')!.formula).toBe(XOR_SCENARIO.ops[6]!.formula)
   })
 
   it('заголовки звеньев начинаются с символа формулы (Gap 6: имена = символы)', () => {

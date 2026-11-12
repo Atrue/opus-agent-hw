@@ -1,17 +1,19 @@
+import React from 'react'
 import { run } from '../run/run'
 import { useRunSlice } from '../run/useRunSlice'
+import { XOR_SCENARIO } from '../run/scenario'
 import { symbolToSegment, type SegmentId } from './chainLinks'
 import { SubscriptText } from './SubscriptText'
 
 /**
  * Формула-строка (01.2-01) — навигационное ядро экрана: полная формула
- * сети на всю ширину полосой между шапкой и сценой, три сегмента —
- * forward-цепочка · лосс · update (разделитель · несёт фазный цвет токена).
- * Каждый символ (x, W1, b1, tanh, W2, b2, σ, ŷ, y, L, η, ∂L/∂W) — кнопка
- * (testid formula-sym-*, ASCII-safe), клик выбирает звено run.selectLink,
- * повторный клик по выбранному символу снимает выбор (aria-pressed).
- * Скобки/операторы — неинтерактивный текст; индексы — SubscriptText
- * (план Б §5.5). Hand-rolled, без KaTeX/MathJax (T-01.2-01-01).
+ * сети на всю ширину полосой между шапкой и сценой; сегменты (forward-цепочка
+ * · лосс · update) и их интерактивные символы — данные спека (spec.render.
+ * formula, D-30), разделитель · несёт фазный цвет следующего сегмента.
+ * Каждый символ — кнопка (testid formula-sym-*, ASCII-safe), клик выбирает
+ * звено run.selectLink, повторный клик по выбранному символу снимает выбор
+ * (aria-pressed). Скобки/операторы — неинтерактивный текст; индексы —
+ * SubscriptText (план Б §5.5). Hand-rolled, без KaTeX/MathJax (T-01.2-01-01).
  */
 
 /** ASCII-safe testid-суффиксы символов (Unicode → ASCII). */
@@ -30,11 +32,18 @@ const SYM_TESTID: Record<string, string> = {
   '∂L/∂W': 'dL-dW',
 }
 
+/** Фазный цвет разделителя (токен фазы следующего сегмента). */
+const SEG_PHASE_COLOR: Record<'forward' | 'loss' | 'update', string> = {
+  forward: 'var(--color-phase-fwd)',
+  loss: 'var(--color-phase-loss)',
+  update: 'var(--color-phase-upd)',
+}
+
 function FormulaSym({ sym, selected, onToggle }: { sym: string; selected: boolean; onToggle: (segment: SegmentId, sym: string) => void }) {
   return (
     <button
       type="button"
-      data-testid={`formula-sym-${SYM_TESTID[sym]}`}
+      data-testid={`formula-sym-${SYM_TESTID[sym] ?? sym}`}
       className="formula-sym"
       aria-pressed={selected}
       onClick={() => onToggle(symbolToSegment[sym]!, sym)}
@@ -51,27 +60,23 @@ export function FormulaStrip() {
     else run.selectLink(segment, sym)
   }
   const isSel = (sym: string): boolean => selection !== null && selection.symbol === sym
-  const sym = (s: string): React.JSX.Element => <FormulaSym key={s} sym={s} selected={isSel(s)} onToggle={toggle} />
+  const sym = (s: string, key: string): React.JSX.Element => <FormulaSym key={key} sym={s} selected={isSel(s)} onToggle={toggle} />
   return (
     <section aria-label="Формула сети" className="formula-strip">
-      {/* forward: ŷ = σ(W2·tanh(W1·x + b1) + b2) */}
-      <span className="formula-seg">
-        {sym('ŷ')} = {sym('σ')}({sym('W2')}·{sym('tanh')}({sym('W1')}·{sym('x')} + {sym('b1')}) + {sym('b2')})
-      </span>
-      <span className="formula-sep" aria-hidden="true" style={{ color: 'var(--color-phase-loss)' }}>
-        ·
-      </span>
-      {/* лосс: L = −[y·ln ŷ + (1−y)·ln(1−ŷ)] */}
-      <span className="formula-seg">
-        {sym('L')} = −[{sym('y')}·ln {sym('ŷ')} + (1−{sym('y')})·ln(1−{sym('ŷ')})]
-      </span>
-      <span className="formula-sep" aria-hidden="true" style={{ color: 'var(--color-phase-upd)' }}>
-        ·
-      </span>
-      {/* update: W ← W − η·∂L/∂W (W — неинтерактивный глиф) */}
-      <span className="formula-seg">
-        W ← W − {sym('η')}·{sym('∂L/∂W')}
-      </span>
+      {XOR_SCENARIO.render.formula.map((seg, i) => (
+        <React.Fragment key={seg.phase}>
+          {i > 0 && (
+            <span className="formula-sep" aria-hidden="true" style={{ color: SEG_PHASE_COLOR[seg.phase] }}>
+              ·
+            </span>
+          )}
+          <span className="formula-seg">
+            {seg.tokens.map((tok, j) =>
+              tok.kind === 'sym' ? sym(tok.sym, `${seg.phase}-${tok.sym}-${String(j)}`) : <span key={`t-${String(j)}`}>{tok.text}</span>,
+            )}
+          </span>
+        </React.Fragment>
+      ))}
     </section>
   )
 }
