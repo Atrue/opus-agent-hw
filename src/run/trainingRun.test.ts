@@ -265,9 +265,10 @@ describe('TrainingRun: SampleRecord-история сессии (01.2-02)', () =
       expect(Number.isFinite(rec.loss)).toBe(true)
       expect(rec.loss).toBe(run.epochLossPoints[i])
       expect(rec.correct).toBe((rec.yhat >= 0.5) === (rec.y >= 0.5))
-      expect(rec.a1).toHaveLength(3)
-      expect(rec.z1).toHaveLength(3)
-      expect(rec.z2).toHaveLength(1)
+      expect(rec.nodes).toEqual({ z1: rec.nodes.z1, a1: rec.nodes.a1, z2: rec.nodes.z2, ŷ: [rec.yhat] })
+      expect(rec.nodes.a1).toHaveLength(3)
+      expect(rec.nodes.z1).toHaveLength(3)
+      expect(rec.nodes.z2).toHaveLength(1)
       expect(rec.weights).toHaveLength(13)
       for (const w of rec.weights) expect(Number.isFinite(w)).toBe(true)
     }

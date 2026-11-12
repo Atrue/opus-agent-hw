@@ -13,10 +13,10 @@ export interface UrlState {
   scenario: string
 }
 
-export const DEFAULT_SCENARIO = 'xor'
+export const DEFAULT_SCENARIO = 'neuron'
 
 /** Известные сценарии (литеральные имена — всё прочее невалидно). */
-const KNOWN_SCENARIOS: readonly string[] = ['xor']
+const KNOWN_SCENARIOS: readonly string[] = ['neuron', 'xor']
 
 /** parseHash: никогда не бросает; принимает только литеральное имя известного сценария. */
 export function parseHash(hash: string): UrlState {

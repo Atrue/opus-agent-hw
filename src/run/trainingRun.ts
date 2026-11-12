@@ -6,7 +6,7 @@
  * следующую операцию ЖИВОГО движка (record:true) и кладёт StepRecord.
  */
 
-import { buildModel, SampleCursor, type ScenarioNet, type StepRecord } from '../tensor'
+import { buildModel, SampleCursor, type ScenarioNet, type SampleTensors, type StepRecord } from '../tensor'
 import { SAMPLE_COUNT, XOR_SCENARIO, type ScenarioModel } from './scenario'
 import type { SegmentId } from '../ui/chainLinks'
 import { buildStepRecord, firstOpValue, flatWeights } from './stepRecords'
@@ -105,9 +105,7 @@ export class TrainingRun {
           yhat: t.h[t.h.length - 1]!.data[0]!,
           loss: t.L!.data[0]!,
           correct: (t.h[t.h.length - 1]!.data[0]! >= 0.5) === (cursor.y.data[0]! >= 0.5),
-          a1: Array.from(t.h[0]!.data),
-          z1: Array.from(t.zPost[0]!.data),
-          z2: Array.from(t.zPost[t.zPost.length - 1]!.data),
+          nodes: this.nodeValuesOf(t),
           weights: flatWeights(this.model),
         },
       ]
@@ -210,6 +208,17 @@ export class TrainingRun {
     this.drill = null
     this.version += 1
     this.emit()
+  }
+
+  /** Узловые числа сэмпла по символам слоёв спека (z/h per layer). */
+  private nodeValuesOf(t: SampleTensors): Readonly<Record<string, readonly number[]>> {
+    const out: Record<string, readonly number[]> = {}
+    const syms = this.scenario.render.layerSymbols
+    for (let k = 0; k < syms.length; k++) {
+      out[syms[k]!.z] = Array.from(t.zPost[k]!.data)
+      out[syms[k]!.h] = Array.from(t.h[k]!.data)
+    }
+    return out
   }
 
   /** Стартовая запись прогона: плоские стартовые константы (без чисел сэмпла). */

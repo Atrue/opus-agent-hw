@@ -148,11 +148,19 @@ export interface LinkSeries {
 /** Извлечение узлового поля записи (по символу формулы). */
 type NodePick = (r: SampleRecord) => readonly number[]
 
-/** Узловые символы — данные спека (series.node): поле SampleRecord (+обёртка скаляра). */
+/** Узловые символы — данные спека (series.node): скаляр записи / поле записи /
+ *  узловое число по символу (SampleRecord.nodes, ключи — layerSymbols спека). */
 const NODE_SERIES: Record<string, { labels: readonly string[]; pick: NodePick }> = Object.fromEntries(
   Object.entries(XOR_SCENARIO.render.series.node).map(([sym, n]) => [
     sym,
-    { labels: n.labels, pick: (r: SampleRecord): readonly number[] => (n.scalar ? [r[n.field] as number] : (r[n.field] as readonly number[])) },
+    {
+      labels: n.labels,
+      pick: (r: SampleRecord): readonly number[] => {
+        if (n.pick.kind === 'scalar') return [r[n.pick.field] as number]
+        if (n.pick.kind === 'record') return r[n.pick.field] as readonly number[]
+        return r.nodes[n.pick.node] ?? []
+      },
+    },
   ]),
 )
 

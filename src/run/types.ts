@@ -39,9 +39,10 @@ export interface Drill {
 
 /**
  * Запись истории сессии на границе сэмпла (01.2-02): полный срез состояния
- * прогона — вход/метка/узловые числа завершённого сэмпла + плоские 13 весов
+ * прогона — вход/метка/узловые числа завершённого сэмпла + плоские веса
  * ПОСЛЕ его SGD-шага. Пишется в общем коде исполнения (инвариант «пошагово
- * = FF» распространяется на историю автоматически).
+ * = FF» распространяется на историю автоматически). Узловые числа — по
+ * символам слоёв спека (render.layerSymbols): XOR z1/a1/z2/ŷ, neuron z/ŷ.
  */
 export interface SampleRecord {
   kind: 'sample'
@@ -53,9 +54,8 @@ export interface SampleRecord {
   yhat: number
   loss: number
   correct: boolean
-  a1: readonly number[]
-  z1: readonly number[]
-  z2: readonly number[]
+  /** Узловые числа по символам слоёв спека (z/h per layer). */
+  nodes: Readonly<Record<string, readonly number[]>>
   weights: readonly number[]
 }
 

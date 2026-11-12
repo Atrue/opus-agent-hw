@@ -97,7 +97,7 @@ describe('История звена цепи: linkHistoryOf (01.2-02)', () => {
     const z1 = linkHistoryOf(run.sampleHistory, 'a1', 'tanh')
     expect(z1.series).toHaveLength(3)
     // плашка tanh показывает свой выход: ряд — активации a1
-    expect(z1.series[0]!.points.map((p) => p.value)).toEqual(samples.map((s) => s.a1[0]!))
+    expect(z1.series[0]!.points.map((p) => p.value)).toEqual(samples.map((s) => s.nodes.a1![0]!))
     // звено W (SGD): судьба обновления — все 13 весов по сэмплам
     const w = linkHistoryOf(run.sampleHistory, 'W', 'η')
     expect(w.series).toHaveLength(13)
