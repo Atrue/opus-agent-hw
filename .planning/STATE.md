@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 02
 current_phase_name: Движок и MVP-walkthrough на одном нейроне
 status: executing
-stopped_at: Completed 02-07-PLAN.md (сплит runState + D-33); далее 02-08
-last_updated: "2026-11-12T18:10:21.360Z"
+stopped_at: Completed 02-08-PLAN.md (README+named exports); далее 02-04
+last_updated: "2026-11-12T18:12:02.221Z"
 last_activity: 2026-11-12
 last_activity_desc: Phase 02 execution started
-state_head: 67f0f088d4a529fe6d535a9cb90c33c27726639c
+state_head: ea93c547a3106fd9934318924d56693381deeff6
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 25
-  completed_plans: 20
+  completed_plans: 21
   percent: 50
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-03)
 ## Current Position
 
 Phase: 02 (Движок и MVP-walkthrough на одном нейроне) — EXECUTING
-Plan: 5 of 9
+Plan: 6 of 9
 Status: Ready to execute
 Last activity: 2026-11-12 — Phase 02 execution started
 
@@ -70,6 +70,7 @@ Progress: [█████░░░░░] 50%
 | Phase 02 P02 | 7 min | 1 tasks | 15 files |
 | Phase 02 P03 | 3 min | 2 tasks | 4 files |
 | Phase 02 P07 | 6 min | 1 tasks | 23 files |
+| Phase 02 P08 | 4 min | 1 tasks | 21 files |
 
 ## Accumulated Context
 
@@ -119,6 +120,7 @@ Recent decisions affecting current work:
 - [Phase 02]: [Phase 02]: [02-02] D-28а колокация выполнена: 9 тест-файлов + etalon-константы в src/** (git mv, история 94-100%), папки tests/ нет; carve-out границ — boundaries правило (1) exempt'ит только *.test.ts (deep-imports сканируют тесты), oxlint-override src/tensor/**/*.test.ts: group ["*","!vitest","!node:*","!./**","!../**"] — эмпирика oxlint: glob * матчит относительные спецификаторы (негативный тест react→error подтверждает запрет внешних); rule (3) усилен assert'ом carve-out — План 02-02 авторизовал миграционный carve-out (D-27↔D-28, журнализация в 02-06); после активации правила правки .oxlintrc.json — только апрув владельца. Pitfall 4 закрыт types +node (@types/node уже devDep). Вычисления не менялись: 101 юнит + 11 e2e зелёные, bit-инварианты на месте.
 - [Phase 02]: [02-03] D-29 реализован: Value и Tensor декомпозированы на класс-контейнер + чистые функции — обратный шаг = данные (BackwardPlan tagged union через TensorInit.plan, без post-hoc-сеттеров) + диспетчеры runBackwardPlan/value-grads; замыкания setBackward/defineBackward/backwardFn удалены (0 вхождений); числовые выражения один-в-один с замыканиями — бит-идентичность доказана инвариантами после каждого файлового хода — Стандарт владельца D-29 «большие файлы → маленькие чистые функции» применён к движку; чистые ядра ops.ts готовы к переиспользованию ScenarioModel (02-04); index.ts не менялся (defineBackward никогда не экспортировался)
 - [Phase 02]: [02-07] Сплит runState.ts → types/stepRecords/trainingRun/run/useRunSlice (D-28б) + D-33: window.__run и declare global удалены, DevTools-замена — сниппет dynamic import в src/run/README.md; runState.test.ts → trainingRun.test.ts; 1 модуль на файл, поведение прогона бит-идентично — Структура «модуль = папка с кодом + тесты + README» — постоянный стандарт владельца; сплит готовит run-слой к ScenarioModel (02-04)
+- [Phase 02]: [02-08] D-28б/в завершены: 16 UI-компонентов на именованных экспортах (ноль export default в src), README в src/{tensor,run,ui,format}; селекторы e2e и RU-строки не менялись — Стандарт владельца «модуль = папка с кодом + тесты + README» соблюдён на всей кодовой базе
 
 ### Pending Todos
 
@@ -143,6 +145,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-11-12T18:10:21.134Z
-Stopped at: Completed 02-07-PLAN.md (сплит runState + D-33); далее 02-08
+Last session: 2026-11-12T18:12:01.983Z
+Stopped at: Completed 02-08-PLAN.md (README+named exports); далее 02-04
 Resume file: None
