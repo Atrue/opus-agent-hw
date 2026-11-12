@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildStepRecord } from './runState'
+import { buildStepRecord } from './stepRecords'
 import { XOR_SCENARIO } from './scenario'
 import { MLP, SampleCursor, type StepRecord, type TensorValues } from '../tensor'
 import { ETALON_SAMPLE_1 } from './etalon-constants'

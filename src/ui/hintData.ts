@@ -6,7 +6,7 @@
  * наличии. Тултип ≠ замена drill: контент анонсирует, полный разбор — клик.
  */
 
-import { run } from '../run/runState'
+import { run } from '../run/run'
 import type { LazyExpansion, Operand, StepRecord, TensorValues } from '../tensor'
 import { expandScalar } from '../tensor'
 

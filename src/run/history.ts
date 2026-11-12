@@ -10,8 +10,8 @@
  * сэмплам (гранулярность утверждена владельцем).
  */
 
-import type { EpochSummaryData, HistoryRecord, SampleRecord } from './runState'
-import { isSampleRecord } from './runState'
+import type { EpochSummaryData, HistoryRecord, SampleRecord } from './types'
+import { isSampleRecord } from './types'
 import { SAMPLE_COUNT } from './scenario'
 import type { SegmentId } from '../ui/chainLinks'
 

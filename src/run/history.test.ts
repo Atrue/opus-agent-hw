@@ -8,7 +8,8 @@ import {
   type LinkHistoryPoint,
   type LinkSeries,
 } from './history'
-import { TrainingRun, isSampleRecord, type SampleRecord } from './runState'
+import { TrainingRun } from './trainingRun'
+import { isSampleRecord, type SampleRecord } from './types'
 import { XOR_SCENARIO, SAMPLE_COUNT } from './scenario'
 import { OPS_PER_SAMPLE } from '../tensor'
 

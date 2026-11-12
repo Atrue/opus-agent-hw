@@ -1,4 +1,5 @@
-import { run, useRunSlice } from '../run/runState'
+import { run } from '../run/run'
+import { useRunSlice } from '../run/useRunSlice'
 import { symbolToSegment, type SegmentId } from './chainLinks'
 import SubscriptText from './SubscriptText'
 

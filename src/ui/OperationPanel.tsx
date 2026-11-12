@@ -1,5 +1,5 @@
 import { Fragment } from 'react'
-import { run } from '../run/runState'
+import { run } from '../run/run'
 import { XOR_SCENARIO } from '../run/scenario'
 import type { StepRecord } from '../tensor'
 import { formatKey } from '../format/numbers'

@@ -1,4 +1,4 @@
-import { useRunSlice } from '../run/runState'
+import { useRunSlice } from '../run/useRunSlice'
 import { formatKey } from '../format/numbers'
 import SubscriptText from './SubscriptText'
 

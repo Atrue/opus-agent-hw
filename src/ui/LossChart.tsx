@@ -1,4 +1,4 @@
-import { useRunSlice } from '../run/runState'
+import { useRunSlice } from '../run/useRunSlice'
 import { buildLossChartData, sessionGeometryOf } from '../run/history'
 import { SAMPLE_COUNT } from '../run/scenario'
 import { formatKey } from '../format/numbers'

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { TrainingRun, isSampleRecord, type HistoryRecord, type SampleRecord, type StartRecord } from './runState'
+import { TrainingRun } from './trainingRun'
+import { isSampleRecord, type HistoryRecord, type SampleRecord, type StartRecord } from './types'
 import { XOR_SCENARIO, SAMPLE_COUNT } from './scenario'
 import { OPS_PER_SAMPLE } from '../tensor'
 

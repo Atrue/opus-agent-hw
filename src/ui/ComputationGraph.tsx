@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { run, useRunSlice } from '../run/runState'
+import { run } from '../run/run'
+import { useRunSlice } from '../run/useRunSlice'
 import type { StepRecord, Tensor } from '../tensor'
 import { formatKey } from '../format/numbers'
 import { GRAPH_EDGES, GRAPH_NODES, NODE_H, NODE_W, STEP_GROUPS, buildGraph, type GraphNode } from './compGraph'

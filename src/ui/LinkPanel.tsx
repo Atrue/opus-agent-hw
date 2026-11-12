@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
-import { run, useRunSlice } from '../run/runState'
+import { run } from '../run/run'
+import { useRunSlice } from '../run/useRunSlice'
 import { SEGMENTS, SEGMENT_NUMBER_SYMS } from './chainLinks'
 import { XOR_SCENARIO } from '../run/scenario'
 import type { Tensor } from '../tensor'

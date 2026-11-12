@@ -1,4 +1,4 @@
-import { useRunSlice } from '../run/runState'
+import { useRunSlice } from '../run/useRunSlice'
 import { capLinkHistory, linkHistoryOf, type LinkHistoryPoint, type LinkSeries } from '../run/history'
 import { liveValues } from './LinkPanel'
 import { formatKey } from '../format/numbers'

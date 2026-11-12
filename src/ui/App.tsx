@@ -1,4 +1,5 @@
-import { run, useRunSlice } from '../run/runState'
+import { run } from '../run/run'
+import { useRunSlice } from '../run/useRunSlice'
 import { XOR_SCENARIO } from '../run/scenario'
 import { parseHash, toHash } from '../run/url'
 import type { Phase } from '../tensor'

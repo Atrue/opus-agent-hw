@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { useRunSlice } from '../run/runState'
+import { useRunSlice } from '../run/useRunSlice'
 import { XOR_SCENARIO } from '../run/scenario'
 import { formatKey } from '../format/numbers'
 import SubscriptText from './SubscriptText'

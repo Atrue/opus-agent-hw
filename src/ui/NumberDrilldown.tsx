@@ -1,4 +1,5 @@
-import { run, type Drill } from '../run/runState'
+import { run } from '../run/run'
+import type { Drill } from '../run/types'
 import type { StepRecord } from '../tensor'
 import { exactRepr, formatKey } from '../format/numbers'
 import { flattenTensorValues, resolveRef, type ResolvedNumber } from './hintData'
