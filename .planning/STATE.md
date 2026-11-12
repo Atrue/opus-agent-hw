@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 02
 current_phase_name: Движок и MVP-walkthrough на одном нейроне
 status: executing
-stopped_at: Completed 02-02-PLAN.md (колокация D-28а); волна 2 = 02-03
-last_updated: "2026-11-12T17:47:59.511Z"
+stopped_at: "Completed 02-03-PLAN.md (D-29: Value/Tensor на чистых функциях); волна 3: 02-07, затем 02-04/02-08"
+last_updated: "2026-11-12T17:58:35.107Z"
 last_activity: 2026-11-12
 last_activity_desc: Phase 02 execution started
-state_head: 003f5b43d38c076c99d38a21406892eccf400e06
+state_head: 6a35dfeee3b99bfafbc05d42976452991b795c12
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 25
-  completed_plans: 18
+  completed_plans: 19
   percent: 50
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-03)
 ## Current Position
 
 Phase: 02 (Движок и MVP-walkthrough на одном нейроне) — EXECUTING
-Plan: 3 of 9
+Plan: 4 of 9
 Status: Ready to execute
 Last activity: 2026-11-12 — Phase 02 execution started
 
@@ -68,6 +68,7 @@ Progress: [█████░░░░░] 50%
 | Phase 01.1 P05 | 4 min | 2 tasks | 7 files |
 | Phase 02 P01 | 20 min | 1 tasks | 27 files |
 | Phase 02 P02 | 7 min | 1 tasks | 15 files |
+| Phase 02 P03 | 3 min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -115,6 +116,7 @@ Recent decisions affecting current work:
 - [Ревью планов фазы 2, 2026-11-09]: D-27 ревизован владельцем — строгий линтер = **только oxlint** (categories suspicious/pedantic/perf + frozen-список исключений в .oxlintrc.json; ESLint/airbnb НЕ вводится, 0 новых npm-пакетов); мотиваторы: отказ от 9 dev-пакетов и eslintrc-моста; type-aware в oxlint (tsgolint, 59/61 правил tseslint) требует TypeScript 7+ — проект на 5.9.3, пересмотр после стабилизации TS7. 02-01 переработан под oxlint-only; 02-06/02-CONTEXT/ROADMAP/PATTERNS точечно скорректированы. По итогам ревью подтверждены владельцем ВСЕ 9 планов; ключевые допущения закрыты: A4 — состав урока AND (2 входа, σ+BCE, lr≈0.5, 8 оп, дефолт #scenario=neuron), OQ2 — y-узел уходит с графа вместе с loss-узлом; A6 (гранулометрия D-28б «1 модуль (+типы) на файл», баррел/types.ts легальны) принят по умолчанию — журнализируется в 02-06
 - [Phase 02]: [02-01] D-27 реализован в ревизии oxlint-only: категории correctness/suspicious=error + pedantic/perf=warn включены один раз; bring-up закрыт 89 стилевыми правками без изменения вычислений (101 юнит + 11 e2e дважды бит-идентичны); замороженный блок исключений с контрактом «изменения — только по апруву владельца»: react-in-jsx-scope/max-lines-per-function/max-lines/require-unicode-regexp off, no-underscore-dangle allow __run, no-await-in-loop off только для e2e/**; ignorePatterns .claude/** (вендорный GSD-тулинг); кандидат no-non-null-assertion не понадобился; oxlint 1.90→1.92 (~1.92.0), 0 новых пакетов; correctness нашёл реальную находку (exhaustive-effect-deps в StepperBand — эффект переписан на честные deps) — [02-01] D-27 реализован в ревизии oxlint-only: категории correctness/suspicious=error + pedantic/perf=warn включены один раз; bring-up закрыт 89 стилевыми правками без изменения вычислений (101 юнит + 11 e2e дважды бит-идентичны); замороженный блок исключений с контрактом «изменения — только по апруву владельца»: react-in-jsx-scope/max-lines-per-function/max-lines/require-unicode-regexp off, no-underscore-dangle allow __run, no-await-in-loop off только для e2e/**; ignorePatterns .claude/** (вендорный GSD-тулинг); кандидат no-non-null-assertion не понадобился; oxlint 1.90→1.92 (~1.92.0), 0 новых пакетов; correctness нашёл реальную находку (exhaustive-effect-deps в StepperBand — эффект переписан на честные deps)
 - [Phase 02]: [Phase 02]: [02-02] D-28а колокация выполнена: 9 тест-файлов + etalon-константы в src/** (git mv, история 94-100%), папки tests/ нет; carve-out границ — boundaries правило (1) exempt'ит только *.test.ts (deep-imports сканируют тесты), oxlint-override src/tensor/**/*.test.ts: group ["*","!vitest","!node:*","!./**","!../**"] — эмпирика oxlint: glob * матчит относительные спецификаторы (негативный тест react→error подтверждает запрет внешних); rule (3) усилен assert'ом carve-out — План 02-02 авторизовал миграционный carve-out (D-27↔D-28, журнализация в 02-06); после активации правила правки .oxlintrc.json — только апрув владельца. Pitfall 4 закрыт types +node (@types/node уже devDep). Вычисления не менялись: 101 юнит + 11 e2e зелёные, bit-инварианты на месте.
+- [Phase 02]: [02-03] D-29 реализован: Value и Tensor декомпозированы на класс-контейнер + чистые функции — обратный шаг = данные (BackwardPlan tagged union через TensorInit.plan, без post-hoc-сеттеров) + диспетчеры runBackwardPlan/value-grads; замыкания setBackward/defineBackward/backwardFn удалены (0 вхождений); числовые выражения один-в-один с замыканиями — бит-идентичность доказана инвариантами после каждого файлового хода — Стандарт владельца D-29 «большие файлы → маленькие чистые функции» применён к движку; чистые ядра ops.ts готовы к переиспользованию ScenarioModel (02-04); index.ts не менялся (defineBackward никогда не экспортировался)
 
 ### Pending Todos
 
@@ -139,6 +141,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-11-12T17:47:59.315Z
-Stopped at: Completed 02-02-PLAN.md (колокация D-28а); волна 2 = 02-03
+Last session: 2026-11-12T17:58:34.907Z
+Stopped at: Completed 02-03-PLAN.md (D-29: Value/Tensor на чистых функциях); волна 3: 02-07, затем 02-04/02-08
 Resume file: None
