@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 current_phase: "02"
 current_phase_name: Движок и MVP-walkthrough на одном нейроне
 status: planning
-stopped_at: "Фаза 01.2 закрыта (верификация 39/39 + UAT 3/3 принят владельцем 2026-11-09); планы фазы 2 (9 шт) отревьюены: 02-02/02-07 подтверждены, 02-01 переработан под oxlint-only (ревизия D-27), 02-08 принят по умолчанию; ожидается подтверждение остальных пунктов ревью → /gsd-execute-phase (волна 1 = 02-01)"
-last_updated: "2026-11-09T14:29:24.000Z"
+stopped_at: "Фаза 01.2 закрыта; ревью планов фазы 2 завершено 2026-11-09 — все 9 планов подтверждены владельцем (02-01 переработан под oxlint-only, D-27 ревизия; состав урока AND утверждён); готово к /gsd-execute-phase (волна 1 = 02-01)"
+last_updated: "2026-11-09T15:05:00.000Z"
 last_activity: 2026-11-09
-last_activity_desc: Phase 01.2 closed; phase-2 plan review in progress (D-27 revised to oxlint-only)
+last_activity_desc: Phase 01.2 closed; phase-2 plan review complete (all 9 plans owner-confirmed, D-27 revised to oxlint-only)
 state_head: a0b21f1687240b7f84f842919aaf756bf064f45bb
 progress:
   total_phases: 6
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-11-03)
 
 ## Current Position
 
-Phase: 02 (Движок и MVP-walkthrough на одном нейроне) — PLANNING (plans 9/9 created, review in progress)
-Plan: 1 of 9 (02-01, wave 1)
-Status: Phase-2 plan review: 02-02/02-07 confirmed, 02-01 reworked to oxlint-only (D-27 revision), 02-08 accepted by default; remaining items pending owner confirmation
-Last activity: 2026-11-09 — Phase 01.2 closed; phase-2 plan review
+Phase: 02 (Движок и MVP-walkthrough на одном нейроне) — PLANNING (plans 9/9 created + owner-reviewed)
+Plan: 1 of 9 (02-01, wave 1 — строгий oxlint, D-27 ревизия)
+Status: Ревью планов завершено 2026-11-09 — все 9 планов подтверждены владельцем; готово к /gsd-execute-phase
+Last activity: 2026-11-09 — Phase 01.2 closed; phase-2 plan review complete
 
 Progress: [██████▓░░░] 64%
 
@@ -110,7 +110,7 @@ Recent decisions affecting current work:
 - [2026-11-05, утверждено владельцем]: модель «формула-хребет» для 9 пунктов ТЗ — формула-строка с полной формулой сети сверху, клик по символу выбирает звено цепи (x→z1→a1→z2→ŷ→L→W): подсветка геометрии на диаграмме (primary, отличимо от амбера активной op) + панель звена; история звена per-sample (гранулярность утверждена) вместо таблицы весов UX-06; reset = перезапуск прогона (runId), история сессии живёт до reload; все примеры выборки — в блоке «Примеры и результат» (бывшая зона результата, переименована владельцем); лента шагов — горизонтально вверх, автоскролл к активной; реализация — вставленной фазой 01.2, планами 01.2-01…03 (журнализация D-26 — в 01.2-03); фаза 2 не смешивается с этими правками и стартует отдельно после 01.2
 - [01.2-03]: D-26 зафиксирован в DECISIONS.md — формула-строка = навигационное ядро, звено цепи x→z1→a1→z2→ŷ→L→W, история звена per-sample, reset = перезапуск прогона (runId) с сохранением истории сессии до reload; супрессии: вертикальный рельс и полоса 2/6/4 (D-25), таблица весов UX-06 и weightSnapshots (01.1-03). UX-06 переписан в обоих REQUIREMENTS (Phase mapping → 01.2), DESIGN.md §4/§9 отражают каркас «формула-строка + горизонтальная лента + main 8/4» и linked-highlighting; глоссарий PROJECT.md дополнен (chain link, formula strip, link history, SampleRecord); e2e — 9 проверок, двойной прогон бит-идентичен (baseline 28)
 - [01.2 → закрытие, 2026-11-09]: верификация цикла 2 — 39/39 must-haves, 101 юнит/11 e2e зелёные, движок не тронут (diff bc9fa0c..HEAD по src/tensor = 0); UAT 3/3 принят владельцем без визуального просмотра на основании автоматических контрактов — фаза 01.2 закрыта (01.2-UAT.md complete, 01.2-VERIFICATION.md passed)
-- [Ревью планов фазы 2, 2026-11-09]: D-27 ревизован владельцем — строгий линтер = **только oxlint** (categories suspicious/pedantic/perf + frozen-список исключений в .oxlintrc.json; ESLint/airbnb НЕ вводится, 0 новых npm-пакетов); мотиваторы: отказ от 9 dev-пакетов и eslintrc-моста; type-aware в oxlint (tsgolint, 59/61 правил tseslint) требует TypeScript 7+ — проект на 5.9.3, пересмотр после стабилизации TS7. 02-01 переработан под oxlint-only; 02-06/02-CONTEXT/ROADMAP точечно скорректированы. Подтверждены владельцем: 02-02 (колокация), 02-07 (сплит runState+D-33); 02-08 (README+экспорты) принят по умолчанию (вопрос пропущен)
+- [Ревью планов фазы 2, 2026-11-09]: D-27 ревизован владельцем — строгий линтер = **только oxlint** (categories suspicious/pedantic/perf + frozen-список исключений в .oxlintrc.json; ESLint/airbnb НЕ вводится, 0 новых npm-пакетов); мотиваторы: отказ от 9 dev-пакетов и eslintrc-моста; type-aware в oxlint (tsgolint, 59/61 правил tseslint) требует TypeScript 7+ — проект на 5.9.3, пересмотр после стабилизации TS7. 02-01 переработан под oxlint-only; 02-06/02-CONTEXT/ROADMAP/PATTERNS точечно скорректированы. По итогам ревью подтверждены владельцем ВСЕ 9 планов; ключевые допущения закрыты: A4 — состав урока AND (2 входа, σ+BCE, lr≈0.5, 8 оп, дефолт #scenario=neuron), OQ2 — y-узел уходит с графа вместе с loss-узлом; A6 (гранулометрия D-28б «1 модуль (+типы) на файл», баррел/types.ts легальны) принят по умолчанию — журнализируется в 02-06
 
 ### Pending Todos
 
@@ -135,6 +135,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-11-09T14:29:24Z
-Stopped at: Фаза 01.2 закрыта; ревью планов фазы 2 — подтверждены 02-02/02-07, 02-01 переработан под oxlint-only (D-27 ревизия), 02-08 по умолчанию; остались пункты 02-03/02-04/02-05/02-09/02-06 → после подтверждения /gsd-execute-phase (волна 1 = 02-01)
+Last session: 2026-11-09T15:05:00Z
+Stopped at: Фаза 01.2 закрыта; ревью планов фазы 2 завершено — все 9 планов подтверждены владельцем (02-01 переработан под oxlint-only, D-27 ревизия); следующий шаг — /gsd-execute-phase (волна 1 = 02-01)
 Resume file: None
