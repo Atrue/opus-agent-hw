@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { TrainingRun, isSampleRecord, type HistoryRecord, type SampleRecord, type StartRecord } from '../../src/run/runState'
-import { XOR_SCENARIO, SAMPLE_COUNT } from '../../src/run/scenario'
-import { OPS_PER_SAMPLE } from '../../src/tensor'
+import { TrainingRun, isSampleRecord, type HistoryRecord, type SampleRecord, type StartRecord } from './runState'
+import { XOR_SCENARIO, SAMPLE_COUNT } from './scenario'
+import { OPS_PER_SAMPLE } from '../tensor'
 
 /**
  * Корень прогона (R3/R4): курсор (эпоха/пример/шаг), границы сэмпла и эпохи,

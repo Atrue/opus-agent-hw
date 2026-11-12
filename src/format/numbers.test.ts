@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { MINUS, exactRepr, formatKey } from '../src/format/numbers'
-import { ETALON_SAMPLE_1 } from './tensor/etalon-constants'
+import { MINUS, exactRepr, formatKey } from './numbers'
+import { ETALON_SAMPLE_1 } from '../run/etalon-constants'
 
 /** Все числовые листья контрольных констант walkthrough (NFR-02). */
 function numbersOf(value: unknown): number[] {

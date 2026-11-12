@@ -9,9 +9,9 @@
  */
 
 import { describe, expect, it } from 'vitest'
-import { CHAIN_GEOMETRY_IDS, SEGMENTS, geometryOf, symbolToSegment, type SegmentGeometry } from '../../src/ui/chainLinks'
-import { GRAPH_EDGES, GRAPH_NODES, SEGMENT_GROUPS } from '../../src/ui/compGraph'
-import { XOR_SCENARIO } from '../../src/run/scenario'
+import { CHAIN_GEOMETRY_IDS, SEGMENTS, geometryOf, symbolToSegment, type SegmentGeometry } from './chainLinks'
+import { GRAPH_EDGES, GRAPH_NODES, SEGMENT_GROUPS } from './compGraph'
+import { XOR_SCENARIO } from '../run/scenario'
 
 /** Полный словарь символов формулы-строки (must_haves плана). */
 const FORMULA_SYMBOLS = ['x', 'W1', 'b1', 'tanh', 'W2', 'b2', 'σ', 'ŷ', 'y', 'L', 'η', '∂L/∂W'] as const

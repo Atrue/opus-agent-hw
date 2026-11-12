@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { XOR_SCENARIO } from '../../src/run/scenario'
-import { expandScalar, MLP, SampleCursor, tensorValuesOf, Value, type Operand } from '../../src/tensor'
+import { XOR_SCENARIO } from '../run/scenario'
+import { expandScalar, MLP, SampleCursor, tensorValuesOf, Value, type Operand } from './index'
 
 /**
  * Инвариант «drill-down = движок» per-op (R1 §4.4 Р-1, NFR-02): ленивое

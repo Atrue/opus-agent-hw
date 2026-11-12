@@ -7,12 +7,15 @@ import { describe, expect, it } from 'vitest'
  * CI-тест границ библиотеки src/tensor/ (R2): дублирует oxlint
  * no-restricted-imports прямым сканированием исходников — граница держится
  * и без локального линта. Правила: (1) внутри src/tensor/ — только
- * внутренние импорты './…' (ноль импортов из приложения и react);
- * (2) вне src/tensor/ — никаких deep-импортов мимо index.ts;
- * (3) линт-гейт настроен (.oxlintrc.json: правило + override для src/tensor).
+ * внутренние импорты './…' (ноль импортов из приложения и react) —
+ * КОЛОЦИРОВАННЫЕ тест-файлы *.test.ts exempt (D-28а: им нужен vitest и
+ * прикладные модули сценариев; послабление точечное, только это правило);
+ * (2) вне src/tensor/ — никаких deep-импортов мимо index.ts — сканирует
+ * ВСЕ файлы, включая тесты; (3) линт-гейт настроен (.oxlintrc.json:
+ * правило + override для src/tensor + carve-out тестов только на vitest).
  */
 
-const SRC_DIR = fileURLToPath(new URL('../../src', import.meta.url))
+const SRC_DIR = fileURLToPath(new URL('..', import.meta.url))
 const OXLINTRC = fileURLToPath(new URL('../../.oxlintrc.json', import.meta.url))
 
 function listTsFiles(dir: string): string[] {
@@ -53,11 +56,17 @@ const importLines: ImportLine[] = outsideFiles.concat(tensorFiles).flatMap((file
 )
 
 describe('граница src/tensor/ (R2) — сканирование исходников', () => {
-  it('внутри src/tensor/ нет импортов извне библиотеки (включая react)', () => {
-    const violations = importLines.filter(({ file, specifier }) => file.includes('/tensor/') && !specifier.startsWith('./'))
+  it('внутри src/tensor/ нет импортов извне библиотеки (включая react), кроме тест-файлов', () => {
+    // D-28а: колоцированные *.test.ts exempt из правила (1) — тесты импортируют
+    // vitest и прикладные модули (../run/scenario); правило (2) ниже продолжает
+    // их сканировать, oxlint-override разрешает тестам ТОЛЬКО vitest.
+    const violations = importLines.filter(
+      ({ file, specifier }) =>
+        file.includes('/tensor/') && !file.endsWith('.test.ts') && !specifier.startsWith('./'),
+    )
     expect(
       violations.map((v) => `${v.file}: ${v.specifier}`),
-      'только внутренние относительные импорты ./… внутри библиотеки',
+      'только внутренние относительные импорты ./… внутри библиотеки (тесты exempt)',
     ).toEqual([])
   })
 
@@ -89,5 +98,16 @@ describe('граница src/tensor/ (R2) — сканирование исхо�
     expect(tensorOverride, 'override для файлов src/tensor/** (запрет внешних импортов внутри библиотеки)').toBeDefined()
     const overrideRule = tensorOverride?.rules?.['no-restricted-imports']
     expect(overrideRule, 'no-restricted-imports активен внутри src/tensor/**').toBeDefined()
+    // D-28а: carve-out для колоцированных тестов — bare-импорт разрешён ТОЛЬКО vitest
+    const testOverride = config.overrides?.find((o) => (o.files ?? []).some((f) => f.includes('test.ts')))
+    expect(testOverride, 'override для src/tensor/**/*.test.ts (carve-out колокации)').toBeDefined()
+    const testRule = testOverride?.rules?.['no-restricted-imports']
+    expect(testRule, 'no-restricted-imports активен и для тест-файлов (запрет внешних импортов, кроме vitest)').toBeDefined()
+    const testPatterns = Array.isArray(testRule) ? (testRule[1] as { patterns?: { group?: unknown[] }[] }) : undefined
+    const testGroup = testPatterns?.patterns?.[0]?.group ?? []
+    expect(
+      (testGroup as string[]).includes('!vitest') && (testGroup as string[]).includes('*'),
+      'carve-out тестов разрешает bare-импорт только vitest (negation !vitest при запрете *)',
+    ).toBe(true)
   })
 })

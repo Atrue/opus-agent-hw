@@ -17,7 +17,7 @@ import {
   STEP_GROUPS,
   buildGraph,
   graphBounds,
-} from '../../src/ui/compGraph'
+} from './compGraph'
 
 const ids = (xs: readonly { id: string }[]): string[] => xs.map((n) => n.id)
 

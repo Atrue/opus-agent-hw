@@ -1,7 +1,7 @@
 import { expect, test } from 'playwright/test'
 import { mkdirSync, rmSync } from 'node:fs'
 import { formatKey } from '../src/format/numbers'
-import { ETALON_SAMPLE_1 } from '../tests/tensor/etalon-constants'
+import { ETALON_SAMPLE_1 } from '../src/run/etalon-constants'
 
 /**
  * Полная e2e фаз 01.1–01.2 (R3, план 01.1-03; тест 6 — 01.2-02; тесты 7–9 —
@@ -34,7 +34,7 @@ import { ETALON_SAMPLE_1 } from '../tests/tensor/etalon-constants'
  * Скриншот-self-check (baseline 28): перед записью директория очищается;
  * сохраняются скриншоты каждой операции сэмпла 1 (13) и экрана завершения
  * эпохи (1) в режимах default и .lecture — (13 + 1) × 2 = 28. Эталон-значения —
- * импортом констант из tests/tensor/etalon-constants.ts (plain-TS, общий
+ * импортом констант из src/run/etalon-constants.ts (plain-TS, общий
  * для vitest и playwright — без чтения JSON и без vitest-зависимости).
  *
  * R5 (план 01.1-04): ВСЕ тесты идут под emulateMedia({ reducedMotion:

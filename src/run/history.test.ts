@@ -7,10 +7,10 @@ import {
   WEIGHT_ROWS,
   type LinkHistoryPoint,
   type LinkSeries,
-} from '../../src/run/history'
-import { TrainingRun, isSampleRecord, type SampleRecord } from '../../src/run/runState'
-import { XOR_SCENARIO, SAMPLE_COUNT } from '../../src/run/scenario'
-import { OPS_PER_SAMPLE } from '../../src/tensor'
+} from './history'
+import { TrainingRun, isSampleRecord, type SampleRecord } from './runState'
+import { XOR_SCENARIO, SAMPLE_COUNT } from './scenario'
+import { OPS_PER_SAMPLE } from '../tensor'
 
 /**
  * История обучения (UX-05/UX-06, планы 01.1-03 → 01.2-02): per-sample

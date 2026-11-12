@@ -24,8 +24,8 @@
       {
         "patterns": [
           {
-            "group": ["**/tensor/*", "!**/tensor/index", "!**/tensor/index.ts", "!./tensor/*", "!**/etalon-constants"],
-            "message": "Граница src/tensor/ (R2): движок импортируется только через index.ts — используйте '../tensor'. Эталон-константы tests/tensor/etalon-constants.ts — plain-TS test-хелпер, разрешён (межраннеровая связь vitest/playwright)."
+            "group": ["**/tensor/*", "!**/tensor/index", "!**/tensor/index.ts", "!./tensor/*", "!**/run/etalon-constants"],
+            "message": "Граница src/tensor/ (R2): движок импортируется только через index.ts — используйте '../tensor'. Эталон-константы src/run/etalon-constants.ts — plain-TS test-хелпер, разрешён (межраннеровая связь vitest/playwright)."
           }
         ]
       }
@@ -74,9 +74,32 @@
           }
         ]
       }
-    },
-    {
-      // e2e — пошаговые Playwright-сценарии: await в цикле — сам тестируемый паттерн
+  },
+  {
+    // D-28а (колокация тестов, план 02-02): миграционный carve-out, авторизован
+    // планом колокации (взаимодействие D-27↔D-28 журнализируется в записи D-28,
+    // план 02-06); после активации этого правила правки конфига — только с явным
+    // апрувом владельца (D-27). Тест-файлы src/tensor/ несут bare-импорт vitest
+    // (раннер) и node:-builtin (boundaries-скан); послабление ТОЛЬКО на них —
+    // относительные импорты тестов ('./…', '../…') ограничений не снимают,
+    // правило (2) boundaries-теста продолжает сканировать deep-импорты.
+    "files": ["src/tensor/**/*.test.ts"],
+    "rules": {
+      "no-restricted-imports": [
+        "error",
+        {
+          "patterns": [
+            {
+              "group": ["*", "!vitest", "!node:*", "!./**", "!../**"],
+              "message": "В тестах src/tensor/ bare-импорт разрешён только vitest (раннер) и node:-builtin (скан границ); относительные импорты './…'/'../…' не ограничиваются этим carve-out — колокация D-28а не открывает библиотеку для внешних пакетов."
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    // e2e — пошаговые Playwright-сценарии: await в цикле — сам тестируемый паттерн
       // (последовательный проход по шагам UI), Promise.all ломает семантику теста.
       "files": ["e2e/**"],
       "rules": {
