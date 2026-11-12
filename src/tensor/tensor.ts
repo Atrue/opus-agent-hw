@@ -1,18 +1,23 @@
 /**
  * Тензорная библиотека (R1, ревью фазы 01): класс Tensor — Float64Array +
- * shape (ранг ≤ 2), micrograd-механика графа (parents + обратные замыкания,
- * topo-backward, аккумуляция grad на месте), словарь имён PyTorch
- * (matmul/add/tanh/sigmoid/backward/zeroGrad). Анти-скоуп v1 (R1 §8.3):
- * Module/Sequential, broadcasting, батчи — не реализуются.
+ * shape (ранг ≤ 2), micrograd-механика графа (parents + op-дескрипторы
+ * обратного шага, topo-backward, аккумуляция grad на месте), словарь имён
+ * PyTorch (matmul/add/tanh/sigmoid/backward/zeroGrad). Анти-скоуп v1
+ * (R1 §8.3): Module/Sequential, broadcasting, батчи — не реализуются.
  *
  * Мутационная семантика как в Python (R1 §2.2): forward создаёт новые
  * тензоры; grad аккумулируется на месте (+=); оптимизатор мутирует data.
  * Тензоры без requiresGrad тоже получают grad (как в micrograd) — walkthrough
  * показывает ∂L/∂x; requiresGrad маркирует параметры, которые обновляет SGD.
+ *
+ * Декомпозиция D-29: обратный шаг — ДАННЫЕ (тегированный union BackwardPlan),
+ * а не замыкание; исполняет чистая функция-диспетчер runBackwardPlan с теми
+ * же ядрами ops.ts и тем же порядком accumulate (бит-идентичность, Pitfall 2).
  */
 
 import {
   addForward,
+  bceGradP,
   matvecForward,
   matvecGradW,
   matvecGradX,
@@ -24,10 +29,21 @@ import {
 
 export type OpName = 'matmul' | 'add' | 'tanh' | 'sigmoid' | 'bce'
 
+/** Дескриптор обратного шага op (D-29): данные вместо замыкания — tagged
+ *  union по образцу ExpandRequest (expanders.ts); ровно тот набор ops, что
+ *  строит forward (+ F.bce). Исполняет чистый диспетчер runBackwardPlan. */
+export type BackwardPlan =
+  | { op: 'matmul'; w: Tensor; x: Tensor; rows: number; cols: number }
+  | { op: 'add'; a: Tensor; b: Tensor }
+  | { op: 'tanh'; z: Tensor }
+  | { op: 'sigmoid'; z: Tensor }
+  | { op: 'bce'; p: Tensor; t: Tensor }
+
 export interface TensorInit {
   requiresGrad?: boolean
   op?: OpName | ''
   parents?: readonly Tensor[]
+  plan?: BackwardPlan
 }
 
 /** Аккумуляция градиента на месте: t.grad += delta (ленивая аллокация).
@@ -40,6 +56,32 @@ export function accumulate(t: Tensor, delta: Float64Array): void {
   for (let i = 0; i < delta.length; i++) t.grad[i] = t.grad[i]! + delta[i]!
 }
 
+/** Чистый диспетчер обратного шага (D-29): switch по plan.op; каждый кейс —
+ *  те же вызовы ядер ops.ts и тот же порядок accumulate(родитель A →
+ *  родитель B), что исходные замыкания (матмул: сначала w, потом x) —
+ *  перестановка меняет биты (Pitfall 2, NFR-02). */
+export function runBackwardPlan(plan: BackwardPlan, out: Tensor): void {
+  if (out.grad === null) return
+  switch (plan.op) {
+    case 'matmul':
+      accumulate(plan.w, matvecGradW(out.grad, plan.x.data, plan.rows, plan.cols))
+      accumulate(plan.x, matvecGradX(plan.w.data, plan.rows, plan.cols, out.grad))
+      return
+    case 'add':
+      accumulate(plan.a, out.grad)
+      accumulate(plan.b, out.grad)
+      return
+    case 'tanh':
+      accumulate(plan.z, tanhBackwardFromOutput(out.data, out.grad))
+      return
+    case 'sigmoid':
+      accumulate(plan.z, sigmoidBackwardFromOutput(out.data, out.grad))
+      return
+    case 'bce':
+      accumulate(plan.p, bceGradP(plan.p.data, plan.t.data))
+  }
+}
+
 export class Tensor {
   readonly data: Float64Array
   readonly shape: readonly number[]
@@ -47,7 +89,7 @@ export class Tensor {
   readonly requiresGrad: boolean
   readonly op: OpName | ''
   readonly parents: readonly Tensor[]
-  private backwardFn: () => void
+  private readonly plan: BackwardPlan | null
 
   constructor(data: Float64Array, shape: readonly number[], init: TensorInit = {}) {
     if (shape.length < 1 || shape.length > 2) throw new Error(`Tensor: ранг ${String(shape.length)} не поддерживается (≤ 2)`)
@@ -57,7 +99,7 @@ export class Tensor {
     this.requiresGrad = init.requiresGrad ?? false
     this.op = init.op ?? ''
     this.parents = init.parents ?? []
-    this.backwardFn = () => {}
+    this.plan = init.plan ?? null
   }
 
   /** Литерал из number[] (вектор [n]) или number[][] (матрица [rows, cols]). */
@@ -78,16 +120,6 @@ export class Tensor {
     return new Tensor(Float64Array.from(values as readonly number[]), [values.length], { requiresGrad })
   }
 
-  /** Установка обратного замыкания (после создания out — micrograd-паттерн). */
-  private setBackward(fn: () => void): void {
-    this.backwardFn = fn
-  }
-
-  /** Установка обратного замыкания для op, созданных вне класса (F.bce). */
-  static defineBackward(t: Tensor, fn: () => void): void {
-    t.backwardFn = fn
-  }
-
   /** z = W·x ↔ W.matmul(x): this — матрица [rows, cols], x — вектор [cols]. */
   matmul(o: Tensor): Tensor {
     if (this.shape.length !== 2 || o.shape.length !== 1 || this.shape[1] !== o.shape[0]) {
@@ -95,62 +127,44 @@ export class Tensor {
     }
     const rows = this.shape[0]!
     const cols = this.shape[1]!
-    const out = new Tensor(matvecForward(this.data, rows, cols, o.data), [rows], {
+    return new Tensor(matvecForward(this.data, rows, cols, o.data), [rows], {
       op: 'matmul',
       parents: [this, o],
       requiresGrad: this.requiresGrad || o.requiresGrad,
+      plan: { op: 'matmul', w: this, x: o, rows, cols },
     })
-    out.setBackward(() => {
-      if (out.grad === null) return
-      accumulate(this, matvecGradW(out.grad, o.data, rows, cols))
-      accumulate(o, matvecGradX(this.data, rows, cols, out.grad))
-    })
-    return out
   }
 
   add(o: Tensor): Tensor {
     if (this.shape.length !== 1 || o.shape.length !== 1 || this.shape[0] !== o.shape[0]) {
       throw new Error(`add: несовместимые формы [${this.shape.join(',')}] + [${o.shape.join(',')}]`)
     }
-    const out = new Tensor(addForward(this.data, o.data), [...this.shape], {
+    return new Tensor(addForward(this.data, o.data), [...this.shape], {
       op: 'add',
       parents: [this, o],
       requiresGrad: this.requiresGrad || o.requiresGrad,
+      plan: { op: 'add', a: this, b: o },
     })
-    out.setBackward(() => {
-      if (out.grad === null) return
-      accumulate(this, out.grad)
-      accumulate(o, out.grad)
-    })
-    return out
   }
 
   tanh(): Tensor {
     if (this.shape.length !== 1) throw new Error(`tanh: ожидается вектор, получен [${this.shape.join(',')}]`)
-    const out = new Tensor(tanhForward(this.data), [...this.shape], {
+    return new Tensor(tanhForward(this.data), [...this.shape], {
       op: 'tanh',
       parents: [this],
       requiresGrad: this.requiresGrad,
+      plan: { op: 'tanh', z: this },
     })
-    out.setBackward(() => {
-      if (out.grad === null) return
-      accumulate(this, tanhBackwardFromOutput(out.data, out.grad))
-    })
-    return out
   }
 
   sigmoid(): Tensor {
     if (this.shape.length !== 1) throw new Error(`sigmoid: ожидается вектор, получен [${this.shape.join(',')}]`)
-    const out = new Tensor(sigmoidForward(this.data), [...this.shape], {
+    return new Tensor(sigmoidForward(this.data), [...this.shape], {
       op: 'sigmoid',
       parents: [this],
       requiresGrad: this.requiresGrad,
+      plan: { op: 'sigmoid', z: this },
     })
-    out.setBackward(() => {
-      if (out.grad === null) return
-      accumulate(this, sigmoidBackwardFromOutput(out.data, out.grad))
-    })
-    return out
   }
 
   /** Полный backward от скалярного корня [1]: topo-сортировка + обратный проход
@@ -172,9 +186,10 @@ export class Tensor {
     for (let k = topo.length - 1; k >= 0; k--) topo[k]!.runBackward()
   }
 
-  /** Исполняет обратное замыкание только этой op (пошаговый backward). */
+  /** Исполняет обратный шаг только этой op (пошаговый backward):
+   *  диспетчер чистых ядер ops.ts по op-дескриптору (D-29). */
   runBackward(): void {
-    this.backwardFn()
+    if (this.plan !== null) runBackwardPlan(this.plan, this)
   }
 
   zeroGrad(): void {
