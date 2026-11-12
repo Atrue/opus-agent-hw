@@ -1,19 +1,19 @@
 ---
 gsd_state_version: "1.0"
-current_phase: "02"
+current_phase: 02
 current_phase_name: Движок и MVP-walkthrough на одном нейроне
-status: planning
-stopped_at: "Фаза 01.2 закрыта; ревью планов фазы 2 завершено 2026-11-09 — все 9 планов подтверждены владельцем (02-01 переработан под oxlint-only, D-27 ревизия; состав урока AND утверждён); готово к /gsd-execute-phase (волна 1 = 02-01)"
-last_updated: "2026-11-09T15:05:00.000Z"
-last_activity: 2026-11-09
-last_activity_desc: Phase 01.2 closed; phase-2 plan review complete (all 9 plans owner-confirmed, D-27 revised to oxlint-only)
-state_head: a0b21f1687240b7f84f842919aaf756bf064f45bb
+status: executing
+stopped_at: Completed 02-01-PLAN.md (строгий oxlint, D-27); волна 2 = 02-02
+last_updated: "2026-11-12T17:34:54.003Z"
+last_activity: 2026-11-12
+last_activity_desc: Phase 02 execution started
+state_head: e54f20f97db43776f46a9d3a7f7eceb0b280a9c6
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 25
-  completed_plans: 16
-  percent: 64
+  completed_plans: 17
+  percent: 50
 ---
 
 # Project State
@@ -27,12 +27,12 @@ See: .planning/PROJECT.md (updated 2026-11-03)
 
 ## Current Position
 
-Phase: 02 (Движок и MVP-walkthrough на одном нейроне) — PLANNING (plans 9/9 created + owner-reviewed)
-Plan: 1 of 9 (02-01, wave 1 — строгий oxlint, D-27 ревизия)
-Status: Ревью планов завершено 2026-11-09 — все 9 планов подтверждены владельцем; готово к /gsd-execute-phase
-Last activity: 2026-11-09 — Phase 01.2 closed; phase-2 plan review complete
+Phase: 02 (Движок и MVP-walkthrough на одном нейроне) — EXECUTING
+Plan: 2 of 9
+Status: Ready to execute
+Last activity: 2026-11-12 — Phase 02 execution started
 
-Progress: [██████▓░░░] 64%
+Progress: [█████░░░░░] 50%
 
 ## Performance Metrics
 
@@ -66,6 +66,7 @@ Progress: [██████▓░░░] 64%
 | Phase 01.1 P03 | 13 min | 3 tasks | 11 files |
 | Phase 01.1 P04 | 25 min | 2 tasks | 11 files |
 | Phase 01.1 P05 | 4 min | 2 tasks | 7 files |
+| Phase 02 P01 | 20 min | 1 tasks | 27 files |
 
 ## Accumulated Context
 
@@ -111,6 +112,7 @@ Recent decisions affecting current work:
 - [01.2-03]: D-26 зафиксирован в DECISIONS.md — формула-строка = навигационное ядро, звено цепи x→z1→a1→z2→ŷ→L→W, история звена per-sample, reset = перезапуск прогона (runId) с сохранением истории сессии до reload; супрессии: вертикальный рельс и полоса 2/6/4 (D-25), таблица весов UX-06 и weightSnapshots (01.1-03). UX-06 переписан в обоих REQUIREMENTS (Phase mapping → 01.2), DESIGN.md §4/§9 отражают каркас «формула-строка + горизонтальная лента + main 8/4» и linked-highlighting; глоссарий PROJECT.md дополнен (chain link, formula strip, link history, SampleRecord); e2e — 9 проверок, двойной прогон бит-идентичен (baseline 28)
 - [01.2 → закрытие, 2026-11-09]: верификация цикла 2 — 39/39 must-haves, 101 юнит/11 e2e зелёные, движок не тронут (diff bc9fa0c..HEAD по src/tensor = 0); UAT 3/3 принят владельцем без визуального просмотра на основании автоматических контрактов — фаза 01.2 закрыта (01.2-UAT.md complete, 01.2-VERIFICATION.md passed)
 - [Ревью планов фазы 2, 2026-11-09]: D-27 ревизован владельцем — строгий линтер = **только oxlint** (categories suspicious/pedantic/perf + frozen-список исключений в .oxlintrc.json; ESLint/airbnb НЕ вводится, 0 новых npm-пакетов); мотиваторы: отказ от 9 dev-пакетов и eslintrc-моста; type-aware в oxlint (tsgolint, 59/61 правил tseslint) требует TypeScript 7+ — проект на 5.9.3, пересмотр после стабилизации TS7. 02-01 переработан под oxlint-only; 02-06/02-CONTEXT/ROADMAP/PATTERNS точечно скорректированы. По итогам ревью подтверждены владельцем ВСЕ 9 планов; ключевые допущения закрыты: A4 — состав урока AND (2 входа, σ+BCE, lr≈0.5, 8 оп, дефолт #scenario=neuron), OQ2 — y-узел уходит с графа вместе с loss-узлом; A6 (гранулометрия D-28б «1 модуль (+типы) на файл», баррел/types.ts легальны) принят по умолчанию — журнализируется в 02-06
+- [Phase 02]: [02-01] D-27 реализован в ревизии oxlint-only: категории correctness/suspicious=error + pedantic/perf=warn включены один раз; bring-up закрыт 89 стилевыми правками без изменения вычислений (101 юнит + 11 e2e дважды бит-идентичны); замороженный блок исключений с контрактом «изменения — только по апруву владельца»: react-in-jsx-scope/max-lines-per-function/max-lines/require-unicode-regexp off, no-underscore-dangle allow __run, no-await-in-loop off только для e2e/**; ignorePatterns .claude/** (вендорный GSD-тулинг); кандидат no-non-null-assertion не понадобился; oxlint 1.90→1.92 (~1.92.0), 0 новых пакетов; correctness нашёл реальную находку (exhaustive-effect-deps в StepperBand — эффект переписан на честные deps) — [02-01] D-27 реализован в ревизии oxlint-only: категории correctness/suspicious=error + pedantic/perf=warn включены один раз; bring-up закрыт 89 стилевыми правками без изменения вычислений (101 юнит + 11 e2e дважды бит-идентичны); замороженный блок исключений с контрактом «изменения — только по апруву владельца»: react-in-jsx-scope/max-lines-per-function/max-lines/require-unicode-regexp off, no-underscore-dangle allow __run, no-await-in-loop off только для e2e/**; ignorePatterns .claude/** (вендорный GSD-тулинг); кандидат no-non-null-assertion не понадобился; oxlint 1.90→1.92 (~1.92.0), 0 новых пакетов; correctness нашёл реальную находку (exhaustive-effect-deps в StepperBand — эффект переписан на честные deps)
 
 ### Pending Todos
 
@@ -135,6 +137,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-11-09T15:05:00Z
-Stopped at: Фаза 01.2 закрыта; ревью планов фазы 2 завершено — все 9 планов подтверждены владельцем (02-01 переработан под oxlint-only, D-27 ревизия); следующий шаг — /gsd-execute-phase (волна 1 = 02-01)
+Last session: 2026-11-12T17:34:53.796Z
+Stopped at: Completed 02-01-PLAN.md (строгий oxlint, D-27); волна 2 = 02-02
 Resume file: None
