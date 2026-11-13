@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 current_phase: 02
 current_phase_name: Движок и MVP-walkthrough на одном нейроне
 status: executing
-stopped_at: All 9 plans of phase 02 executed (02-06 D-32 + docs-sync D-27..D-33 последним); ready for /gsd-verify-work 02
-last_updated: "2026-11-13T09:45:00.000Z"
+stopped_at: Ревью владельцем планов 02-10/11/12 (2026-11-13) — планы переработаны по решениям ревью (02-10: value-ops = свободные функции, backwardFn-замыкание чистых локальных производных внутри, Value без методов, без CONTRACTS/switch; 02-11: ops/ по операциям зеркально value-ops, SegmentId → run/types.ts, format/index.ts + 13 импортов, тесты колоцируются, гранулометрия — мягкая инструкция; 02-12: гейт R1/R2/R4 бинарный минимум без подсчёта экспортов, D-34 пакетный); далее /gsd-execute-phase 02 --gaps-only → реверификация цикл 2
+last_updated: "2026-11-13T14:30:00.000Z"
 last_activity: 2026-11-13
-last_activity_desc: Phase 02 — все 9 планов исполнены
+last_activity_desc: Phase 02 — ревью планов 02-10/11/12 владельцем; планы переработаны под решения ревью
 state_head: 71cb059
 progress:
   total_phases: 6
@@ -28,9 +28,9 @@ See: .planning/PROJECT.md (updated 2026-11-03)
 ## Current Position
 
 Phase: 02 (Движок и MVP-walkthrough на одном нейроне) — EXECUTING
-Plan: 9 of 9
-Status: All plans executed; верификация фазы — /gsd-verify-work 02
-Last activity: 2026-11-13 — 02-05, 02-09, 02-06 executed (фаза закрыта по планам)
+Plan: 12 of 12 (gap-цикл: 9 исполнено + 3 gap-плана созданы)
+Status: Gap-цикл: планы 02-10/11/12 переработаны по ревью владельца 2026-11-13 (value-ops = функции с backwardFn; ops/ по операциям; гейт R1/R2/R4; гранулометрия — инструкция) — готовы к /gsd-execute-phase 02 --gaps-only; после — реверификация цикл 2
+Last activity: 2026-11-13 — disposition владельца (все OQ маршрутом A) → создание gap-планов → ревью планов владельцем с переработкой по пунктам
 
 Progress: [██████░░░░] 60%
 
@@ -129,6 +129,9 @@ Recent decisions affecting current work:
 - [Phase 02]: [02-05] D-31 носитель MVP R1 = «один нейрон»: NEURON_SCENARIO (AND 2 входа, σ+BCE, lr 0.5, веса W=(0.8,0.8) b=−0.8 руками под ŷ₀∈[0.3,0.7], 8 оп), дефолт #scenario=neuron (XOR выбираем — регрессия); активный спец фиксируется по URL до создания прогона (activateScenario), UI-слой не знает какой сценарий активен; e2e 16 проверок на neuron-носителе, DOCS-01/UX-02 верифицированы
 - [Phase 02]: [02-09] NFR-02 на neuron тремя ногами: central-difference gradcheck (независимая численная верификация, зелёный ДО констант — порядок в коммитах) → ETALON_NEURON_SAMPLE_1 (self-capture 8 оп, shortest round-trip) → бит-бит инварианты; e2e-пины тестов 1/16 числами из констант (межраннеровый мостик); etalon/invariants параметризованы спеком — фаза 3 подключает XOR-MLP без нового тест-слоя
 - [Phase 02]: [02-06] D-32 исполнен: лосс и y-узел ушли с графа обоих сценариев (правка только spec.render — UI не знает про loss-узел), звено L подсвечивает ŷ, dangling-id гейт T-2-10; D-27..D-33 журнализированы в DECISIONS.md, правило апрува линтера — постоянное в AGENTS.md, глоссарий PROJECT.md +7 терминов; DESIGN §9/§9a синхронизированы — Фаза 02 завершена по планам: 9/9, DOCS-01/02 + UX-02 закрыты, далее /gsd-verify-work 02
+- [Phase 02 → верификация 1, 2026-11-13]: gaps_found — must-haves 9/9 планов подтверждены (121 юнит / lint 0 / tsc 0 / 16 e2e), но 4 стандарта владельца реализованы в суженной интерпретации: OQ-1 структура не ограничена линтером (max-lines выключены замороженным блоком D-27, правил гранулометрии в oxlint нет — задача не планировалась); OQ-2 папки/экспорты (scenario.ts 21 экспорт, compGraph.ts 18, ui плоская 23 файла — гранулометрия A6 «1 модуль (+типы) на файл» принята по умолчанию без апрува владельца); OQ-3 Value-декомпозиция наполовину (градиенты вынесены в value-grads.ts, forward 8 оп остался методами класса value.ts:50-80 — must_haves 02-03 сформулированы уже суженно); OQ-4 интерфейсы только сценарного слоя (ScenarioModel), у движка контрактов нет, Value = 4 роли в одном классе. Системная причина: сужение на этапе планирования (2026-11-09, пакетный апрув 9 планов) + must_haves писались после сужения + /gsd-verify-work не запускался до 2026-11-13. Фаза не закрывается до disposition владельца (02-VERIFICATION.md §Disposition)
+- [Phase 02 → gap-цикл, 2026-11-13]: disposition владельца — OQ-1..4 ВСЕ маршрутом A (gap-планы сейчас); созданы: 02-10-PLAN (gap_ids OQ-3/OQ-4: value-ops/ — 8 per-op модулей forward+localGrad парой, контракт ValueOpContract + таблица CONTRACTS, value.ts = контейнер + генерический runBackward без switch, value-grads.ts удаляется, бит-идентичность инвариантами), 02-11-PLAN (gap_ids OQ-2: ui → 10 подпапок сущностей app/stepper/formula/graph/chain/operation/numbers/dataset/epoch/typography; scenario.ts(21)/history.ts(12)/ops.ts(10)/trace.ts(12)/compGraph.ts(18)/chainLinks.ts(11)/hintData.ts(5)/numbers.ts(4) → домен-папки с баррелами; чистые git mv, testid/RU-строки/тела не трогаются), 02-12-PLAN (gap_ids OQ-1: structure.test.ts — R1 no export default / R2 ui-корень только README / R3 ≤1 не-типового экспорта вне замороженных исключений / R4 дубль границы tensor; гейт тестом — oxlint гранулометрию не умеет, .oxlintrc.json не трогается; docs-sync D-34 ревизует A6-чтение D-28). Порядок 02-10 → 02-11 → 02-12; после SUMMARY — реверификация цикл 2
+- [Phase 02 → ревью gap-планов, 2026-11-13]: ревью владельцем трёх планов с правкой по пунктам — 02-10: операции = СВОБОДНЫЕ функции (a: Value, b: Value): Value, из Value уходят ВСЕ методы; внутри op-функции объявлен backwardFn — замыкание чистых локальных производных (массив параллельно parents, БЕЗ incoming и мутаций); chain rule общий в свободной backward(root) (topo + parents[i].grad += partials[i]·v.grad, порядок A→B); CONTRACTS-таблица/интерфейс/switch исключены; op-функции внутренние для src/tensor (index.ts не меняется); принят ulp-дрейф div/log/sigmoid (ассоциация partial·incoming; 1e-12/1e-6); машинные структурные гейты убраны — приёмка ручным ревью владельца. 02-11: ops/ ПО ОПЕРАЦИЯМ (matvec/tanh/sigmoid/bce/add — зеркально value-ops, не по категориям); SegmentId поднимается в run/types.ts (закрыта слой-инверсия run→ui: run/types+trainingRun+history импортировали ui/chainLinks); format — чистый index.ts-баррел + правка 13 импортов; тесты колоцируются в папки сущностей; un-export аудит мёртвых символов (scenarioById, accumulate, LINK_HISTORY_CAP, CHAIN_GEOMETRY_IDS); гранулометрия — мягкая инструкция, НЕ машинный гейт; сплиты = новые файлы (git-история только у чистых mv). 02-12: гейт = бинарный минимум R1 (нет export default) / R2 (корень ui только README) / R4 (tensor './…', не-тесты, carve-out зеркалит oxlint) — без подсчёта экспортов/порогов/списков; D-34 пакетный: гранулометрия-инструкция + Value-замыкания (разрешены в view, запрещены в движке) + ulp-дрейф + ops по операциям + SegmentId + состав гейта; супрессии A6-чтения D-28 и «замыкания удалены» D-29 (только Value-слой); AGENTS.md №6 + новый пункт «Гранулометрия модулей»
 
 ### Pending Todos
 
@@ -136,7 +139,7 @@ Recent decisions affecting current work:
 
 ### Blockers/Concerns
 
-None yet.
+- Phase 02 закрытие: ждёт исполнения gap-планов 02-10/11/12 (disposition владельца 2026-11-13: OQ-1..4 все A) → реверификация цикл 2 → UAT. Планы готовы, см. 02-VERIFICATION.md §Disposition.
 
 ### Roadmap Evolution
 
@@ -153,6 +156,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-11-13T09:45:00.000Z
-Stopped at: All 9 plans of phase 02 executed (02-06 D-32 + docs-sync D-27..D-33 последним); ready for /gsd-verify-work 02
+Last session: 2026-11-13T12:45:00.000Z
+Stopped at: Gap-планы 02-10/11/12 созданы (disposition 1-a/2-a/3-a/4-a); далее /gsd-execute-phase 02 --gaps-only → реверификация цикл 2
 Resume file: None
