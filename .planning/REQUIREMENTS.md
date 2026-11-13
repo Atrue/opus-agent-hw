@@ -13,7 +13,7 @@ Requirements for initial release (R1). Each maps to roadmap phases.
 
 ### Walkthrough Execution
 
-- [ ] **DOCS-01**: Пользователь сам исполняет каждый шаг forward- и backward-pass готового сценария и видит входы, выходы, активации и градиенты операции конкретными числами; индикатор — «эпоха N · шаг M»; forward-only: «назад» отсутствует by design (как в реальном обучении), есть «Сброс»; fast-forward «Запустить эпоху» даёт числа, идентичные пошаговому исполнению; экран завершения эпохи (L до/после, точность) продолжается следующей эпохой — без NaN/пустых состояний и «конца walkthrough»
+- [x] **DOCS-01**: Пользователь сам исполняет каждый шаг forward- и backward-pass готового сценария и видит входы, выходы, активации и градиенты операции конкретными числами; индикатор — «эпоха N · шаг M»; forward-only: «назад» отсутствует by design (как в реальном обучении), есть «Сброс»; fast-forward «Запустить эпоху» даёт числа, идентичные пошаговому исполнению; экран завершения эпохи (L до/после, точность) продолжается следующей эпохой — без NaN/пустых состояний и «конца walkthrough»
 
 ### Drill-down Visualization
 
@@ -30,7 +30,7 @@ Requirements for initial release (R1). Each maps to roadmap phases.
 ### Lecture Mode
 
 - [ ] **DOCS-05**: Сценарий воспроизводим пошагово на проекторе без подготовки: каждый шаг читаем с дальних рядов, маршрут детерминирован при повторении (фиксированные стартовые веса); после обрыва сети шаги продолжаются (все вычисления на клиенте), перезагрузка по той же ссылке честно сбрасывает прогон к тому же детерминированному старту
-- [ ] **UX-02**: Клавиатурная навигация: `→` / `Space` — шаг вперёд, поддержка презентерного пульта; «назад» отсутствует by design (ревью R3)
+- [x] **UX-02**: Клавиатурная навигация: `→` / `Space` — шаг вперёд, поддержка презентерного пульта; «назад» отсутствует by design (ревью R3)
 
 ### Training History
 
@@ -94,13 +94,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DOCS-01 | Phase 2 | Pending |
+| DOCS-01 | Phase 2 | Complete (носитель neuron D-31; эталон+gradcheck+инварианты — 02-05/02-09) |
 | DOCS-02 | Phase 2 | Pending |
 | DOCS-03 | Phase 3 | Pending |
 | DOCS-04 | Phase 3 | Pending |
 | DOCS-05 | Phase 3 | Pending |
 | DOCS-06 | Phase 4 | Pending |
-| UX-02 | Phase 2 | Pending |
+| UX-02 | Phase 2 | Complete (e2e 7–10: →/Space/PgDn вперёд, ←/Backspace/PgUp инертны) |
 | UX-03 | Phase 3 | Pending |
 | UX-04 | Phase 4 | Pending |
 | UX-05 | Phase 1.1 | Complete |
