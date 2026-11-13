@@ -1,13 +1,15 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
-import { join } from 'node:path'
+import { dirname, isAbsolute, join, relative, resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 /**
  * CI-тест границ библиотеки src/tensor/ (R2): дублирует oxlint
  * no-restricted-imports прямым сканированием исходников — граница держится
  * и без локального линта. Правила: (1) внутри src/tensor/ — только
- * внутренние импорты './…' (ноль импортов из приложения и react) —
+ * внутренние импорты, остающиеся внутри библиотеки (D-34, апрув владельца
+ * 2026-11-13: '../…' из подпапок к корню tensor разрешён; выход за пределы
+ * src/tensor и bare-импорты — нет; ноль импортов из приложения и react) —
  * КОЛОЦИРОВАННЫЕ тест-файлы *.test.ts exempt (D-28а: им нужен vitest и
  * прикладные модули сценариев; послабление точечное, только это правило);
  * (2) вне src/tensor/ — никаких deep-импортов мимо index.ts — сканирует
@@ -55,18 +57,26 @@ const importLines: ImportLine[] = outsideFiles.concat(tensorFiles).flatMap((file
   importsOf(file).map((specifier) => ({ file, specifier })),
 )
 
+/** D-34: относительный импорт нарушает границу, только если резолвится
+ *  за пределы src/tensor/ (bare-импорт извне — всегда нарушение). */
+function escapesTensor(file: string, specifier: string): boolean {
+  if (!specifier.startsWith('.')) return true
+  const rel = relative(SRC_DIR, resolve(dirname(file), specifier))
+  return rel.startsWith('..') || isAbsolute(rel)
+}
+
 describe('граница src/tensor/ (R2) — сканирование исходников', () => {
   it('внутри src/tensor/ нет импортов извне библиотеки (включая react), кроме тест-файлов', () => {
     // D-28а: колоцированные *.test.ts exempt из правила (1) — тесты импортируют
     // vitest и прикладные модули (../run/scenario); правило (2) ниже продолжает
     // их сканировать, oxlint-override разрешает тестам ТОЛЬКО vitest.
+    // D-34: '../…' из подпапок к корню tensor легален (резолв внутри библиотеки).
     const violations = importLines.filter(
-      ({ file, specifier }) =>
-        file.includes('/tensor/') && !file.endsWith('.test.ts') && !specifier.startsWith('./'),
+      ({ file, specifier }) => file.includes('/tensor/') && !file.endsWith('.test.ts') && escapesTensor(file, specifier),
     )
     expect(
       violations.map((v) => `${v.file}: ${v.specifier}`),
-      'только внутренние относительные импорты ./… внутри библиотеки (тесты exempt)',
+      'внутри библиотеки только импорты, резолвящиеся в src/tensor/ (тесты exempt)',
     ).toEqual([])
   })
 
