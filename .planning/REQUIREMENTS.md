@@ -17,7 +17,7 @@ Requirements for initial release (R1). Each maps to roadmap phases.
 
 ### Drill-down Visualization
 
-- [ ] **DOCS-02**: С любого уровня визуализации можно углубиться до отдельного числа: диаграмма архитектуры → слой (список операций) → операция (входы/выходы) → число (формула + источник); на границе графа (первый слой) панель показывает входные данные / старт цепного правила, а не пустой экран
+- [x] **DOCS-02**: С любого уровня визуализации можно углубиться до отдельного числа: диаграмма архитектуры → слой (список операций) → операция (входы/выходы) → число (формула + источник); на границе графа (первый слой) панель показывает входные данные / старт цепного правила, а не пустой экран
 
 ### Scenario Library
 
@@ -95,7 +95,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | DOCS-01 | Phase 2 | Complete (носитель neuron D-31; эталон+gradcheck+инварианты — 02-05/02-09) |
-| DOCS-02 | Phase 2 | Pending |
+| DOCS-02 | Phase 2 | Complete (drill-down + D-32: граф = сеть, лосс = числа — 02-04/02-06) |
 | DOCS-03 | Phase 3 | Pending |
 | DOCS-04 | Phase 3 | Pending |
 | DOCS-05 | Phase 3 | Pending |
