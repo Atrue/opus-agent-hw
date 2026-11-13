@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { TrainingRun } from './trainingRun'
 import { flatWeights } from './stepRecords'
 import { isSampleRecord, type HistoryRecord, type SampleRecord, type StartRecord } from './types'
-import { XOR_SCENARIO, XOR_START_WEIGHTS, SAMPLE_COUNT } from './scenario'
+import { XOR_SCENARIO, XOR_START_WEIGHTS } from './scenario'
 
 /**
  * Корень прогона (R3/R4): курсор (эпоха/пример/шаг), границы сэмпла и эпохи,
@@ -20,6 +20,7 @@ import { XOR_SCENARIO, XOR_START_WEIGHTS, SAMPLE_COUNT } from './scenario'
 
 const START_W1 = XOR_START_WEIGHTS.w1.flat()
 const START_FLAT = [...XOR_START_WEIGHTS.w1.flat(), ...XOR_START_WEIGHTS.b1, ...XOR_START_WEIGHTS.w2.flat(), ...XOR_START_WEIGHTS.b2]
+const SAMPLE_COUNT = XOR_SCENARIO.samples.length
 
 /** Плоские веса живой модели (layer-major: W1, b1, W2, b2). */
 function flatModelWeightsOf(): number[] {
@@ -30,7 +31,8 @@ function flatModelWeightsOf(): number[] {
 let run: TrainingRun
 
 beforeEach(() => {
-  run = new TrainingRun()
+  // XOR пинится явно: дефолт активного сценария — neuron (D-31)
+  run = new TrainingRun(XOR_SCENARIO)
 })
 
 /** Плоские веса живой модели в порядке снапшота (W1, b1, W2, b2). */
@@ -301,13 +303,13 @@ describe('TrainingRun: SampleRecord-история сессии (01.2-02)', () =
   })
 
   it('(в) инвариант R3 на истории: две эпохи пошагово и FF — идентичные sampleHistory', () => {
-    const stepwise = new TrainingRun()
+    const stepwise = new TrainingRun(XOR_SCENARIO)
     for (let e = 0; e < 2; e++) {
       for (let i = 0; i < SAMPLE_COUNT * XOR_SCENARIO.ops.length; i++) stepwise.advance()
       // экран завершения эпохи → следующая эпоха
       stepwise.advance()
     }
-    const ff = new TrainingRun()
+    const ff = new TrainingRun(XOR_SCENARIO)
     for (let e = 0; e < 2; e++) {
       ff.runEpoch()
       ff.advance()

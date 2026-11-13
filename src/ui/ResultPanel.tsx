@@ -1,5 +1,5 @@
 import { useRunSlice } from '../run/useRunSlice'
-import { XOR_SCENARIO } from '../run/scenario'
+import { activeScenario } from '../run/scenario'
 import { formatKey } from '../format/numbers'
 import { SubscriptText } from './SubscriptText'
 
@@ -8,22 +8,28 @@ import { SubscriptText } from './SubscriptText'
  * правой колонки — что ПРОИСХОДИТ с текущим примером (обзор «на чём учится
  * сеть» живёт отдельно — ExamplesPanel в полосе истории). Все входы текущего
  * примера (x₁ = …, x₂ = …), метка y, выход ŷ и лосс L — те же live-срезы,
- * что питали прежний блок результата (sampleOpValues: оп 5 — ŷ, оп 6 — L),
- * тренд L ↓/↑ против предыдущей лосс-точки и вердикт порогом 0.5 (логика
+ * что питали прежний блок результата (sampleOpValues: ŷ — активация выхода,
+ * L — bce-опа, индексы выводятся из ops спека), тренд L ↓/↑ против
+ * предыдущей лосс-точки и вердикт порогом 0.5 (логика
  * движка). Из статус-бара переехала метрика LR (η из сценария); сессионный
  * лосс-дубль удалён (01.2-07) — лосс-показатель карточки один: L.
  * До вычисления — «н/д» (Empty, DESIGN.md §6); лекционный режим масштабирует
  * через --num-size. Данные — только опубликованные срезы прогона, новых
  * вычислений нет.
  */
+/** Индексы операций ŷ (активация выхода) и L (bce) — данные ops спека. */
+const SPEC = activeScenario()
+const YHAT_OP = SPEC.ops.findIndex((o) => o.op === 'sigmoid')
+const LOSS_OP = SPEC.ops.findIndex((o) => o.op === 'bce')
+
 export function ResultPanel() {
   const sampleIndex = useRunSlice((r) => r.sampleIndex)
   const values = useRunSlice((r) => r.sampleOpValues)
   const lossPoints = useRunSlice((r) => r.epochLossPoints)
 
-  const sample = XOR_SCENARIO.samples[sampleIndex]!
-  const yhat = values[5]
-  const loss = values[6]
+  const sample = SPEC.samples[sampleIndex]!
+  const yhat = values[YHAT_OP]
+  const loss = values[LOSS_OP]
   const decided = yhat !== undefined && loss !== undefined
   const correct = decided ? (yhat >= 0.5) === (sample.y >= 0.5) : null
   const prev = lossPoints.length >= 2 ? lossPoints[lossPoints.length - 2]! : null
@@ -78,7 +84,7 @@ export function ResultPanel() {
           лосс-показатель карточки — L текущего примера выше. */}
       <div className="num flex flex-wrap items-baseline gap-x-6 gap-y-1 text-sm">
         <span>
-          LR <span className="text-on-surface-variant">{formatKey(XOR_SCENARIO.lr)}</span>
+          LR <span className="text-on-surface-variant">{formatKey(SPEC.lr)}</span>
         </span>
       </div>
     </section>

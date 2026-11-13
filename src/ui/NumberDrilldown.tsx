@@ -1,4 +1,5 @@
 import { run } from '../run/run'
+import { activeScenario } from '../run/scenario'
 import type { Drill } from '../run/types'
 import type { StepRecord } from '../tensor'
 import { exactRepr, formatKey } from '../format/numbers'
@@ -17,7 +18,9 @@ import { SubscriptText } from './SubscriptText'
  * экран. Закрытие: backlink «← к шагу», Esc, автосброс при смене операции.
  */
 
-const TERMINAL_BODY = 'Градиент дальше не распространяется: x — старт цепного правила. Смотри ∂L/∂W1 и ∂L/∂b1.'
+/** Символы первого слоя спека — терминальная панель и кросс-ссылки. */
+const FIRST = activeScenario().render.layerSymbols[0]!
+const TERMINAL_BODY = `Градиент дальше не распространяется: x — старт цепного правила. Смотри ∂L/∂${FIRST.w} и ∂L/∂${FIRST.b}.`
 const GLOSSARY = '∂L/∂W — градиент L по W (в CS231n: dL/dW)'
 
 function DrillHeading({ sym, value }: { sym: string; value: number }) {
@@ -39,11 +42,11 @@ function TerminalPanel({ resolved }: { resolved: ResolvedNumber }) {
         <SubscriptText text={TERMINAL_BODY} />
       </p>
       <div className="flex flex-wrap items-baseline gap-x-4">
-        <button type="button" className="value-btn num text-on-surface" onClick={() => run.openDrill('∂L/∂W1[0]')}>
-          <SubscriptText text="∂L/∂W1" />
+        <button type="button" className="value-btn num text-on-surface" onClick={() => run.openDrill(`∂L/∂${FIRST.w}[0]`)}>
+          <SubscriptText text={`∂L/∂${FIRST.w}`} />
         </button>
-        <button type="button" className="value-btn num text-on-surface" onClick={() => run.openDrill('∂L/∂b1[0]')}>
-          <SubscriptText text="∂L/∂b1" />
+        <button type="button" className="value-btn num text-on-surface" onClick={() => run.openDrill(`∂L/∂${FIRST.b}[0]`)}>
+          <SubscriptText text={`∂L/∂${FIRST.b}`} />
         </button>
       </div>
       <div data-testid="drill-exact" className="exact-row num">

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { run } from '../run/run'
 import { useRunSlice } from '../run/useRunSlice'
-import { XOR_SCENARIO, type NodeBinding, type RenderNode } from '../run/scenario'
+import { activeScenario, netShapeOf, type NodeBinding, type RenderNode } from '../run/scenario'
 import type { SampleCursor, StepRecord, Tensor } from '../tensor'
 import { formatKey } from '../format/numbers'
 import { GRAPH_EDGES, GRAPH_NODES, NODE_H, NODE_W, STEP_GROUPS, buildGraph, type GraphNode } from './compGraph'
@@ -109,7 +109,7 @@ function bindingGrad(b: NodeBinding): number | undefined {
 }
 
 /** Спека-узел по id графа (биндинги живых чисел и клика — данные рендера). */
-const renderNodeById = new Map<string, RenderNode>(XOR_SCENARIO.render.nodes.map((n) => [n.id, n]))
+const renderNodeById = new Map<string, RenderNode>(activeScenario().render.nodes.map((n) => [n.id, n]))
 
 /** Живое значение звена (число доступно, когда операция исполнена). */
 function nodeValue(id: string): number | undefined {
@@ -242,7 +242,7 @@ export function ComputationGraph({ record }: { record: StepRecord | null }) {
           className="graph-canvas"
           style={{ transform: `scale(${zoom})`, transformOrigin: '0 0' }}
           role="img"
-          aria-label="Граф вычислений 2-3-1: константы x и y, параметры W1/b1/W2/b2, операции matvec, add, tanh, σ, BCE и станция обновления весов; внутри звена — живое значение, под звеном — градиент после backward"
+          aria-label={`Граф вычислений ${netShapeOf(activeScenario())}: константы x и y, параметры W и b, операции слоёв и станция обновления весов; внутри звена — живое значение, под звеном — градиент после backward`}
         >
         {GRAPH_EDGES.map((e) => {
           const from = anchor(e.from, 'right')

@@ -131,6 +131,10 @@ export interface ScenarioRender {
 export interface ScenarioModel {
   /** URL #scenario= (url.ts KNOWN_SCENARIOS). */
   id: 'neuron' | 'xor'
+  /** RU-заголовок урока — шапка приложения (RU-first, строки в данных спека). */
+  title: string
+  /** RU-метка датасета — карточка «Примеры» (выборка AND / выборка XOR). */
+  datasetLabel: string
   /** Декларативная структура сети — источник топологии. */
   net: readonly LayerSpec[]
   /** Модель + функция потерь в одном объекте (D-30). */
@@ -451,6 +455,8 @@ export const XOR_START_WEIGHTS: {
 
 export const XOR_SCENARIO: ScenarioModel = {
   id: 'xor',
+  title: 'XOR: backprop по шагам',
+  datasetLabel: 'выборка XOR',
   net: [
     { inputs: 2, units: 3, activation: 'tanh' },
     { inputs: 3, units: 1, activation: 'sigmoid' },
@@ -525,7 +531,10 @@ export const XOR_SCENARIO: ScenarioModel = {
   },
 }
 
-export const SAMPLE_COUNT = XOR_SCENARIO.samples.length
+/** Форма сети для подписей («2-3-1» / «2-1») — механическая производная net. */
+export function netShapeOf(spec: ScenarioModel): string {
+  return [spec.net[0]!.inputs, ...spec.net.map((l) => l.units)].join('-')
+}
 
 // ============================ Сценарий «один нейрон» (D-31) ============================
 
@@ -711,6 +720,8 @@ const NEURON_SERIES: RenderSeries = {
  */
 export const NEURON_SCENARIO: ScenarioModel = {
   id: 'neuron',
+  title: 'Один нейрон: backprop по шагам',
+  datasetLabel: 'выборка AND',
   net: [{ inputs: 2, units: 1, activation: 'sigmoid' }],
   loss: { kind: 'bce' },
   lr: 0.5,

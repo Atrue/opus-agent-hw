@@ -1,6 +1,6 @@
 import { run } from '../run/run'
 import { useRunSlice } from '../run/useRunSlice'
-import { XOR_SCENARIO } from '../run/scenario'
+import { activeScenario, netShapeOf } from '../run/scenario'
 import { parseHash, toHash } from '../run/url'
 import type { Phase } from '../tensor'
 import { ComputationGraph } from './ComputationGraph'
@@ -63,13 +63,13 @@ export function App() {
   const screen = useRunSlice((r) => r.screen)
   const record = useRunSlice((r) => r.currentRecord)
   const drill = useRunSlice((r) => r.drill)
-  const phase = record?.phase ?? XOR_SCENARIO.ops[0]!.phase
+  const phase = record?.phase ?? activeScenario().ops[0]!.phase
   const phaseVar = PHASE_COLOR_VAR[phase]
 
   return (
     <div className={`flex min-h-screen flex-col bg-background font-sans text-on-surface xl:h-screen${mode === 'lecture' ? ' lecture' : ''}`}>
       <header className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-2 border-b border-outline-variant px-4 py-2 xl:h-14">
-        <h1 className="app-heading mr-auto min-w-0 shrink truncate">XOR: backprop по шагам</h1>
+        <h1 className="app-heading mr-auto min-w-0 shrink truncate">{activeScenario().title}</h1>
         <span
           data-testid="phase-badge"
           className="phase-badge ui-label"
@@ -112,7 +112,7 @@ export function App() {
               <span className="icon" aria-hidden="true">
                 hub
               </span>
-              <h2 className="card-title">Граф вычислений 2-3-1</h2>
+              <h2 className="card-title">Граф вычислений {netShapeOf(activeScenario())}</h2>
               <span className="card-meta ui-label">живые значения и градиенты</span>
             </div>
             <div className="screen min-h-0 flex-1">

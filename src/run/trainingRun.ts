@@ -7,7 +7,7 @@
  */
 
 import { buildModel, SampleCursor, type ScenarioNet, type SampleTensors, type StepRecord } from '../tensor'
-import { SAMPLE_COUNT, XOR_SCENARIO, type ScenarioModel } from './scenario'
+import { activeScenario, type ScenarioModel } from './scenario'
 import type { SegmentId } from '../ui/chainLinks'
 import { buildStepRecord, firstOpValue, flatWeights } from './stepRecords'
 import type { Drill, EpochSummaryData, HistoryRecord, LinkSelection, Mode, RunScreen } from './types'
@@ -48,7 +48,12 @@ export class TrainingRun {
   private recording = true
   private readonly listeners = new Set<Listener>()
 
-  constructor(spec: ScenarioModel = XOR_SCENARIO) {
+  /** Сэмплов в эпохе — данные спека (per-scenario). */
+  get sampleCount(): number {
+    return this.scenario.samples.length
+  }
+
+  constructor(spec: ScenarioModel = activeScenario()) {
     this.scenario = spec
     this.model = buildModel(spec)
     this.cursor = this.newCursor(0)
@@ -62,7 +67,7 @@ export class TrainingRun {
   }
 
   /** Номер следующей операции в сэмпле, 1-based (курсор индикатора R3);
-   *  на завершённом сэмпле (экран эпохи) — 13, без «шага 14». */
+   *  на завершённом сэмпле (экран эпохи) — последняя, без «шага N+1». */
   get stepInSample(): number {
     return Math.min(this.cursor.opIndex + 1, this.opsCount)
   }
@@ -131,7 +136,7 @@ export class TrainingRun {
   runEpoch(): void {
     if (this.screen === 'epoch-end') return
     while (!this.cursor.done) this.execOp(false)
-    while (this.sampleIndex + 1 < SAMPLE_COUNT) {
+    while (this.sampleIndex + 1 < this.sampleCount) {
       this.sampleIndex += 1
       this.cursor = this.newCursor(this.sampleIndex)
       while (!this.cursor.done) this.execOp(false)
@@ -147,7 +152,7 @@ export class TrainingRun {
   private afterOpBoundary(): void {
     if (!this.cursor.done) return
     const next = this.sampleIndex + 1
-    if (next >= SAMPLE_COUNT) {
+    if (next >= this.sampleCount) {
       // экран завершения эпохи — продолжение по advance()
       this.finalizeEpoch()
     } else {

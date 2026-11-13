@@ -12,11 +12,14 @@
 
 import type { EpochSummaryData, HistoryRecord, SampleRecord } from './types'
 import { isSampleRecord } from './types'
-import { SAMPLE_COUNT, XOR_SCENARIO } from './scenario'
+import { activeScenario, type ScenarioModel } from './scenario'
 import type { SegmentId } from '../ui/chainLinks'
 
-/** Метки плоских весов (порядок среза) — данные спека: series.weight. */
-export const WEIGHT_ROWS: readonly string[] = Object.values(XOR_SCENARIO.render.series.weight).flatMap((w) => w.labels)
+/** Сэмплов в эпохе — данные активного сценария (история сессии одного URL). */
+const sampleCount = (): number => activeScenario().samples.length
+
+/** Метки плоских весов активного сценария (порядок среза) — series.weight. */
+export const WEIGHT_ROWS: readonly string[] = seriesOf().weightRows
 
 export interface LossPoint {
   x: number
@@ -68,7 +71,7 @@ export function sessionGeometryOf(
   let groupLen = 0
   const closeGroup = (): void => {
     // полная группа = завершённая эпоха: её последний сэмпл — точка эпохи
-    if (groupRun !== null && groupLen === SAMPLE_COUNT) epochEndXs.push(samples)
+    if (groupRun !== null && groupLen === sampleCount()) epochEndXs.push(samples)
   }
   for (const rec of history) {
     if (!isSampleRecord(rec)) {
@@ -114,7 +117,7 @@ export function buildLossChartData(
   geometry: SessionGeometry,
 ): LossChartData {
   const dots: LossPoint[] = summaries.map((s, k) => ({
-    x: geometry.epochEndXs[k] ?? (k + 1) * SAMPLE_COUNT,
+    x: geometry.epochEndXs[k] ?? (k + 1) * sampleCount(),
     y: s.lossAfter,
   }))
   const base = geometry.samplesBefore
@@ -148,29 +151,33 @@ export interface LinkSeries {
 /** Извлечение узлового поля записи (по символу формулы). */
 type NodePick = (r: SampleRecord) => readonly number[]
 
-/** Узловые символы — данные спека (series.node): скаляр записи / поле записи /
- *  узловое число по символу (SampleRecord.nodes, ключи — layerSymbols спека). */
-const NODE_SERIES: Record<string, { labels: readonly string[]; pick: NodePick }> = Object.fromEntries(
-  Object.entries(XOR_SCENARIO.render.series.node).map(([sym, n]) => [
-    sym,
-    {
-      labels: n.labels,
-      pick: (r: SampleRecord): readonly number[] => {
-        if (n.pick.kind === 'scalar') return [r[n.pick.field] as number]
-        if (n.pick.kind === 'record') return r[n.pick.field] as readonly number[]
-        return r.nodes[n.pick.node] ?? []
+/** Серии истории из spec.render.series (тесты параметризуют XOR/neuron). */
+export function seriesOf(spec: ScenarioModel = activeScenario()) {
+  const node: Record<string, { labels: readonly string[]; pick: NodePick }> = Object.fromEntries(
+    Object.entries(spec.render.series.node).map(([sym, n]) => [
+      sym,
+      {
+        labels: n.labels,
+        pick: (r: SampleRecord): readonly number[] => {
+          if (n.pick.kind === 'scalar') return [r[n.pick.field] as number]
+          if (n.pick.kind === 'record') return r[n.pick.field] as readonly number[]
+          return r.nodes[n.pick.node] ?? []
+        },
       },
-    },
-  ]),
-)
+    ]),
+  )
+  return {
+    node,
+    weight: Object.fromEntries(
+      Object.entries(spec.render.series.weight).map(([sym, w]) => [sym, { labels: w.labels, from: w.from, to: w.to }]),
+    ) as Record<string, { labels: readonly string[]; from: number; to: number }>,
+    defaultSymbol: { ...spec.render.series.defaultSymbol } as Record<SegmentId, string>,
+    weightRows: Object.values(spec.render.series.weight).flatMap((w) => w.labels),
+  }
+}
 
-/** Весовые символы — данные спека (series.weight): срезы плоских весов записи. */
-const WEIGHT_SERIES: Record<string, { labels: readonly string[]; from: number; to: number }> = Object.fromEntries(
-  Object.entries(XOR_SCENARIO.render.series.weight).map(([sym, w]) => [sym, { labels: w.labels, from: w.from, to: w.to }]),
-)
-
-/** Символ звена по умолчанию, если выбор без символа (series.defaultSymbol). */
-const SEGMENT_DEFAULT_SYMBOL: Record<SegmentId, string> = { ...XOR_SCENARIO.render.series.defaultSymbol }
+/** Серии активного сценария (сценарий сессии фиксируется до импорта UI). */
+const SERIES = seriesOf()
 
 /** Ряды плоских весов по записям истории (включая стартовые записи прогонов). */
 function weightSeries(history: readonly HistoryRecord[], from: number, to: number, labels: readonly string[]): LinkSeries[] {
@@ -203,25 +210,26 @@ function nodeSeries(history: readonly HistoryRecord[], pick: NodePick, labels: r
 
 /**
  * История звена цепи по сэмплам (01.2-02, пункт 4 ТЗ): весовые символы
- * (W1/b1/W2/b2) — компоненты плоских весов записей (стартовая запись прогона
- * даёт стартовые константы ряда), узловые (x, y, z1, a1, z2, ŷ, L, а также
- * плашки tanh/σ по их выходам) — поля записей сэмплов. Звено W (SGD-обновление)
- * — судьба всех 13 весов. Метаданные точек (runId/epoch/sampleIndex) задают
- * разделители эпох и прогонов в UI.
+ * (W/b — символы слоёв спека) — компоненты плоских весов записей (стартовая
+ * запись прогона даёт стартовые константы ряда), узловые (x, y, z, ŷ, L) —
+ * поля записей сэмплов. Звено W (SGD-обновление) — судьба всех весов.
+ * Метаданные точек (runId/epoch/sampleIndex) задают разделители эпох и
+ * прогонов в UI.
  */
 export function linkHistoryOf(
   history: readonly HistoryRecord[],
   segment: SegmentId,
   symbol?: string,
+  series: { node: Record<string, { labels: readonly string[]; pick: NodePick }>; weight: Record<string, { labels: readonly string[]; from: number; to: number }>; defaultSymbol: Record<SegmentId, string>; weightRows: readonly string[] } = SERIES,
 ): { series: readonly LinkSeries[] } {
-  const sym = symbol ?? SEGMENT_DEFAULT_SYMBOL[segment]
+  const sym = symbol ?? series.defaultSymbol[segment]
   if (segment === 'W') {
-    // SGD масштабирует все 13 весов — история обновления = все веса (UX-06)
-    return { series: weightSeries(history, 0, WEIGHT_ROWS.length, WEIGHT_ROWS) }
+    // SGD масштабирует все веса — история обновления = все веса (UX-06)
+    return { series: weightSeries(history, 0, series.weightRows.length, series.weightRows) }
   }
-  const w = WEIGHT_SERIES[sym]
+  const w = series.weight[sym]
   if (w !== undefined) return { series: weightSeries(history, w.from, w.to, w.labels) }
-  const n = NODE_SERIES[sym]
+  const n = series.node[sym]
   if (n !== undefined) return { series: nodeSeries(history, n.pick, n.labels) }
   return { series: [] }
 }

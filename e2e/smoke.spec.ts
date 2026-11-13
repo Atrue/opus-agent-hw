@@ -4,37 +4,43 @@ import { formatKey } from '../src/format/numbers'
 import { ETALON_SAMPLE_1 } from '../src/run/etalon-constants'
 
 /**
- * Полная e2e фаз 01.1–01.2 (R3, план 01.1-03; тест 6 — 01.2-02; тесты 7–9 —
- * 01.2-03; тест 10 — 01.2-05; тесты 8b/8c — 01.2-06 граф вычислений) —
- * 11 проверок живого цикла:
- * (1) первый «Шаг»: числа движка в панели (эталон-константы сэмпла 1),
- *     индикатор «Эпоха 1 · пример 1 · шаг 2»;
- * (2) полная эпоха 1 пошагово (4 сэмпла × 13 оп): DOM без NaN/Infinity/
- *     undefined, в конце — экран завершения эпохи (L до/после, точность);
+ * Полная e2e фаз 01.1–01.2 + 02 на сценарии «один нейрон» (D-31 — дефолтный
+ * носитель MVP R1, план 02-05) — 16 проверок живого цикла:
+ * (1) первый «Шаг»: числа движка в панели (interim-числа сценария: сэмпл 1
+ *     AND [1,1]→1, z = 0.8·1 + 0.8·1 = 1.6; точный пин на эталон-константы —
+ *     план 02-09), индикатор «Эпоха 1 · пример 1 · шаг 2»;
+ * (2) полная эпоха 1 пошагово (4 сэмпла × 8 оп): DOM без NaN/Infinity/
+ *     undefined, backward-поток с 5-го клика (op 4 = bce-grad), в конце —
+ *     экран завершения эпохи (L до/после, точность);
  * (3) эквивалентность: после reset «Запустить эпоху» даёт экран эпохи с теми
  *     же числами, что и пошаговый проход (сравнение текста экрана);
  * (4) «Следующая эпоха» → «Эпоха 2 · пример 1 · шаг 1», обучение продолжается;
- * (5) честный reload: индикатор на первой операции, URL несёт только сценарий;
- * (6) история звена (01.2-02): FF двух эпох → выбор W1 → link-history ≥ 9
- *     значений (2×4 сэмпла + стартовые), график лосса не пуст; выбор L —
+ * (5) честный reload: дефолт neuron, URL несёт только #scenario=neuron;
+ * (6) #scenario=xor всё ещё загружает XOR: первый шаг по эталон-константам
+ *     (XOR-эталон — регрессия движка, OQ5);
+ * (7–9) UX-02 клавиатура: → / Space / PgDn исполняют шаг вперёд — каждая
+ *     клавиша отдельной проверкой с числом шага до/после;
+ * (10) UX-02 «назад» отсутствует by design (ревью R3): ← / Backspace / PgUp
+ *     не меняют позицию — каждая клавиша отдельной проверкой;
+ * (11) формула-хребет: все 5 звеньев цепи x→z→ŷ→L→W выбираются кликом по
+ *     символу формулы (data-selection + панель звена); повторный клик снимает;
+ * (12) история звена W (D-26): FF двух эпох → символ η → 3 ряда (W[0,0],
+ *     W[0,1], b[0]) × (2×4 сэмпла + стартовые) = 27 значений; выбор L —
  *     история лосса; после reset история звена и разделители сохраняются;
- * (7) формула-хребет (01.2-03): клик по символу W1 → aria-pressed на символе,
- *     data-selection="z1" на svg, панель звена с формулой «z1 = W1·x + b1»;
- *     повторный клик снимает выбор (панель скрыта, атрибут снят);
- * (8) клик по tanh → primary-подсветка скрытого слоя (класс .diag-selected
- *     несут ≥ 3 элемента геометрии, узлы a1 ×3); клик по биас-узлу b1 → drill;
- * (9) samples-panel: 4 строки примеров, текущий помечен; FF эпоха → все 4
- *     с вердиктами ✓/✗; reset → samples-panel сброшен к текущему=1, но
- *     link-history и разделители прогонов на графике лосса живы;
- * (10) result-zone (01.2-05): карточка «Результат» в правой колонке — все
- *     входы текущего примера (x₁ = 1, x₂ = 0), метка y, ŷ и L после операций
- *     6/7, LR = η; LOSS/LR ушли из футера (пункт 8 UAT), step-indicator —
- *     первый элемент футера слева, текст-контракт не меняется.
+ * (13) граф: σ-символ подсвечивает группу звена ŷ (.diag-selected); клик по
+ *     биас-узлу b[0] → drill; после bce все станции несут числа; клик по узлу
+ *     BCE выбирает звено L;
+ * (14) граф: градиенты ∂L/∂· под звеньями после backward, hover рёбер —
+ *     fwd/bwd-тултип, 8-й шаг sgd — update-станция активна, веса обновились;
+ * (15) samples-panel: колонки-переменные, 4 AND-примера, текущий помечен;
+ *     FF → 4 вердикта ✓/✗; reset → карточка сброшена, история жива;
+ * (16) result-zone: все входы AND-сэмпла + метка y, ŷ/L после 4 операций,
+ *     LR = η = 0.5; LOSS/LR ушли из футера (пункт 8 UAT).
  *
- * Скриншот-self-check (baseline 28): перед записью директория очищается;
- * сохраняются скриншоты каждой операции сэмпла 1 (13) и экрана завершения
- * эпохи (1) в режимах default и .lecture — (13 + 1) × 2 = 28. Эталон-значения —
- * импортом констант из src/run/etalon-constants.ts (plain-TS, общий
+ * Скриншот-self-check (baseline 18): перед записью директория очищается;
+ * сохраняются скриншоты каждой операции сэмпла 1 (8) и экрана завершения
+ * эпохи (1) в режимах default и .lecture — (8 + 1) × 2 = 18. Эталон-значения
+ * XOR — импортом констант из src/run/etalon-constants.ts (plain-TS, общий
  * для vitest и playwright — без чтения JSON и без vitest-зависимости).
  *
  * R5 (план 01.1-04): ВСЕ тесты идут под emulateMedia({ reducedMotion:
@@ -42,10 +48,14 @@ import { ETALON_SAMPLE_1 } from '../src/run/etalon-constants'
  * флаков ноль) и одновременно живая проверка того, что reduced-motion-путь
  * реально работает: computed animation-name активного .diag-flow === 'none'.
  * Направление потока по фазе: data-flow корня svg (forward → backward →
- * отсутствует на update-опе).
+ * отсутствует на update-опе). Двойной прогон бит-идентичен (DPR2 — 01.1-04).
  */
 
-// Baseline скриншотов регенерируем: pnpm e2e пересоздаёт весь набор (28)
+/** Параметры носителя neuron (спека: 8 оп/сэмпл, 4 AND-примера в эпохе). */
+const OPS = 8
+const SAMPLES = 4
+
+// Baseline скриншотов регенерируем: pnpm e2e пересоздаёт весь набор (18)
 rmSync('e2e/screenshots', { recursive: true, force: true })
 mkdirSync('e2e/screenshots', { recursive: true })
 
@@ -58,14 +68,15 @@ let stepwiseEpochText: string | null = null
 
 const etalonOutput = (op: number): number => (ETALON_SAMPLE_1[op]!.outputs as number[])[0]!
 
-test('1) первый «Шаг» исполняет операцию движка: z1[0] = −0.9229', async ({ page }) => {
+test('1) первый «Шаг» исполняет matvec движка: z = 1.6', async ({ page }) => {
   await page.goto('/')
   await expect(page.getByTestId('step-indicator')).toHaveText('Эпоха 1 · пример 1 · шаг 1')
   await expect(page.getByTestId('architecture-diagram'), 'до первого шага потока нет').not.toHaveAttribute('data-flow')
   await page.getByTestId('btn-next').click()
   await expect(page.getByTestId('step-indicator')).toHaveText('Эпоха 1 · пример 1 · шаг 2')
   const panel = await page.getByTestId('step-panel').textContent()
-  expect(panel, 'в панели — контрольное число движка (display-минус U+2212)').toContain(formatKey(etalonOutput(0)))
+  // interim-число живого движка (W = (0.8, 0.8), x = (1, 1)); пин эталон-константой — 02-09
+  expect(panel, 'matvec первого шага: z = 0.8·1 + 0.8·1 = 1.6').toMatch(/z\s*=\s*1\.6/)
   expect(panel).not.toContain('NaN')
   await expect(page.getByTestId('architecture-diagram'), 'forward-фаза — поток к выходу').toHaveAttribute(
     'data-flow',
@@ -84,8 +95,8 @@ test('1) первый «Шаг» исполняет операцию движк�
   await firstNumber.hover()
   const hint = page.getByTestId('number-hint')
   await expect(hint).toBeVisible()
-  await expect(hint).toContainText(formatKey(etalonOutput(0)))
-  await expect(hint, 'формула с подстановкой из экспандеров').toContainText('W1[0,0]')
+  await expect(hint).toContainText('1.6')
+  await expect(hint, 'формула с подстановкой из экспандеров (символы нейрона)').toContainText('W[0,0]')
   const describedBy = await firstNumber.getAttribute('aria-describedby')
   expect(describedBy, 'a11y: якорь связан с тултипом aria-describedby').toBeTruthy()
   await page.keyboard.press('Escape')
@@ -94,33 +105,35 @@ test('1) первый «Шаг» исполняет операцию движк�
   await expect(page.getByTestId('drill-panel')).toBeVisible()
 })
 
-test('2) полная эпоха 1 пошагово: без NaN, в конце — экран завершения эпохи', async ({ page }) => {
+test('2) полная эпоха 1 пошагово (4 × 8 оп): без NaN, в конце — экран завершения эпохи', async ({ page }) => {
   await page.goto('/')
-  for (let i = 1; i <= 4 * 13; i++) {
+  for (let i = 1; i <= SAMPLES * OPS; i++) {
     await page.getByTestId('btn-next').click()
-    if (i === 8) {
-      // 8-й клик исполнил op 7 (bce-grad) — старт backward: поток разворачивается
+    if (i === 5) {
+      // 5-й клик исполнил op 4 (bce-grad) — старт backward: поток разворачивается
       await expect(page.getByTestId('architecture-diagram')).toHaveAttribute('data-flow', 'backward')
     }
-    if (i === 13) {
-      // op 12 (sgd) — update-фаза: потока нет
+    if (i === 8) {
+      // op 7 (sgd) — update-фаза: потока нет
       await expect(page.getByTestId('architecture-diagram')).not.toHaveAttribute('data-flow')
     }
-    if (i <= 13) {
-      // baseline: операции сэмпла 1, default-режим (13 из 28)
+    if (i <= OPS) {
+      // baseline: операции сэмпла 1, default-режим (8 из 18)
       await page.screenshot({ path: `e2e/screenshots/op-${String(i).padStart(2, '0')}.png` })
     }
   }
-  await expect(page.getByTestId('step-indicator')).toHaveText('Эпоха 1 · пример 4 · шаг 13')
+  await expect(page.getByTestId('step-indicator')).toHaveText('Эпоха 1 · пример 4 · шаг 8')
   const body = await page.locator('body').textContent()
   expect(body, 'DOM-скан: нигде нет не-числовых артефактов вычислений').not.toMatch(/NaN|Infinity|undefined/)
 
   const summary = page.getByTestId('epoch-summary')
   await expect(summary).toBeVisible()
   await expect(summary).toContainText('Эпоха 1 завершена')
-  await expect(summary, 'L до — эталонный bce первого сэмпла').toContainText(formatKey(etalonOutput(6)))
   await expect(summary).toContainText('Точность')
-  // 14-й из default-набора
+  await expect(summary.getByTestId('epoch-loss-before'), 'L до — число движка').toHaveText(/L в начале эпохи = [-−\d.]+/)
+  await expect(summary.getByTestId('epoch-loss-after'), 'L после — число движка').toHaveText(/L в конце эпохи = [-−\d.]+/)
+  await expect(summary.getByTestId('epoch-accuracy'), 'точность: N из 4 примеров верно').toContainText('из 4 верно')
+  // 9-й из default-набора
   await page.screenshot({ path: 'e2e/screenshots/epoch-end.png' })
   stepwiseEpochText = await summary.textContent()
 })
@@ -129,7 +142,7 @@ test('3) эквивалентность: «Запустить эпоху» да�
   await page.goto('/')
   await page.getByTestId('btn-epoch').click()
   await expect(page.getByTestId('epoch-summary')).toBeVisible()
-  await expect(page.getByTestId('step-indicator')).toHaveText('Эпоха 1 · пример 4 · шаг 13')
+  await expect(page.getByTestId('step-indicator')).toHaveText('Эпоха 1 · пример 4 · шаг 8')
   const ffText = await page.getByTestId('epoch-summary').textContent()
   expect(ffText, 'экран эпохи FF === экран эпохи пошагового прохода (инвариант R3)').toBe(stepwiseEpochText)
 })
@@ -149,14 +162,96 @@ test('5) честный reload: индикатор на первой опера�
   await page.getByTestId('toggle-lecture').click()
   await page.reload()
   await expect(page.getByTestId('step-indicator')).toHaveText('Эпоха 1 · пример 1 · шаг 1')
-  expect(page.url(), 'hash несёт только сценарий; позиция и режим из URL ушли (R3)').toMatch(/#scenario=xor$/)
+  expect(page.url(), 'hash несёт только сценарий; позиция и режим из URL ушли (R3)').toMatch(/#scenario=neuron$/)
   await expect(page.getByTestId('toggle-lecture'), 'лекционный режим — toggle без URL, после reload — default').toHaveAttribute(
     'aria-pressed',
     'false',
   )
 })
 
-test('6) история звена: FF двух эпох → история W1 по сэмплам; reset сохраняет историю', async ({ page }) => {
+test('6) #scenario=xor всё ещё загружает XOR: первый шаг по эталону', async ({ page }) => {
+  await page.goto('/#scenario=xor')
+  await expect(page.locator('h1'), 'XOR остаётся выбираемым до фазы 3 (OQ4)').toHaveText('XOR: backprop по шагам')
+  await expect(page.getByTestId('step-indicator')).toHaveText('Эпоха 1 · пример 1 · шаг 1')
+  await page.getByTestId('btn-next').click()
+  const panel = await page.getByTestId('step-panel').textContent()
+  expect(panel, 'эталонное число XOR-движка (display-минус U+2212) — регрессия не тронута').toContain(formatKey(etalonOutput(0)))
+})
+
+test('7) UX-02: ArrowRight исполняет шаг вперёд (шаг 1 → 2)', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.getByTestId('step-indicator')).toHaveText('Эпоха 1 · пример 1 · шаг 1')
+  await page.keyboard.press('ArrowRight')
+  await expect(page.getByTestId('step-indicator'), 'клавиша → исполняет операцию движка').toHaveText(
+    'Эпоха 1 · пример 1 · шаг 2',
+  )
+})
+
+test('8) UX-02: Space исполняет шаг вперёд (шаг 1 → 2)', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.getByTestId('step-indicator')).toHaveText('Эпоха 1 · пример 1 · шаг 1')
+  await page.keyboard.press('Space')
+  await expect(page.getByTestId('step-indicator'), 'Space (фокус на body) исполняет операцию движка').toHaveText(
+    'Эпоха 1 · пример 1 · шаг 2',
+  )
+})
+
+test('9) UX-02: PageDown исполняет шаг вперёд (шаг 1 → 2)', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.getByTestId('step-indicator')).toHaveText('Эпоха 1 · пример 1 · шаг 1')
+  await page.keyboard.press('PageDown')
+  await expect(page.getByTestId('step-indicator'), 'PgDn исполняет операцию движка').toHaveText('Эпоха 1 · пример 1 · шаг 2')
+})
+
+test('10) UX-02 «назад» отсутствует: ← / Backspace / PgUp инертны', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.getByTestId('step-indicator')).toHaveText('Эпоха 1 · пример 1 · шаг 1')
+  await page.keyboard.press('ArrowRight')
+  await expect(page.getByTestId('step-indicator')).toHaveText('Эпоха 1 · пример 1 · шаг 2')
+  await page.keyboard.press('ArrowLeft')
+  await expect(page.getByTestId('step-indicator'), 'ArrowLeft не двигает прогон назад (forward-only, ревью R3)').toHaveText(
+    'Эпоха 1 · пример 1 · шаг 2',
+  )
+  await page.keyboard.press('Backspace')
+  await expect(page.getByTestId('step-indicator'), 'Backspace инертна').toHaveText('Эпоха 1 · пример 1 · шаг 2')
+  await page.keyboard.press('PageUp')
+  await expect(page.getByTestId('step-indicator'), 'PgUp инертна так же, как ←/Backspace').toHaveText(
+    'Эпоха 1 · пример 1 · шаг 2',
+  )
+})
+
+test('11) 5 звеньев цепи x→z→ŷ→L→W: выбор по символам формулы, повторный клик снимает', async ({ page }) => {
+  await page.goto('/')
+  const svg = page.getByTestId('architecture-diagram')
+  await expect(svg, 'до выбора атрибута data-selection нет').not.toHaveAttribute('data-selection')
+
+  // каждый символ формулы выбирает своё звено (D-26: звено = сегмент цепи)
+  const cases: readonly (readonly [string, string])[] = [
+    ['x', 'x'],
+    ['W', 'z'],
+    ['sigma', 'yhat'],
+    ['L', 'L'],
+    ['eta', 'W'],
+  ]
+  for (const [sym, segment] of cases) {
+    await page.getByTestId(`formula-sym-${sym}`).click()
+    await expect(svg, `символ ${sym} выбирает звено ${segment}`).toHaveAttribute('data-selection', segment)
+    await expect(page.getByTestId('link-panel')).toBeVisible()
+    if (sym === 'W') {
+      await expect(page.getByTestId('link-formula'), 'формула звена z — склейка matvec+add спека').toContainText('z = W·x + b')
+    }
+  }
+
+  // повторный клик по выбранному символу снимает выбор (D-26)
+  const eta = page.getByTestId('formula-sym-eta')
+  await expect(eta, 'выбранный символ — aria-pressed').toHaveAttribute('aria-pressed', 'true')
+  await eta.click()
+  await expect(page.getByTestId('link-panel'), 'панель звена скрыта').toBeHidden()
+  await expect(eta, 'aria-pressed снят').toHaveAttribute('aria-pressed', 'false')
+  await expect(svg, 'выбор снят — атрибут удалён').not.toHaveAttribute('data-selection')
+})
+
+test('12) история звена W (3 веса × сэмплы): FF двух эпох; reset сохраняет историю', async ({ page }) => {
   await page.goto('/')
   // эпоха 1 — FF
   await page.getByTestId('btn-epoch').click()
@@ -170,20 +265,20 @@ test('6) история звена: FF двух эпох → история W1 �
   expect(points?.trim().length ?? 0, 'график лосса не пуст').toBeGreaterThan(0)
   await expect(page.getByTestId('loss-dot'), 'точки двух завершённых эпох').toHaveCount(2)
 
-  // история звена W1 (пункт 4 ТЗ): клик по символу формулы → панель звена →
-  // раскрывающаяся история по сэмплам (свёрнута по умолчанию — details)
-  await page.getByTestId('formula-sym-W1').click()
+  // звено W через символ η (пункт 4 ТЗ): история обновления = все 3 веса
+  await page.getByTestId('formula-sym-eta').click()
   await expect(page.getByTestId('link-panel')).toBeVisible()
   const history = page.getByTestId('link-history')
   await expect(history).toBeAttached()
   await expect(history).not.toHaveAttribute('open', '')
-  await expect(history.locator('summary'), 'заголовок истории содержит символ').toContainText('W1')
+  await expect(history.locator('summary'), 'заголовок истории содержит символ').toContainText('η')
+  await expect(history.locator('summary'), '3 ряда — три веса нейрона (W₁, W₂, b)').toContainText('3 рядов')
   // раскрыть
   await history.locator('summary').click()
   expect(
     await history.locator('[data-testid="link-value"]').count(),
-    '2×4 сэмпла + стартовые: ≥ 9 значений W1',
-  ).toBeGreaterThanOrEqual(9)
+    '3 ряда × (2×4 сэмпла + стартовые) = 27 значений',
+  ).toBe(27)
 
   // выбор звена L — история лосса по сэмплам (скалярный ряд — спарклайн)
   await page.getByTestId('formula-sym-L').click()
@@ -194,26 +289,25 @@ test('6) история звена: FF двух эпох → история W1 �
   expect(await lossHistory.locator('[data-testid="link-value"]').count()).toBeGreaterThanOrEqual(1)
 
   // reset = перезапуск прогона, не стирание сессии: разделитель прогона на
-  // графике, история звена (уже W1… сейчас L) не пуста, обучение продолжается
-  // выбор W1 обратно
-  await page.getByTestId('formula-sym-W1').click()
+  // графике, история звена не пуста, обучение продолжается; выбор η обратно
+  await page.getByTestId('formula-sym-eta').click()
   await page.getByTestId('btn-reset').click()
   await expect(page.getByTestId('step-indicator')).toHaveText('Эпоха 1 · пример 1 · шаг 1')
   await expect(page.getByTestId('run-dividers').locator('line'), 'разделитель прогона после сброса').toHaveCount(1)
   await expect(page.getByTestId('loss-dot'), 'точки эпох пережили сброс').toHaveCount(2)
   expect(
     await page.getByTestId('link-history').locator('[data-testid="link-value"]').count(),
-    'история звена пережила сброс',
-  ).toBeGreaterThanOrEqual(9)
+    'история звена пережила сброс (+ стартовая точка нового прогона: 3 × 10)',
+  ).toBe(30)
   // повторный клик снимает выбор
-  await page.getByTestId('formula-sym-W1').click()
+  await page.getByTestId('formula-sym-eta').click()
 
-  // «Примеры и результат» (пункт 3 ТЗ): вся выборка с входом и меткой
-  await expect(page.getByTestId('sample-row'), '4 строки выборки').toHaveCount(4)
+  // «Примеры и результат» (пункт 3 ТЗ): вся AND-выборка
+  await expect(page.getByTestId('sample-row'), '4 строки выборки AND').toHaveCount(4)
 
-  // baseline: операции сэмпла 1 и экран эпохи в .lecture (14 из 28)
+  // baseline: операции сэмпла 1 и экран эпохи в .lecture (9 из 18)
   await page.getByTestId('toggle-lecture').click()
-  for (let i = 1; i <= 13; i++) {
+  for (let i = 1; i <= OPS; i++) {
     await page.getByTestId('btn-next').click()
     await page.screenshot({ path: `e2e/screenshots/op-${String(i).padStart(2, '0')}.lecture.png` })
   }
@@ -222,54 +316,28 @@ test('6) история звена: FF двух эпох → история W1 �
   await page.screenshot({ path: 'e2e/screenshots/epoch-end.lecture.png' })
 })
 
-test('7) выбор звена по символу формулы: aria-pressed, data-selection, панель звена', async ({ page }) => {
+test('13) граф: σ выбирает группу звена ŷ; клик по биасу b[0] → drill; станции с числами', async ({ page }) => {
   await page.goto('/')
-  const w1 = page.getByTestId('formula-sym-W1')
-  const svg = page.getByTestId('architecture-diagram')
-  await expect(svg, 'до выбора атрибута data-selection нет').not.toHaveAttribute('data-selection')
-
-  await w1.click()
-  await expect(w1, 'выбранный символ — aria-pressed').toHaveAttribute('aria-pressed', 'true')
-  await expect(svg, 'клик по W1 выбирает звено z1 (W1·x + b1)').toHaveAttribute('data-selection', 'z1')
-  const panel = page.getByTestId('link-panel')
-  await expect(panel).toBeVisible()
-  await expect(page.getByTestId('link-formula'), 'формула звена из opMeta (склейка matvec+add)').toContainText(
-    'z1 = W1·x + b1',
-  )
-
-  // повторный клик по выбранному символу снимает выбор (D-26)
-  await w1.click()
-  await expect(panel, 'панель звена скрыта').toBeHidden()
-  await expect(w1, 'aria-pressed снят').toHaveAttribute('aria-pressed', 'false')
-  await expect(svg, 'выбор снят — атрибут удалён').not.toHaveAttribute('data-selection')
-})
-
-test('8) tanh подсвечивает группу графа (.diag-selected); клик по биасу b1 → drill', async ({ page }) => {
-  await page.goto('/')
-  await page.getByTestId('formula-sym-tanh').click()
-  await expect(page.getByTestId('architecture-diagram'), 'tanh выбирает звено a1').toHaveAttribute(
-    'data-selection',
-    'a1',
-  )
+  await page.getByTestId('formula-sym-sigma').click()
+  await expect(page.getByTestId('architecture-diagram'), 'σ выбирает звено ŷ').toHaveAttribute('data-selection', 'yhat')
   expect(
     await page.locator('.diag-selected').count(),
-    'группа звена a1: tanh-опы + a1-значения + рёбра — ≥ 3',
+    'группа звена ŷ: σ-операция + значение ŷ + ребро — ≥ 3',
   ).toBeGreaterThanOrEqual(3)
-  await expect(page.locator('g.g-op.diag-selected'), 'три tanh-операции несут .diag-selected').toHaveCount(3)
+  await expect(page.locator('g.g-op.diag-selected'), 'операция σ несёт .diag-selected').toHaveCount(1)
 
-  // клик по узлу параметра b1[0] на графе — полный drill числа (tier 2);
+  // клик по узлу параметра b[0] на графе — полный drill числа (tier 2);
   // drill-слот живёт в панели операции: до первого шага записи нет (by design),
   // поэтому один «Шаг» — и разбор числа доступен
   await page.getByTestId('btn-next').click()
-  await page.getByRole('button', { name: /^Биас b1\[0\]/ }).click()
+  await page.getByRole('button', { name: /^Биас b\[0\]/ }).click()
   await expect(page.getByTestId('drill-panel')).toBeVisible()
 
-  // 8b (01.2-06): граф вычислений — звенья со значениями; прогон до bce-опы
-  // (7 кликов = операции 0–6): все значения/параметры/операции несут числа,
-  // ни одного «н/д»; клик по узлу BCE выбирает звено L
-  for (let i = 0; i < 6; i++) await page.getByTestId('btn-next').click()
+  // 4 клика = операции 0–3 (matvec…bce): все значения/параметры/операции
+  // несут числа, ни одного «н/д»; клик по узлу BCE выбирает звено L
+  for (let i = 0; i < 3; i++) await page.getByTestId('btn-next').click()
   const stations = page.getByTestId('station-value')
-  await expect(stations, 'звенья графа со значениями (z1×3, a1×3, z2, ŷ, L и др.)').toHaveCount(42)
+  await expect(stations, 'звенья графа со значениями (x×2, W×2, Wx, b, z, ŷ, y, L + оп ×4)').toHaveCount(14)
   await expect(stations.filter({ hasText: 'н/д' }), 'после bce все звенья несут числа').toHaveCount(0)
   await page.getByRole('button', { name: 'Операция BCE' }).click()
   await expect(page.getByTestId('architecture-diagram'), 'клик по узлу BCE выбирает звено L').toHaveAttribute(
@@ -279,14 +347,17 @@ test('8) tanh подсвечивает группу графа (.diag-selected);
   await expect(page.getByTestId('link-panel')).toBeVisible()
 })
 
-test('8c) граф: градиенты под звеньями, hover рёбер fwd/bwd, update-станция обновляет параметры', async ({ page }) => {
+test('14) граф: градиенты под звеньями, hover рёбер fwd/bwd, update-станция обновляет веса', async ({ page }) => {
   await page.goto('/')
 
-  // 12 кликов = операции 0–11 (backward завершён, до sgd): под звеньями
+  // 7 кликов = операции 0–6 (backward завершён, до sgd): под звеньями
   // появляются градиенты ∂L/∂· (параметры, промежуточные значения)
-  for (let i = 0; i < 12; i++) await page.getByTestId('btn-next').click()
+  for (let i = 0; i < 7; i++) await page.getByTestId('btn-next').click()
   const grads = page.getByTestId('node-grad')
-  expect(await grads.count(), 'градиенты под звеньями после backward (параметры, значения, операции)').toBeGreaterThanOrEqual(30)
+  expect(
+    await grads.count(),
+    'градиенты под звеньями после backward (x×2, W×2, b, z-цепь, ŷ)',
+  ).toBe(11)
   await expect(grads.filter({ hasText: '∂ =' }).first()).toBeVisible()
 
   // hover ребра → тултип с двумя значениями: forward (значение источника)
@@ -298,22 +369,22 @@ test('8c) граф: градиенты под звеньями, hover рёбер
   expect(tipText, 'тултип несёт forward-значение источника').toMatch(/=\s*[-−+]?[\d.]/)
   expect(tipText, 'тултип несёт backward-значение (∂L/∂ источника)').toContain('∂L/∂')
 
-  // 13-й шаг — sgd: update-станция активна, параметры обновились (b1[0])
-  const b1Value = page.locator('g[data-node="b1[0]"] [data-testid="station-value"]')
-  const before = ((await b1Value.textContent()) ?? '').trim()
+  // 8-й шаг — sgd: update-станция активна, параметры обновились (W[0])
+  const w0Value = page.locator('g[data-node="W[0]"] [data-testid="station-value"]')
+  const before = ((await w0Value.textContent()) ?? '').trim()
   await page.getByTestId('btn-next').click()
-  await expect(page.locator('g.g-update.active'), 'update-станция активна на 13-м шаге').toBeAttached()
-  const after = ((await b1Value.textContent()) ?? '').trim()
-  expect(after, 'параметр b1[0] обновился на шаге sgd').not.toBe(before)
+  await expect(page.locator('g.g-update.active'), 'update-станция активна на 8-м шаге').toBeAttached()
+  const after = ((await w0Value.textContent()) ?? '').trim()
+  expect(after, 'вес W[0] обновился на шаге sgd').not.toBe(before)
 })
 
-test('9) samples-panel: колонки-переменные; текущий помечен; FF → 4 вердикта; reset сохраняет историю', async ({ page }) => {
+test('15) samples-panel: колонки-переменные; текущий помечен; FF → 4 вердикта; reset сохраняет историю', async ({ page }) => {
   await page.goto('/')
   const panel = page.getByTestId('samples-panel')
   await expect(panel).toBeVisible()
   // таблица-датасет: колонки = названия переменных (01.2-07, пункт 8 цикла 2)
   await expect(panel.locator('thead th'), 'колонки = переменные x1 | x2 | y | ŷ | ✓').toHaveText(['x1', 'x2', 'y', 'ŷ', '✓'])
-  await expect(panel.getByTestId('sample-row'), '4 примера обучающей выборки').toHaveCount(4)
+  await expect(panel.getByTestId('sample-row'), '4 примера AND-выборки').toHaveCount(4)
   await expect(panel.locator('.sample-row-current'), 'текущий пример помечен (до прохода — первый)').toHaveCount(1)
   await expect(panel.locator('[data-index="0"]')).toHaveClass(/sample-row-current/)
   await expect(panel.locator('.sample-verdict-ok, .sample-verdict-miss'), 'вердиктов до прохода нет').toHaveCount(0)
@@ -335,7 +406,7 @@ test('9) samples-panel: колонки-переменные; текущий по
   await expect(panel.locator('.sample-verdict-ok, .sample-verdict-miss'), 'вердикты новой эпохи пусты').toHaveCount(0)
   await expect(page.getByTestId('run-dividers').locator('line'), 'разделитель прогона на графике жив').toHaveCount(1)
 
-  await page.getByTestId('formula-sym-W1').click()
+  await page.getByTestId('formula-sym-eta').click()
   const history = page.getByTestId('link-history')
   if (!(await history.evaluate((el) => el.open))) await history.locator('summary').click()
   expect(
@@ -343,18 +414,18 @@ test('9) samples-panel: колонки-переменные; текущий по
     'история звена пережила reset (4 сэмпла + стартовые)',
   ).toBeGreaterThanOrEqual(5)
   // снимаем выбор
-  await page.getByTestId('formula-sym-W1').click()
+  await page.getByTestId('formula-sym-eta').click()
 })
 
-test('10) result-zone: все входы текущего примера + ŷ/L/LR; футер без LOSS/LR', async ({ page }) => {
+test('16) result-zone: входы AND-сэмпла + ŷ/L/LR; футер без LOSS/LR', async ({ page }) => {
   await page.goto('/')
   const zone = page.getByTestId('result-zone')
   await expect(zone).toBeVisible()
 
-  // все входы текущего примера (сэмпл 1: x₁ = 1, x₂ = 0) + метка y = 1 —
+  // все входы текущего примера (сэмпл 1 AND: x₁ = 1, x₂ = 1) + метка y = 1 —
   // сабскрипты рендерятся x<sub>1</sub>, textContent несёт «x1 = 1»
   await expect(zone).toContainText(/x1\s*=\s*1/)
-  await expect(zone).toContainText(/x2\s*=\s*0/)
+  await expect(zone).toContainText(/x2\s*=\s*1/)
   await expect(zone).toContainText(/y\s*=\s*1/)
   // ŷ/L до вычисления — «н/д» (DESIGN §6); LR = η сценария уже на месте;
   // LOSS-дубля нет — единственный лосс-показатель это L (01.2-07, пункт 9)
@@ -363,15 +434,16 @@ test('10) result-zone: все входы текущего примера + ŷ/L/
   await expect(zone).toContainText('0.5')
   await expect(zone).not.toContainText('LOSS')
 
-  // 7 кликов = операции 0–6 (matvec…bce): ŷ и L вычислены — эталон-числа
-  for (let i = 0; i < 7; i++) await page.getByTestId('btn-next').click()
-  await expect(zone).toContainText(formatKey(etalonOutput(5)))
-  await expect(zone).toContainText(formatKey(etalonOutput(6)))
+  // 4 клика = операции 0–3 (matvec…bce): ŷ и L вычислены — interim-числа
+  // живого движка (ŷ = σ(0.8) ≈ 0.69, L = −ln ŷ ≈ 0.3711); пин — 02-09
+  for (let i = 0; i < 4; i++) await page.getByTestId('btn-next').click()
+  await expect(zone, 'ŷ = σ(0.8) — interim').toContainText('0.69')
+  await expect(zone, 'L = −ln(ŷ) — interim').toContainText('0.3711')
 
   // футер (пункт 8 UAT): LOSS/LR-метрик нет; слева — индикатор позиции
   const footer = page.locator('footer')
   await expect(footer).not.toContainText('LOSS')
   await expect(footer).not.toContainText('LR')
   await expect(page.locator('footer > *').first()).toHaveAttribute('data-testid', 'step-indicator')
-  await expect(page.getByTestId('step-indicator')).toHaveText('Эпоха 1 · пример 1 · шаг 8')
+  await expect(page.getByTestId('step-indicator')).toHaveText('Эпоха 1 · пример 1 · шаг 5')
 })

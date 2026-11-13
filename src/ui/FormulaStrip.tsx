@@ -1,7 +1,7 @@
 import React from 'react'
 import { run } from '../run/run'
 import { useRunSlice } from '../run/useRunSlice'
-import { XOR_SCENARIO } from '../run/scenario'
+import { activeScenario } from '../run/scenario'
 import { symbolToSegment, type SegmentId } from './chainLinks'
 import { SubscriptText } from './SubscriptText'
 
@@ -63,7 +63,7 @@ export function FormulaStrip() {
   const sym = (s: string, key: string): React.JSX.Element => <FormulaSym key={key} sym={s} selected={isSel(s)} onToggle={toggle} />
   return (
     <section aria-label="Формула сети" className="formula-strip">
-      {XOR_SCENARIO.render.formula.map((seg, i) => (
+      {activeScenario().render.formula.map((seg, i) => (
         <React.Fragment key={seg.phase}>
           {i > 0 && (
             <span className="formula-sep" aria-hidden="true" style={{ color: SEG_PHASE_COLOR[seg.phase] }}>

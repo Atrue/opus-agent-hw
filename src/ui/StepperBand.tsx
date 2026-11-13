@@ -1,13 +1,13 @@
 import { useEffect, useRef } from 'react'
 import { useRunSlice } from '../run/useRunSlice'
-import { XOR_SCENARIO } from '../run/scenario'
+import { activeScenario } from '../run/scenario'
 import { formatKey } from '../format/numbers'
 import { SubscriptText } from './SubscriptText'
 
 /**
  * Лента шагов (DESIGN.md §4/§9; 01.2-01 пункт 5 ТЗ) — ОДНА горизонтальная
- * строка над сценой: 13 пилюль операций текущего сэмпла с mono-значениями,
- * состояния done (opacity-80) / active (container-high + ring-1 primary +
+ * строка над сценой: пилюли операций текущего сэмпла (по spec.ops) с
+ * mono-значениями, состояния done (opacity-80) / active (container-high + ring-1 primary +
  * оверлей primary/10 pulse 2s) / future (opacity-60). При смене шага active
  * пилюля скроллится в центр (scrollIntoView inline:center; reduced-motion →
  * behavior auto). Пилюли не переносятся — высота полосы фиксирована
@@ -49,8 +49,14 @@ export function StepperBand() {
   }, [stepInSample, epochDone])
 
   return (
-    <div ref={bandRef} data-testid="step-band" role="list" aria-label={`Лента шагов сэмпла: ${String(stepInSample)} из 13`} className="step-band">
-      {XOR_SCENARIO.ops.map((meta, i) => {
+    <div
+      ref={bandRef}
+      data-testid="step-band"
+      role="list"
+      aria-label={`Лента шагов сэмпла: ${String(stepInSample)} из ${String(activeScenario().ops.length)}`}
+      className="step-band"
+    >
+      {activeScenario().ops.map((meta, i) => {
         const step = i + 1
         const done = epochDone || step < stepInSample
         const active = !epochDone && step === stepInSample

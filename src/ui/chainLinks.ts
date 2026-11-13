@@ -11,7 +11,7 @@
  */
 
 import { GRAPH_EDGES, GRAPH_NODES, SEGMENT_GROUPS } from './compGraph'
-import { XOR_SCENARIO } from '../run/scenario'
+import { activeScenario, type ScenarioModel } from '../run/scenario'
 
 /** Идентификатор звена — строка спека (render.segments[].id). */
 export type SegmentId = string
@@ -37,23 +37,36 @@ export interface SegmentGeometry {
   biases: Set<string>
 }
 
-/** Звенья цепи из spec.render (порядок = цепь). */
-export const SEGMENTS: readonly ChainSegment[] = XOR_SCENARIO.render.segments.map((seg) => ({
-  id: seg.id,
-  title: seg.title,
-  formula: seg.formula,
-  symbols: seg.symbols,
-}))
+/** Звенья/символы/подмножества из спека (тесты параметризуют XOR/neuron). */
+export function chainOf(spec: ScenarioModel = activeScenario()) {
+  const segments: readonly ChainSegment[] = spec.render.segments.map((seg) => ({
+    id: seg.id,
+    title: seg.title,
+    formula: seg.formula,
+    symbols: seg.symbols,
+  }))
+  return {
+    segments,
+    symbolToSegment: Object.fromEntries(segments.flatMap((s) => s.symbols.map((sym) => [sym, s.id]))) as Readonly<
+      Record<string, SegmentId>
+    >,
+    numberSyms: Object.fromEntries(spec.render.segments.map((seg) => [seg.id, seg.numberSyms])) as Readonly<
+      Record<SegmentId, readonly string[]>
+    >,
+    symbolNodes: Object.assign({}, ...spec.render.segments.map((seg) => seg.symbolNodes)) as Readonly<
+      Record<string, readonly string[]>
+    >,
+  }
+}
+
+/** Звенья цепи активного сценария (порядок = цепь). */
+export const SEGMENTS: readonly ChainSegment[] = chainOf().segments
 
 /** Каждый символ формулы сети — ровно в одно звено (источник: SEGMENTS). */
-export const symbolToSegment: Readonly<Record<string, SegmentId>> = Object.fromEntries(
-  SEGMENTS.flatMap((s) => s.symbols.map((sym) => [sym, s.id])),
-)
+export const symbolToSegment: Readonly<Record<string, SegmentId>> = chainOf().symbolToSegment
 
 /** Символы живых чисел панели звена (значения — живые тензоры прогона). */
-export const SEGMENT_NUMBER_SYMS: Readonly<Record<SegmentId, readonly string[]>> = Object.fromEntries(
-  XOR_SCENARIO.render.segments.map((seg) => [seg.id, seg.numberSyms]),
-)
+export const SEGMENT_NUMBER_SYMS: Readonly<Record<SegmentId, readonly string[]>> = chainOf().numberSyms
 
 /** Контракт графа: все узлы/рёбра вычислительного графа (сверка с рендером). */
 export const CHAIN_GEOMETRY_IDS = {
@@ -69,31 +82,39 @@ function toGeometry(nodes: Iterable<string>, edges: Iterable<string>): SegmentGe
   return { nodes: new Set(nodes), edges: new Set(edges), plates: new Set<string>(), biases: new Set<string>() }
 }
 
-/** Геометрия группы: узлы группы + рёбра между ними (внутренние связи). */
-function groupGeometry(nodes: ReadonlySet<string>): SegmentGeometry {
-  const edges = GRAPH_EDGES.filter((e) => nodes.has(e.from) && nodes.has(e.to)).map((e) => e.id)
-  return toGeometry(nodes, edges)
+/** Точечные подмножества символа внутри его звена (symbolNodes спека). */
+const SYMBOL_NODES: Readonly<Record<string, readonly string[]>> = chainOf().symbolNodes
+
+/** Контекст геометрии: рёбра/группы графа + символы одного сценария. */
+export interface GeometryContext {
+  edges: readonly { id: string; from: string; to: string }[]
+  segmentGroups: Readonly<Record<SegmentId, { nodes: ReadonlySet<string> }>>
+  symbolToSegment: Readonly<Record<string, SegmentId>>
+  symbolNodes: Readonly<Record<string, readonly string[]>>
 }
 
-/** Точечные подмножества символа внутри его звена (symbolNodes спека). */
-const SYMBOL_NODES: Readonly<Record<string, readonly string[]>> = Object.assign(
-  {},
-  ...XOR_SCENARIO.render.segments.map((seg) => seg.symbolNodes),
-)
+/** Контекст активного сценария (по умолчанию в geometryOf). */
+const ACTIVE_CONTEXT: GeometryContext = {
+  edges: GRAPH_EDGES,
+  segmentGroups: SEGMENT_GROUPS,
+  symbolToSegment,
+  symbolNodes: SYMBOL_NODES,
+}
 
 /** Геометрия подсветки: точечная для символа его звена, целиком для звена. */
-export function geometryOf(segment: SegmentId, symbol?: string): SegmentGeometry {
-  const groupEntry = SEGMENT_GROUPS[segment]
+export function geometryOf(segment: SegmentId, symbol?: string, ctx: GeometryContext = ACTIVE_CONTEXT): SegmentGeometry {
+  const groupEntry = ctx.segmentGroups[segment]
   if (groupEntry === undefined) return toGeometry([], [])
-  const whole = groupGeometry(groupEntry.nodes)
+  const inner = ctx.edges.filter((e) => groupEntry.nodes.has(e.from) && groupEntry.nodes.has(e.to)).map((e) => e.id)
+  const whole = toGeometry(groupEntry.nodes, inner)
   if (symbol !== undefined) {
-    const subset = SYMBOL_NODES[symbol]
-    if (subset !== undefined && symbolToSegment[symbol] === segment) {
+    const subset = ctx.symbolNodes[symbol]
+    if (subset !== undefined && ctx.symbolToSegment[symbol] === segment) {
       const allowed = new Set(subset)
       const nodes = [...whole.nodes].filter((n) => allowed.has(n))
       const nodeSet = new Set(nodes)
       const edges = [...whole.edges].filter((e) => {
-        const edge = GRAPH_EDGES.find((ge) => ge.id === e)!
+        const edge = ctx.edges.find((ge) => ge.id === e)!
         return nodeSet.has(edge.from) && nodeSet.has(edge.to)
       })
       if (nodes.length > 0) return toGeometry(nodeSet, edges)

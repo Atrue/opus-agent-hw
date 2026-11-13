@@ -1,61 +1,85 @@
 /**
  * Модель звеньев «формулы-хребта» (план 01.2-01; цепь-станций — 01.2-04;
- * граф вычислений — 01.2-06): 7 звеньев цепи x → z1 → a1 → z2 → ŷ(yhat) → L →
- * W; каждый символ формулы сети отображается ровно в одно звено; заголовки
- * звеньев — символ формулы первым (Gap 6 UAT). Геометрия звена = ГРУППА
- * звеньев графа вычислений (узлы-значения/операции + рёбра между ними,
- * compGraph.SEGMENT_GROUPS): выбор символа формулы подсвечивает группу графа.
+ * граф вычислений — 01.2-06): цепь звеньев — XOR: x → z1 → a1 → z2 → ŷ(yhat)
+ * → L → W; нейрон (D-31): x → z → ŷ(yhat) → L → W. Каждый символ формулы
+ * сети отображается ровно в одно звено; заголовки звеньев — символ формулы
+ * первым (Gap 6 UAT). Геометрия звена = ГРУППА звеньев графа вычислений
+ * (compGraph.SEGMENT_GROUPS): выбор символа формулы подсвечивает группу графа.
  * Формулы звеньев — из opMeta сценария (z1 = matvec+add → «z1 = W1·x + b1»).
+ *
+ * 02-05: данные параметризованы спеком (chainOf/buildInventory) — XOR как
+ * регрессия движка, нейрон — носитель MVP R1; geometryOf-гейты (контекст
+ * активного сценария = neuron по умолчанию) проверяют логику подсветки.
  */
 
 import { describe, expect, it } from 'vitest'
-import { CHAIN_GEOMETRY_IDS, SEGMENTS, geometryOf, symbolToSegment, type SegmentGeometry } from './chainLinks'
-import { GRAPH_EDGES, GRAPH_NODES, SEGMENT_GROUPS } from './compGraph'
-import { XOR_SCENARIO } from '../run/scenario'
+import { chainOf, geometryOf, type GeometryContext, type SegmentGeometry } from './chainLinks'
+import { buildInventory } from './compGraph'
+import { NEURON_SCENARIO, XOR_SCENARIO, type ScenarioModel } from '../run/scenario'
 
-/** Полный словарь символов формулы-строки (must_haves плана). */
-const FORMULA_SYMBOLS = ['x', 'W1', 'b1', 'tanh', 'W2', 'b2', 'σ', 'ŷ', 'y', 'L', 'η', '∂L/∂W'] as const
-
-/** Ведущий символ заголовка звена (заголовки символ-первым, 01.2-04). */
-const LEADING_SYMBOL: Record<string, string> = {
-  x: 'x',
-  z1: 'z1',
-  a1: 'a1',
-  z2: 'z2',
-  yhat: 'ŷ',
-  L: 'L',
-  W: 'W',
+/** Контекст геометрии спека (рёбра/группы + символы). */
+function contextOf(spec: ScenarioModel): GeometryContext {
+  const inv = buildInventory(spec)
+  const chain = chainOf(spec)
+  return { edges: inv.edges, segmentGroups: inv.segmentGroups, symbolToSegment: chain.symbolToSegment, symbolNodes: chain.symbolNodes }
 }
 
 function geometrySize(g: SegmentGeometry): number {
   return g.nodes.size + g.edges.size
 }
 
-describe('chainLinks: звенья формулы-хребта', () => {
-  it('7 звеньев в порядке цепи: x → z1 → a1 → z2 → yhat → L → W', () => {
-    expect(SEGMENTS.map((s) => s.id)).toEqual(['x', 'z1', 'a1', 'z2', 'yhat', 'L', 'W'])
-  })
-
-  it('каждый символ формулы отображается ровно в одно звено и числится в нём', () => {
-    expect(new Set(Object.keys(symbolToSegment))).toEqual(new Set(FORMULA_SYMBOLS))
-    for (const sym of FORMULA_SYMBOLS) {
-      const segId = symbolToSegment[sym] as unknown
-      expect(segId, `символ «${sym}» отображается в звено`).toBeDefined()
-      const segs = SEGMENTS.filter((s) => s.id === segId)
-      expect(segs, `звено «${String(segId)}» существует и единственно`).toHaveLength(1)
-      expect(segs[0]!.symbols, `символ «${sym}» числится в звене`).toContain(sym)
+/** Символ → звено: каждый ровно в одно звено и числится в нём (любой спек). */
+function mappingGates(spec: ScenarioModel, label: string, formulaSymbols: readonly string[]): void {
+  const chain = chainOf(spec)
+  it(`${label}: каждый символ формулы отображается ровно в одно звено и числится в нём`, () => {
+    expect(new Set(Object.keys(chain.symbolToSegment))).toEqual(new Set(formulaSymbols))
+    for (const sym of formulaSymbols) {
+      const segId = chain.symbolToSegment[sym] as unknown
+      expect(segId, `${label}: символ «${sym}» отображается в звено`).toBeDefined()
+      const segs = chain.segments.filter((s) => s.id === segId)
+      expect(segs, `${label}: звено «${String(segId)}» существует и единственно`).toHaveLength(1)
+      expect(segs[0]!.symbols, `${label}: символ «${sym}» числится в звене`).toContain(sym)
     }
   })
-
-  it('RU-строки и формулы всех звеньев непустые', () => {
-    for (const s of SEGMENTS) {
-      expect(s.title.trim().length, `title звена ${s.id}`).toBeGreaterThan(0)
-      expect(s.formula.trim().length, `formula звена ${s.id}`).toBeGreaterThan(0)
+  it(`${label}: RU-строки и формулы всех звеньев непустые; заголовки начинаются с символа`, () => {
+    for (const s of chain.segments) {
+      expect(s.title.trim().length, `${label}: title звена ${s.id}`).toBeGreaterThan(0)
+      expect(s.formula.trim().length, `${label}: formula звена ${s.id}`).toBeGreaterThan(0)
+      const lead = s.id === 'yhat' ? 'ŷ' : s.id
+      expect(s.title.startsWith(lead), `${label}: заголовок «${s.title}» начинается с «${lead}»`).toBe(true)
     }
+  })
+  it(`${label}: геометрия звена = группа графа; геометрия символа непуста и вложена в звено`, () => {
+    const ctx = contextOf(spec)
+    for (const s of chain.segments) {
+      const g = geometryOf(s.id, undefined, ctx)
+      const ref = ctx.segmentGroups[s.id]!
+      expect([...g.nodes], `${label}: узлы звена ${s.id}`).toEqual([...ref.nodes])
+      expect(geometrySize(g), `${label}: геометрия звена ${s.id} непуста`).toBeGreaterThan(0)
+      for (const sym of s.symbols) {
+        const part = geometryOf(s.id, sym, ctx)
+        expect(geometrySize(part), `${label}: геометрия ${s.id}/${sym}`).toBeGreaterThan(0)
+        for (const n of part.nodes) expect(g.nodes.has(n), `${label}: ${s.id}/${sym}: узел ${n} ∈ звену`).toBe(true)
+      }
+    }
+  })
+  it(`${label}: вся геометрия ссылается только на узлы контракта; каждый узел покрыт звеном`, () => {
+    const ctx = contextOf(spec)
+    const covered = new Set<string>()
+    for (const s of chain.segments) geometryOf(s.id, undefined, ctx).nodes.forEach((n) => covered.add(n))
+    expect([...covered].sort()).toEqual([...buildInventory(spec).nodes.map((n) => n.id)].sort())
+  })
+}
+
+describe('chainLinks XOR: 7 звеньев в порядке цепи (регрессия движка)', () => {
+  const chain = chainOf(XOR_SCENARIO)
+
+  it('порядок цепи: x → z1 → a1 → z2 → yhat → L → W', () => {
+    expect(chain.segments.map((s) => s.id)).toEqual(['x', 'z1', 'a1', 'z2', 'yhat', 'L', 'W'])
   })
 
   it('формулы звеньев собираются из opMeta: z1/z2 — склейка matvec+add, остальные — формулы оп', () => {
-    const byId = new Map(SEGMENTS.map((s) => [s.id, s]))
+    const byId = new Map(chain.segments.map((s) => [s.id, s]))
     expect(byId.get('z1')!.formula).toBe('z1 = W1·x + b1')
     expect(byId.get('z2')!.formula).toBe('z2 = W2·a1 + b2')
     // a1 = tanh(z1)
@@ -66,15 +90,8 @@ describe('chainLinks: звенья формулы-хребта', () => {
     expect(byId.get('L')!.formula).toBe(XOR_SCENARIO.ops[6]!.formula)
   })
 
-  it('заголовки звеньев начинаются с символа формулы (Gap 6: имена = символы)', () => {
-    for (const s of SEGMENTS) {
-      const lead = LEADING_SYMBOL[s.id]!
-      expect(s.title.startsWith(lead), `заголовок «${s.title}» начинается с «${lead}»`).toBe(true)
-    }
-  })
-
   it('symbolToSegment не изменился: формула-строка не пересобирается', () => {
-    expect(symbolToSegment).toEqual({
+    expect(chain.symbolToSegment).toEqual({
       x: 'x',
       W1: 'z1',
       b1: 'z1',
@@ -89,74 +106,54 @@ describe('chainLinks: звенья формулы-хребта', () => {
       '∂L/∂W': 'W',
     })
   })
-})
 
-describe('chainLinks: геометрия = группы графа вычислений (01.2-06)', () => {
-  it('geometryOf(seg) возвращает группу SEGMENT_GROUPS (узлы + внутренние рёбра)', () => {
-    for (const s of SEGMENTS) {
-      const g = geometryOf(s.id)
-      const ref = SEGMENT_GROUPS[s.id]!
-      expect([...g.nodes], `узлы звена ${s.id}`).toEqual([...ref.nodes])
-      expect([...g.edges], `рёбра звена ${s.id}`).toEqual([...ref.edges])
-      expect(geometrySize(g), `геометрия звена ${s.id} непуста`).toBeGreaterThan(0)
-    }
-  })
-
-  it('geometryOf(seg, sym) непустая и вложена в геометрию звена', () => {
-    for (const s of SEGMENTS) {
-      const whole = geometryOf(s.id)
-      for (const sym of s.symbols) {
-        const part = geometryOf(s.id, sym)
-        expect(geometrySize(part), `геометрия ${s.id}/${sym}`).toBeGreaterThan(0)
-        for (const n of part.nodes) expect(whole.nodes.has(n), `${s.id}/${sym}: узел ${n} ∈ звену`).toBe(true)
-        for (const e of part.edges) expect(whole.edges.has(e), `${s.id}/${sym}: ребро ${e} ∈ звену`).toBe(true)
-      }
-    }
-  })
-
-  it('звено a1 = tanh-опы + a1-значения (≥3 элементов — контракт e2e 8); z1-узлов нет', () => {
-    const g = geometryOf('a1')
-    expect(g.nodes.size).toBeGreaterThanOrEqual(3)
-    expect([...g.nodes].filter((id) => id.startsWith('op:tanh'))).toHaveLength(3)
-    expect([...g.nodes].filter((id) => id.startsWith('a1['))).toHaveLength(3)
-    for (const n of geometryOf('z1').nodes) {
-      if (n.startsWith('z1[')) expect(g.nodes.has(n), `z1-узел ${n} не входит в звено a1`).toBe(false)
-    }
-  })
-
-  it('звено L — станция лосса: bce + y + L + ŷ', () => {
-    const g = geometryOf('L')
-    for (const id of ['op:bce', 'y[0]', 'L', 'ŷ']) expect(g.nodes.has(id), `L содержит ${id}`).toBe(true)
-  })
-
-  it('звено W — update-станция + все 13 параметров', () => {
-    const g = geometryOf('W')
-    expect(g.nodes.has('op:update')).toBe(true)
-    expect([...g.nodes].filter((id) => id.startsWith('W1[') || id.startsWith('b1[') || id.startsWith('W2[') || id.startsWith('b2['))).toHaveLength(13)
+  it('звено a1 = tanh-опы + a1-значения (≥3 — контракт e2e 8); звено W — станция + все 13 параметров', () => {
+    const ctx = contextOf(XOR_SCENARIO)
+    const a1 = geometryOf('a1', undefined, ctx)
+    expect(a1.nodes.size).toBeGreaterThanOrEqual(3)
+    expect([...a1.nodes].filter((id) => id.startsWith('op:tanh'))).toHaveLength(3)
+    expect([...a1.nodes].filter((id) => id.startsWith('a1['))).toHaveLength(3)
+    const w = geometryOf('W', undefined, ctx)
+    expect(w.nodes.has('op:update')).toBe(true)
+    expect([...w.nodes].filter((id) => id.startsWith('W1[') || id.startsWith('b1[') || id.startsWith('W2[') || id.startsWith('b2['))).toHaveLength(13)
   })
 })
 
-describe('chainLinks: контракт графа CHAIN_GEOMETRY_IDS (01.2-06)', () => {
-  it('контракт = все узлы и рёбра графа вычислений', () => {
-    expect(new Set(CHAIN_GEOMETRY_IDS.nodes)).toEqual(new Set(GRAPH_NODES.map((n) => n.id)))
-    expect(new Set(CHAIN_GEOMETRY_IDS.edges)).toEqual(new Set(GRAPH_EDGES.map((e) => e.id)))
+describe('chainLinks нейрон: цепь сжата до 5 звеньев x → z → ŷ → L → W (D-31)', () => {
+  const chain = chainOf(NEURON_SCENARIO)
+
+  it('порядок цепи: x → z → yhat → L → W; звено W — станция + 3 параметра', () => {
+    expect(chain.segments.map((s) => s.id)).toEqual(['x', 'z', 'yhat', 'L', 'W'])
+    const ctx = contextOf(NEURON_SCENARIO)
+    const w = geometryOf('W', undefined, ctx)
+    expect(w.nodes.has('op:update')).toBe(true)
+    expect([...w.nodes].filter((id) => id === 'W[0]' || id === 'W[1]' || id === 'b[0]')).toHaveLength(3)
   })
 
-  it('вся геометрия звеньев ссылается только на id контракта', () => {
-    const nodes = new Set(CHAIN_GEOMETRY_IDS.nodes)
-    const edges = new Set(CHAIN_GEOMETRY_IDS.edges)
-    for (const s of SEGMENTS) {
-      const geometries = [geometryOf(s.id), ...s.symbols.map((sym) => geometryOf(s.id, sym))]
-      for (const g of geometries) {
-        for (const n of g.nodes) expect(nodes.has(n), `узел «${n}» есть в контракте`).toBe(true)
-        for (const e of g.edges) expect(edges.has(e), `ребро «${e}» есть в контракте`).toBe(true)
-      }
-    }
+  it('формула звена z — склейка matvec+add: «z = W·x + b»', () => {
+    const byId = new Map(chain.segments.map((s) => [s.id, s]))
+    expect(byId.get('z')!.formula).toBe('z = W·x + b')
+    expect(byId.get('yhat')!.formula).toBe(NEURON_SCENARIO.ops[2]!.formula)
+    expect(byId.get('L')!.formula).toBe(NEURON_SCENARIO.ops[3]!.formula)
   })
 
-  it('каждый узел графа покрыт хотя бы одним звеном (подсвечиваем выбором)', () => {
-    const covered = new Set<string>()
-    for (const s of SEGMENTS) geometryOf(s.id).nodes.forEach((n) => covered.add(n))
-    expect([...covered].sort()).toEqual([...CHAIN_GEOMETRY_IDS.nodes].sort())
+  it('symbolToSegment нейрона: W и b выбирают z; σ и ŷ — прогноз', () => {
+    expect(chain.symbolToSegment).toEqual({
+      x: 'x',
+      W: 'z',
+      b: 'z',
+      σ: 'yhat',
+      ŷ: 'yhat',
+      y: 'L',
+      L: 'L',
+      η: 'W',
+      '∂L/∂W': 'W',
+    })
   })
 })
+
+const XOR_SYMBOLS = ['x', 'W1', 'b1', 'tanh', 'W2', 'b2', 'σ', 'ŷ', 'y', 'L', 'η', '∂L/∂W'] as const
+const NEURON_SYMBOLS = ['x', 'W', 'b', 'σ', 'ŷ', 'y', 'L', 'η', '∂L/∂W'] as const
+
+mappingGates(XOR_SCENARIO, 'XOR', XOR_SYMBOLS)
+mappingGates(NEURON_SCENARIO, 'neuron', NEURON_SYMBOLS)

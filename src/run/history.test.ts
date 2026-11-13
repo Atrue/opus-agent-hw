@@ -4,13 +4,13 @@ import {
   capLinkHistory,
   linkHistoryOf,
   sessionGeometryOf,
-  WEIGHT_ROWS,
+  seriesOf,
   type LinkHistoryPoint,
   type LinkSeries,
 } from './history'
 import { TrainingRun } from './trainingRun'
 import { isSampleRecord, type SampleRecord } from './types'
-import { XOR_SCENARIO, SAMPLE_COUNT } from './scenario'
+import { XOR_SCENARIO } from './scenario'
 
 /**
  * История обучения (UX-05/UX-06, планы 01.1-03 → 01.2-02): per-sample
@@ -18,7 +18,12 @@ import { XOR_SCENARIO, SAMPLE_COUNT } from './scenario'
  * — источник графика лосса (ось — сэмплы сессии, разделители прогонов) и
  * истории звена цепи (linkHistoryOf). Сброс — перезапуск прогона: история
  * живёт до reload, поэтому каждый тест — свежий TrainingRun (семантика reload).
+ * XOR пиннится явно (серии/прогон): дефолт активного сценария — neuron (D-31).
  */
+
+const SAMPLE_COUNT = XOR_SCENARIO.samples.length
+const XOR_SERIES = seriesOf(XOR_SCENARIO)
+const WEIGHT_ROWS = XOR_SERIES.weightRows
 
 const START_FLAT = [
   ...XOR_SCENARIO.startWeights.w1.flat(),
@@ -31,7 +36,7 @@ const START_FLAT = [
 let run: TrainingRun
 
 beforeEach(() => {
-  run = new TrainingRun()
+  run = new TrainingRun(XOR_SCENARIO)
 })
 
 /** Завершает две эпохи: FF эпохи 1 → следующая → FF эпохи 2. */
@@ -49,7 +54,7 @@ function sampleRecords(): SampleRecord[] {
 describe('История звена цепи: linkHistoryOf (01.2-02)', () => {
   it('весовой символ W1: 6 рядов — значения weights[индексы W1] по записям, включая стартовые', () => {
     runTwoEpochs()
-    const { series } = linkHistoryOf(run.sampleHistory, 'z1', 'W1')
+    const { series } = linkHistoryOf(run.sampleHistory, 'z1', 'W1', XOR_SERIES)
     expect(series).toHaveLength(6)
     expect(series.map((s) => s.label)).toEqual([...WEIGHT_ROWS.slice(0, 6)])
     const samples = sampleRecords()
@@ -68,7 +73,7 @@ describe('История звена цепи: linkHistoryOf (01.2-02)', () => {
 
   it('разделители эпох и прогонов: метаданные точек несут границы runId/epoch', () => {
     runTwoEpochs()
-    const { series } = linkHistoryOf(run.sampleHistory, 'L', 'L')
+    const { series } = linkHistoryOf(run.sampleHistory, 'L', 'L', XOR_SERIES)
     const points = series[0]!.points
     expect(points.map((p) => p.epoch)).toEqual([1, 1, 1, 1, 2, 2, 2, 2])
     expect(points.map((p) => p.runId)).toEqual([1, 1, 1, 1, 1, 1, 1, 1])
@@ -76,7 +81,7 @@ describe('История звена цепи: linkHistoryOf (01.2-02)', () => {
     // сброс — граница прогона: прогон 2 пишет свой runId и свою эпоху 1
     run.reset()
     run.runEpoch()
-    const after = linkHistoryOf(run.sampleHistory, 'L', 'L').series[0]!.points
+    const after = linkHistoryOf(run.sampleHistory, 'L', 'L', XOR_SERIES).series[0]!.points
     expect(after.map((p) => p.runId)).toEqual([1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2])
     expect(after[8]!.epoch).toBe(1)
     expect(after[8]!.sampleIndex).toBe(0)
@@ -85,21 +90,21 @@ describe('История звена цепи: linkHistoryOf (01.2-02)', () => {
   it('скалярные и узловые символы: L — лосс, ŷ — прогноз, x — входы; звено W — все 13 весов', () => {
     runTwoEpochs()
     const samples = sampleRecords()
-    const loss: LinkSeries = linkHistoryOf(run.sampleHistory, 'L', 'L').series[0]!
+    const loss: LinkSeries = linkHistoryOf(run.sampleHistory, 'L', 'L', XOR_SERIES).series[0]!
     expect(loss.label).toBe('L')
     expect(loss.points.map((p) => p.value)).toEqual(samples.map((s) => s.loss))
-    const yhat = linkHistoryOf(run.sampleHistory, 'yhat', 'ŷ').series[0]!
+    const yhat = linkHistoryOf(run.sampleHistory, 'yhat', 'ŷ', XOR_SERIES).series[0]!
     expect(yhat.label).toBe('ŷ')
     expect(yhat.points.map((p) => p.value)).toEqual(samples.map((s) => s.yhat))
-    const x = linkHistoryOf(run.sampleHistory, 'x', 'x')
+    const x = linkHistoryOf(run.sampleHistory, 'x', 'x', XOR_SERIES)
     expect(x.series).toHaveLength(2)
     expect(x.series[0]!.points.map((p) => p.value)).toEqual(samples.map((s) => s.x[0]!))
-    const z1 = linkHistoryOf(run.sampleHistory, 'a1', 'tanh')
+    const z1 = linkHistoryOf(run.sampleHistory, 'a1', 'tanh', XOR_SERIES)
     expect(z1.series).toHaveLength(3)
     // плашка tanh показывает свой выход: ряд — активации a1
     expect(z1.series[0]!.points.map((p) => p.value)).toEqual(samples.map((s) => s.nodes.a1![0]!))
     // звено W (SGD): судьба обновления — все 13 весов по сэмплам
-    const w = linkHistoryOf(run.sampleHistory, 'W', 'η')
+    const w = linkHistoryOf(run.sampleHistory, 'W', 'η', XOR_SERIES)
     expect(w.series).toHaveLength(13)
     expect(w.series.map((s) => s.label)).toEqual([...WEIGHT_ROWS])
   })

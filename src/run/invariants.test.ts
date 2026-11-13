@@ -42,7 +42,7 @@ function runEpoch(record: boolean): EpochResult {
   for (const sample of XOR_SCENARIO.samples) {
     const recorder = record
       ? (cursor: SampleCursor, op: number) => {
-          records.push(buildStepRecord(cursor, op))
+          records.push(buildStepRecord(cursor, op, XOR_SCENARIO))
           if (op === 6) losses.push(cursor.tensors.L!.data[0]!)
         }
       : undefined

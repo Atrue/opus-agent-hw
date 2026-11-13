@@ -9,9 +9,13 @@
  * картину (e2e-дисциплина). Чистый data-слой без React (fast-refresh-safe);
  * значения навешивает рендер live-срезами прогона (инвариант
  * «граф = drill-down = движок»).
+ *
+ * Билдеры параметризуются спеком (тесты сверяют инвентарь XOR и neuron);
+ * модульные константы строятся из activeScenario() — сценарий сессии
+ * фиксируется по URL до импорта UI (run.ts), таблицы стабильны весь сеанс.
  */
 
-import { XOR_SCENARIO } from '../run/scenario'
+import { activeScenario, type ScenarioModel } from '../run/scenario'
 import type { SegmentId } from './chainLinks'
 
 export type GraphNodeKind = 'value' | 'op' | 'update'
@@ -49,10 +53,10 @@ export const NODE_W = 62
 export const NODE_H = 30
 
 /** Рамки канвы из данных спека (максимум col/row + один pitch запас). */
-export function graphBounds(): { w: number; h: number } {
+export function graphBounds(spec: ScenarioModel = activeScenario()): { w: number; h: number } {
   let maxCol = 0
   let maxRow = 0
-  for (const n of XOR_SCENARIO.render.nodes) {
+  for (const n of spec.render.nodes) {
     if (n.col > maxCol) maxCol = n.col
     if (n.row > maxRow) maxRow = n.row
   }
@@ -60,8 +64,8 @@ export function graphBounds(): { w: number; h: number } {
 }
 
 /** Полный граф с координатами и рамками (чистая функция структуры спека). */
-export function buildGraph(): { nodes: readonly GraphNode[]; view: { w: number; h: number } } {
-  const nodes = XOR_SCENARIO.render.nodes.map((s) => ({
+export function buildGraph(spec: ScenarioModel = activeScenario()): { nodes: readonly GraphNode[]; view: { w: number; h: number } } {
+  const nodes = spec.render.nodes.map((s) => ({
     id: s.id,
     kind: s.kind,
     role: s.role,
@@ -71,33 +75,41 @@ export function buildGraph(): { nodes: readonly GraphNode[]; view: { w: number; 
     x: PAD_X + s.col * PITCH_X,
     y: PAD_Y + s.row * PITCH_Y,
   }))
-  return { nodes, view: graphBounds() }
+  return { nodes, view: graphBounds(spec) }
 }
-
-/** Статичный инвентарь графа (топология сценария неизменна в течение сессии). */
-export const GRAPH_NODES: readonly GraphNode[] = buildGraph().nodes
-export const GRAPH_EDGES: readonly GraphEdge[] = XOR_SCENARIO.render.edges.map((e) => ({
-  id: `${e.from}->${e.to}`,
-  from: e.from,
-  to: e.to,
-  kind: e.kind === 'update' ? 'update' : 'flow',
-}))
 
 export interface NodeGroup {
   readonly nodes: ReadonlySet<string>
   readonly edges: ReadonlySet<string>
 }
 
-const group = (nodeIds: readonly string[]): NodeGroup => {
-  const nodes = new Set(nodeIds)
-  const edges = new Set(GRAPH_EDGES.filter((e) => nodes.has(e.from) && nodes.has(e.to)).map((e) => e.id))
-  return { nodes, edges }
+/** Полный инвентарь графа спека: узлы/рёбра/группы звеньев/группы шагов. */
+export function buildInventory(spec: ScenarioModel = activeScenario()) {
+  const nodes = buildGraph(spec).nodes
+  const edges: GraphEdge[] = spec.render.edges.map((e) => ({
+    id: `${e.from}->${e.to}`,
+    from: e.from,
+    to: e.to,
+    kind: e.kind === 'update' ? 'update' : 'flow',
+  }))
+  const group = (nodeIds: readonly string[]): NodeGroup => {
+    const set = new Set(nodeIds)
+    const inner = edges.filter((e) => set.has(e.from) && set.has(e.to)).map((e) => e.id)
+    return { nodes: set, edges: new Set(inner) }
+  }
+  return {
+    nodes,
+    edges,
+    segmentGroups: Object.fromEntries(spec.render.segments.map((seg) => [seg.id, group(seg.nodes)])) as Readonly<
+      Record<SegmentId, NodeGroup>
+    >,
+    stepGroups: spec.render.stepGroups.map((ids) => group(ids)),
+  }
 }
 
-/** Группы звеньев цепи (selection формулы-строки → подсветка группы). */
-export const SEGMENT_GROUPS: Readonly<Record<SegmentId, NodeGroup>> = Object.fromEntries(
-  XOR_SCENARIO.render.segments.map((seg) => [seg.id, group(seg.nodes)]),
-)
-
-/** Группы шагов ленты (по индексу walked-опы; подсветка активной op). */
-export const STEP_GROUPS: readonly NodeGroup[] = XOR_SCENARIO.render.stepGroups.map((ids) => group(ids))
+/** Статичный инвентарь активного сценария (топология неизменна в течение сессии). */
+const INVENTORY = buildInventory()
+export const GRAPH_NODES: readonly GraphNode[] = INVENTORY.nodes
+export const GRAPH_EDGES: readonly GraphEdge[] = INVENTORY.edges
+export const SEGMENT_GROUPS: Readonly<Record<SegmentId, NodeGroup>> = INVENTORY.segmentGroups
+export const STEP_GROUPS: readonly NodeGroup[] = INVENTORY.stepGroups

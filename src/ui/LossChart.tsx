@@ -1,6 +1,6 @@
 import { useRunSlice } from '../run/useRunSlice'
 import { buildLossChartData, sessionGeometryOf } from '../run/history'
-import { SAMPLE_COUNT } from '../run/scenario'
+import { activeScenario } from '../run/scenario'
 import { formatKey } from '../format/numbers'
 
 /**
@@ -36,7 +36,7 @@ export function LossChart() {
   const yLo = chart.yMin
   const yHi = chart.yMax === yLo ? yLo + 1 : chart.yMax
   const maxX = Math.max(
-    SAMPLE_COUNT,
+    activeScenario().samples.length,
     ...chart.dots.map((p) => p.x),
     ...chart.line.map((p) => p.x),
     // место под разделитель и первый сэмпл нового прогона

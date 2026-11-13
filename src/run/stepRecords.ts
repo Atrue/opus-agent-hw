@@ -8,7 +8,7 @@
  */
 
 import { gradIo, tensorIo, type Phase, type SampleCursor, type StepRecord, type Tensor, type TensorIo } from '../tensor'
-import { XOR_SCENARIO, type ScenarioModel } from './scenario'
+import { activeScenario, type ScenarioModel } from './scenario'
 
 const PROV_WEIGHT = 'вес модели (стартовые константы сценария)'
 const PROV_INPUT = 'входные данные — граница графа'
@@ -56,7 +56,7 @@ export function flatWeights(m: { weights: readonly Tensor[]; biases: readonly Te
  * рендер-метки слоёв спека (render.layerSymbols); индексы шагов provenance
  * выведены из топологии walked-оп (buildWalk).
  */
-export function buildStepRecord(cursor: SampleCursor, opIndex: number, spec: ScenarioModel = XOR_SCENARIO): StepRecord {
+export function buildStepRecord(cursor: SampleCursor, opIndex: number, spec: ScenarioModel = activeScenario()): StepRecord {
   const meta = spec.ops[opIndex]!
   const walk = cursor.walk[opIndex]!
   const t = cursor.tensors
@@ -180,7 +180,7 @@ export function buildStepRecord(cursor: SampleCursor, opIndex: number, spec: Sce
 
 /** Текущая фаза для бейджа (до первого шага — фаза предстоящей операции). */
 export function currentPhase(record: StepRecord | null): Phase {
-  return record?.phase ?? XOR_SCENARIO.ops[0]!.phase
+  return record?.phase ?? activeScenario().ops[0]!.phase
 }
 
 /** Ключевое число операции для ленты шагов (D-25): первый элемент выхода

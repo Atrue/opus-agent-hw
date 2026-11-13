@@ -39,7 +39,7 @@ function runEtalonSample(): StepRecord[] {
   while (!cursor.done) {
     const op = cursor.opIndex
     cursor.advance()
-    records.push(buildStepRecord(cursor, op))
+    records.push(buildStepRecord(cursor, op, XOR_SCENARIO))
   }
   return records
 }

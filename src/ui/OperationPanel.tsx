@@ -1,6 +1,6 @@
 import { Fragment } from 'react'
 import { run } from '../run/run'
-import { XOR_SCENARIO } from '../run/scenario'
+import { activeScenario } from '../run/scenario'
 import type { StepRecord } from '../tensor'
 import { formatKey } from '../format/numbers'
 import { buildOperationRows, type NumberRow } from './operationRows'
@@ -22,8 +22,8 @@ import { SubscriptText } from './SubscriptText'
  * ≤30 на экране) — чистая модель operationRows.
  */
 
-// Нарратив до первого шага — предстоящей операции
-const INTRO_NARRATIVE = XOR_SCENARIO.ops[0]!.narrative
+// Вводная панель до первого шага — метаданные предстоящей операции спека
+const INTRO = activeScenario().ops[0]!
 
 function NumberRowView({ row, joiner, record }: { row: NumberRow; joiner: string; record: StepRecord }) {
   const valueClass = row.kind === 'input' || !row.changed ? 'value-unchanged' : 'value-changed'
@@ -62,11 +62,11 @@ export function OperationPanel({ record }: { record: StepRecord | null }) {
             functions
           </span>
           <h2 className="card-title">Панель операции</h2>
-          <span className="card-meta ui-label">шаг 1/13</span>
+          <span className="card-meta ui-label">шаг 1/{String(activeScenario().ops.length)}</span>
         </div>
-        <NarrativeLine text={INTRO_NARRATIVE} />
+        <NarrativeLine text={INTRO.narrative} />
         <p data-testid="step-formula" className="num text-on-surface">
-          <SubscriptText text="z1 = W1·x" />
+          <SubscriptText text={INTRO.formula} />
         </p>
         <p className="ui-text text-on-surface-variant">Нажмите «Шаг»: движок исполнит первую операцию, и здесь появятся её числа.</p>
       </div>
@@ -82,7 +82,9 @@ export function OperationPanel({ record }: { record: StepRecord | null }) {
           functions
         </span>
         <h2 className="card-title">Панель операции</h2>
-        <span className="card-meta ui-label">шаг {record.index + 1}/13</span>
+        <span className="card-meta ui-label">
+          шаг {String(record.index + 1)}/{String(activeScenario().ops.length)}
+        </span>
       </div>
       <NarrativeLine text={record.narrative.ru} />
       <p data-testid="step-formula" className="num text-on-surface">

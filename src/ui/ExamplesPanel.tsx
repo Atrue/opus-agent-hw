@@ -1,5 +1,5 @@
 import { useRunSlice } from '../run/useRunSlice'
-import { XOR_SCENARIO } from '../run/scenario'
+import { activeScenario } from '../run/scenario'
 import { formatKey } from '../format/numbers'
 import { SubscriptText } from './SubscriptText'
 
@@ -20,6 +20,7 @@ export function ExamplesPanel() {
   const runId = useRunSlice((r) => r.runId)
   const epoch = useRunSlice((r) => r.epoch)
   const history = useRunSlice((r) => r.sampleHistory)
+  const spec = activeScenario()
 
   // пройденные примеры текущей эпохи текущего прогона (из per-sample истории)
   const done = new Map<number, { yhat: number; correct: boolean }>()
@@ -35,7 +36,7 @@ export function ExamplesPanel() {
           target
         </span>
         <h2 className="card-title">Примеры</h2>
-        <span className="card-meta ui-label">выборка XOR</span>
+        <span className="card-meta ui-label">{spec.datasetLabel}</span>
       </div>
       <div className="samples-table-wrap">
         <table className="samples-table num" aria-label="Примеры обучающей выборки: переменные по колонкам">
@@ -59,7 +60,7 @@ export function ExamplesPanel() {
             </tr>
           </thead>
           <tbody>
-            {XOR_SCENARIO.samples.map((sample, i) => {
+            {spec.samples.map((sample, i) => {
               const rec = done.get(i)
               const current = i === sampleIndex
               return (
