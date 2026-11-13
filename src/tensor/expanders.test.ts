@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { XOR_SCENARIO } from '../run/scenario'
 import { buildModel, expandScalar, SampleCursor, ScenarioNet, tensorValuesOf, Value, type Operand } from './index'
+import { backward } from './value'
+import { add, div, log, mul, sigmoid, tanh } from './value-ops'
 
 /**
  * Инвариант «drill-down = движок» per-op (R1 §4.4 Р-1, NFR-02): ленивое
@@ -241,8 +243,8 @@ describe('скалярное ядро Value (micrograd-механика)', () =>
     const a = new Value(2, { label: 'a' })
     const b = new Value(-3, { label: 'b' })
     // c = a·b + a = −4
-    const c = a.mul(b).add(a)
-    c.backward()
+    const c = add(mul(a, b), a)
+    backward(c)
     expect(c.data).toBe(-4)
     expect(a.grad, 'dc/da = b + 1').toBe(-2)
     expect(b.grad, 'dc/db = a').toBe(2)
@@ -250,11 +252,11 @@ describe('скалярное ядро Value (micrograd-механика)', () =>
 
   it('tanh/sigmoid/log/div: локальные производные против аналитических', () => {
     const z = new Value(0.7, { label: 'z' })
-    z.tanh().div(new Value(2, { label: '2' })).backward()
+    backward(div(tanh(z), new Value(2, { label: '2' })))
     expect(z.grad).toBeCloseTo((1 - Math.tanh(0.7) ** 2) / 2, 15)
 
     const u = new Value(0.5, { label: 'u' })
-    u.sigmoid().log().backward()
+    backward(log(sigmoid(u)))
     // d/du ln(σ(u)) = 1−σ(u)
     expect(u.grad).toBeCloseTo(1 - 1 / (1 + Math.exp(-0.5)), 15)
   })

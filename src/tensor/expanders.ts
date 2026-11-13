@@ -13,6 +13,7 @@
  */
 
 import { Value } from './value'
+import { add, div, log, mul, neg, sigmoid, sub, tanh } from './value-ops'
 
 /** Снапшот операнда: вектор или матрица (row-major). */
 export type TensorSnapshot = readonly number[] | readonly (readonly number[])[]
@@ -138,8 +139,8 @@ function buildMatvec(req: Extract<ExpandRequest, { kind: 'matvec' }>): Value {
   const x = vecOf(req.x)
   const cols = w[0]!.length
   // acc слева направо от i = 0 — как matvecForward (acc = 0; acc += w·x)
-  let acc = matLeaf(req.w, w, req.row, 0).mul(vecLeaf(req.x, x, 0))
-  for (let i = 1; i < cols; i++) acc = acc.add(matLeaf(req.w, w, req.row, i).mul(vecLeaf(req.x, x, i)))
+  let acc = mul(matLeaf(req.w, w, req.row, 0), vecLeaf(req.x, x, 0))
+  for (let i = 1; i < cols; i++) acc = add(acc, mul(matLeaf(req.w, w, req.row, i), vecLeaf(req.x, x, i)))
   return acc
 }
 
@@ -148,8 +149,8 @@ function buildMatvecGradX(req: Extract<ExpandRequest, { kind: 'matvec-grad-x' }>
   const g = vecOf(req.gOut)
   const rows = w.length
   // Σ_j по возрастанию j — как matvecGradX
-  let acc = matLeaf(req.w, w, 0, req.col).mul(vecLeaf(req.gOut, g, 0))
-  for (let j = 1; j < rows; j++) acc = acc.add(matLeaf(req.w, w, j, req.col).mul(vecLeaf(req.gOut, g, j)))
+  let acc = mul(matLeaf(req.w, w, 0, req.col), vecLeaf(req.gOut, g, 0))
+  for (let j = 1; j < rows; j++) acc = add(acc, mul(matLeaf(req.w, w, j, req.col), vecLeaf(req.gOut, g, j)))
   return acc
 }
 
@@ -221,25 +222,25 @@ function buildChain(req: ExpandRequest): Value {
     case 'add': {
       const a = vecOf(req.a)
       const b = vecOf(req.b)
-      return vecLeaf(req.a, a, req.index).add(vecLeaf(req.b, b, req.index))
+      return add(vecLeaf(req.a, a, req.index), vecLeaf(req.b, b, req.index))
     }
     case 'tanh':
-      return vecLeaf(req.z, vecOf(req.z), req.index).tanh()
+      return tanh(vecLeaf(req.z, vecOf(req.z), req.index))
     case 'sigmoid':
-      return vecLeaf(req.z, vecOf(req.z), req.index).sigmoid()
+      return sigmoid(vecLeaf(req.z, vecOf(req.z), req.index))
     case 'bce': {
       // L = −[y·ln ŷ + (1−y)·ln(1−ŷ)] — порядок слагаемых как bceForward
       const p = vecLeaf(req.p, vecOf(req.p), 0)
       const t = vecLeaf(req.t, vecOf(req.t), 0)
-      const term1 = t.mul(p.log())
-      const term2 = one().sub(t).mul(one().sub(p).log())
-      return term1.add(term2).neg()
+      const term1 = mul(t, log(p))
+      const term2 = mul(sub(one(), t), log(sub(one(), p)))
+      return neg(add(term1, term2))
     }
     case 'matvec-grad-w': {
       // ∂L/∂W[j][i] = ∂L/∂z[j]·x[i] — без суммирования, как matvecGradW
       const g = vecOf(req.gOut)
       const x = vecOf(req.x)
-      return vecLeaf(req.gOut, g, req.row).mul(vecLeaf(req.x, x, req.col))
+      return mul(vecLeaf(req.gOut, g, req.row), vecLeaf(req.x, x, req.col))
     }
     case 'matvec-grad-x':
       return buildMatvecGradX(req)
@@ -250,27 +251,28 @@ function buildChain(req: ExpandRequest): Value {
       const a = vecOf(req.a)
       const g = vecOf(req.gOut)
       const av = vecLeaf(req.a, a, req.index)
-      return vecLeaf(req.gOut, g, req.index).mul(one().sub(av.mul(av)))
+      return mul(vecLeaf(req.gOut, g, req.index), sub(one(), mul(av, av)))
     }
     case 'sigmoid-grad': {
       // ∂L/∂z = (∂L/∂ŷ · ŷ)·(1 − ŷ) — ассоциация как sigmoidBackwardFromOutput
       const out = vecOf(req.out)
       const g = vecOf(req.gOut)
-      return vecLeaf(req.gOut, g, req.index)
-        .mul(vecLeaf(req.out, out, req.index))
-        .mul(one().sub(vecLeaf(req.out, out, req.index)))
+      return mul(
+        mul(vecLeaf(req.gOut, g, req.index), vecLeaf(req.out, out, req.index)),
+        sub(one(), vecLeaf(req.out, out, req.index)),
+      )
     }
     case 'bce-grad': {
       // ∂L/∂ŷ = (ŷ − y)/(ŷ(1 − ŷ)) — как bceGradP
       const p = vecLeaf(req.p, vecOf(req.p), 0)
       const t = vecLeaf(req.t, vecOf(req.t), 0)
-      return p.sub(t).div(p.mul(one().sub(p)))
+      return div(sub(p, t), mul(p, sub(one(), p)))
     }
     case 'sgd': {
       // W = W − η·∂L/∂W — плоский индекс параметра (row-major, как refs диаграммы)
       const w = flatOf(req.w)
       const g = flatOf(req.g)
-      return vecLeaf(req.w, w, req.index).sub(leaf(req.lr, 'η').mul(vecLeaf(req.g, g, req.index)))
+      return sub(vecLeaf(req.w, w, req.index), mul(leaf(req.lr, 'η'), vecLeaf(req.g, g, req.index)))
     }
   }
 }

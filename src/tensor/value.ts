@@ -1,29 +1,19 @@
 /**
- * Скалярное ядро (R1, micrograd-механика): Value с data/grad/op/parents
- * и topo-backward. Используется ТОЛЬКО ленивыми
- * экспандерами drill-down (expanders.ts) — A-математика по требованию,
- * view-слой над снапшотами чисел; гранулярность ИСПОЛНЕНИЯ walkthrough
- * остаётся op-level (решение R1: чистый micrograd-порт как движок отвергнут).
+ * Скалярное ядро (R1, micrograd-механика): Value-контейнер с
+ * data/grad/op/label/parents/backwardFn и свободная функция backward(root).
+ * Используется ТОЛЬКО ленивыми экспандерами drill-down (expanders.ts) —
+ * A-математика по требованию, view-слой над снапшотами чисел; гранулярность
+ * ИСПОЛНЕНИЯ walkthrough остаётся op-level (решение R1: чистый micrograd-порт
+ * как движок отвергнут).
  *
- * Семантика как в Python: forward создаёт новые узлы, grad аккумулируется
- * на месте (+=), backward сеет ∂L/∂L = 1 в корне и идёт по topo-порядку.
+ * Семантика как в Python: forward (операции — свободные функции
+ * value-ops/<op>.ts) создаёт новые узлы, grad аккумулируется на месте (+=),
+ * backward сеет ∂L/∂L = 1 в корне и идёт по topo-порядку.
  *
- * Декомпозиция D-29: op-методы только записывают данные (op-метка +
- * родители); локальные градиенты считают чистые функции value-grads.ts,
- * метод runBackward умножает их на входящий grad и аккумулирует в том же
- * порядке побочных эффектов, что исходные замыкания (бит-идентичность).
+ * D-34 (gap OQ-3/OQ-4): класс Value — чистый контейнер БЕЗ методов;
+ * операция знает только локальные производные (backwardFn — чистые,
+ * параллельно parents), chain rule — общий код backward().
  */
-
-import {
-  localGradAdd,
-  localGradDiv,
-  localGradLog,
-  localGradMul,
-  localGradNeg,
-  localGradSigmoid,
-  localGradSub,
-  localGradTanh,
-} from './value-grads'
 
 export type ScalarOp = '' | '+' | '-' | '*' | '/' | 'neg' | 'tanh' | 'sigmoid' | 'log'
 
@@ -41,8 +31,8 @@ export class Value {
   readonly label: string
   readonly parents: readonly Value[]
   /** Обратный шаг операции: ЧИСТЫЕ локальные производные (параллельно
-   *  parents, без incoming и мутаций); умножение на incoming и аккумулирование
-   *  — общий код backward() (chain rule, D-34). */
+   *  parents, без incoming и мутаций); умножение на incoming и
+   *  аккумулирование — общий код backward() (chain rule, D-34). */
   readonly backwardFn?: () => readonly number[]
 
   constructor(data: number, init: ValueInit = {}) {
@@ -50,109 +40,35 @@ export class Value {
     this.op = init.op ?? ''
     this.label = init.label ?? ''
     this.parents = init.parents ?? []
-    this.backwardFn = init.backwardFn
+    // exactOptionalPropertyTypes: поле не принимает явный undefined
+    if (init.backwardFn !== undefined) this.backwardFn = init.backwardFn
   }
+}
 
-  add(o: Value): Value {
-    return new Value(this.data + o.data, { op: '+', parents: [this, o] })
+/**
+ * Обратный проход графа (micrograd-канон): топологическая развёртка,
+ * посев ∂L/∂L = 1 в корне, затем chain rule — ОБЩИЙ для всех операций:
+ * локальные производные узла (backwardFn) умножаются на входящий v.grad
+ * и аккумулируются в родителей в порядке родитель A → родитель B.
+ */
+export function backward(root: Value): void {
+  const topo: Value[] = []
+  const seen = new Set<Value>()
+  const visit = (v: Value): void => {
+    if (seen.has(v)) return
+    seen.add(v)
+    for (const p of v.parents) visit(p)
+    topo.push(v)
   }
-
-  sub(o: Value): Value {
-    return new Value(this.data - o.data, { op: '-', parents: [this, o] })
-  }
-
-  mul(o: Value): Value {
-    return new Value(this.data * o.data, { op: '*', parents: [this, o] })
-  }
-
-  div(o: Value): Value {
-    return new Value(this.data / o.data, { op: '/', parents: [this, o] })
-  }
-
-  neg(): Value {
-    return new Value(-this.data, { op: 'neg', parents: [this] })
-  }
-
-  tanh(): Value {
-    return new Value(Math.tanh(this.data), { op: 'tanh', parents: [this] })
-  }
-
-  sigmoid(): Value {
-    return new Value(1 / (1 + Math.exp(-this.data)), { op: 'sigmoid', parents: [this] })
-  }
-
-  log(): Value {
-    return new Value(Math.log(this.data), { op: 'log', parents: [this] })
-  }
-
-  /** Исполняет обратный шаг этой op (вызывается topo-обходом backward):
-   *  чистые локальные градиенты (value-grads.ts) на входящий this.grad
-   *  аккумулируются в родителей в порядке родитель A → родитель B — тот же
-   *  порядок побочных эффектов и числовые выражения, что исходные замыкания. */
-  runBackward(): void {
-    const a = this.parents[0]
-    const b = this.parents[1]
-    switch (this.op) {
-      case '+': {
-        const [ga, gb] = localGradAdd(this.grad)
-        a!.grad += ga
-        b!.grad += gb
-        return
-      }
-      case '-': {
-        const [ga, gb] = localGradSub(this.grad)
-        a!.grad += ga
-        b!.grad += gb
-        return
-      }
-      case '*': {
-        const [ga, gb] = localGradMul(a!.data, b!.data, this.grad)
-        a!.grad += ga
-        b!.grad += gb
-        return
-      }
-      case '/': {
-        const [ga, gb] = localGradDiv(a!.data, b!.data, this.grad)
-        a!.grad += ga
-        b!.grad += gb
-        return
-      }
-      case 'neg': {
-        const [g] = localGradNeg(this.grad)
-        a!.grad += g
-        return
-      }
-      case 'tanh': {
-        const [g] = localGradTanh(this.data, this.grad)
-        a!.grad += g
-        return
-      }
-      case 'sigmoid': {
-        const [g] = localGradSigmoid(this.data, this.grad)
-        a!.grad += g
-        return
-      }
-      case 'log': {
-        const [g] = localGradLog(a!.data, this.grad)
-        a!.grad += g
-      }
-      // лист (op '') не имеет родителей — обратный шаг пуст
-    }
-  }
-
-  /** Топологическая развёртка графа + обратный проход (micrograd-канон). */
-  backward(): void {
-    const topo: Value[] = []
-    const seen = new Set<Value>()
-    const visit = (v: Value): void => {
-      if (seen.has(v)) return
-      seen.add(v)
-      for (const p of v.parents) visit(p)
-      topo.push(v)
-    }
-    visit(this)
-    // сеем ∂L/∂L = 1
-    this.grad = 1
-    for (let k = topo.length - 1; k >= 0; k--) topo[k]!.runBackward()
+  visit(root)
+  // сеем ∂L/∂L = 1
+  root.grad = 1
+  for (let k = topo.length - 1; k >= 0; k--) {
+    const v = topo[k]!
+    // лист (op '') не имеет родителей — обратный шаг пуст
+    if (v.backwardFn === undefined) continue
+    const g = v.grad
+    const partials = v.backwardFn()
+    for (let i = 0; i < partials.length; i++) v.parents[i]!.grad += partials[i]! * g
   }
 }

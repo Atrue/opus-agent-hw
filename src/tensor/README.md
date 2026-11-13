@@ -22,7 +22,7 @@ Deep-импорты внутренних модулей (`tensor/…`) запр�
 | `index.ts` | единственный публичный вход (баррел) |
 | `tensor.ts` | класс Tensor + op-дескриптор BackwardPlan (D-29) |
 | `ops.ts` | чистые ядра/градиенты per-op (порядок суммирования фиксирован) |
-| `value.ts`, `value-grads.ts` | скалярный Value drill-down + чистые grad-функции |
+| `value.ts`, `value-ops/` | скалярный Value-контейнер + backward (общий chain rule) и операции-функции с backwardFn внутри (D-34) |
 | `functional.ts` | `F.bce` (лосс как план backward) |
 | `optim.ts` | SGD |
 | `model.ts` | MLP (обобщается до `buildModel(spec)`, D-30) |
