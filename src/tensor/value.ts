@@ -31,6 +31,7 @@ export interface ValueInit {
   op?: ScalarOp
   parents?: readonly Value[]
   label?: string
+  backwardFn?: () => readonly number[]
 }
 
 export class Value {
@@ -39,12 +40,17 @@ export class Value {
   readonly op: ScalarOp
   readonly label: string
   readonly parents: readonly Value[]
+  /** Обратный шаг операции: ЧИСТЫЕ локальные производные (параллельно
+   *  parents, без incoming и мутаций); умножение на incoming и аккумулирование
+   *  — общий код backward() (chain rule, D-34). */
+  readonly backwardFn?: () => readonly number[]
 
   constructor(data: number, init: ValueInit = {}) {
     this.data = data
     this.op = init.op ?? ''
     this.label = init.label ?? ''
     this.parents = init.parents ?? []
+    this.backwardFn = init.backwardFn
   }
 
   add(o: Value): Value {
