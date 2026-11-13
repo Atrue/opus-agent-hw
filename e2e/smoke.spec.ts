@@ -1,13 +1,13 @@
 import { expect, test } from 'playwright/test'
 import { mkdirSync, rmSync } from 'node:fs'
 import { formatKey } from '../src/format/numbers'
-import { ETALON_SAMPLE_1 } from '../src/run/etalon-constants'
+import { ETALON_NEURON_SAMPLE_1, ETALON_SAMPLE_1 } from '../src/run/etalon-constants'
 
 /**
  * Полная e2e фаз 01.1–01.2 + 02 на сценарии «один нейрон» (D-31 — дефолтный
  * носитель MVP R1, план 02-05) — 16 проверок живого цикла:
- * (1) первый «Шаг»: числа движка в панели (interim-числа сценария: сэмпл 1
- *     AND [1,1]→1, z = 0.8·1 + 0.8·1 = 1.6; точный пин на эталон-константы —
+ * (1) первый «Шаг»: числа движка в панели, пин эталон-константы
+ *     ETALON_NEURON_SAMPLE_1 (сэмпл 1 AND [1,1]→1, z = 0.8·1 + 0.8·1 = 1.6;
  *     план 02-09), индикатор «Эпоха 1 · пример 1 · шаг 2»;
  * (2) полная эпоха 1 пошагово (4 сэмпла × 8 оп): DOM без NaN/Infinity/
  *     undefined, backward-поток с 5-го клика (op 4 = bce-grad), в конце —
@@ -68,6 +68,12 @@ let stepwiseEpochText: string | null = null
 
 const etalonOutput = (op: number): number => (ETALON_SAMPLE_1[op]!.outputs as number[])[0]!
 
+/** Пиновое число neuron-сэмпла 1 (межраннеровый мостик: константы ← playwright). */
+const neuronOut = (op: number): number => (ETALON_NEURON_SAMPLE_1[op]!.outputs as number[])[0]!
+
+/** Экранирование литерала для RegExp-пина панели. */
+const esc = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
 test('1) первый «Шаг» исполняет matvec движка: z = 1.6', async ({ page }) => {
   await page.goto('/')
   await expect(page.getByTestId('step-indicator')).toHaveText('Эпоха 1 · пример 1 · шаг 1')
@@ -75,8 +81,10 @@ test('1) первый «Шаг» исполняет matvec движка: z = 1.6
   await page.getByTestId('btn-next').click()
   await expect(page.getByTestId('step-indicator')).toHaveText('Эпоха 1 · пример 1 · шаг 2')
   const panel = await page.getByTestId('step-panel').textContent()
-  // interim-число живого движка (W = (0.8, 0.8), x = (1, 1)); пин эталон-константой — 02-09
-  expect(panel, 'matvec первого шага: z = 0.8·1 + 0.8·1 = 1.6').toMatch(/z\s*=\s*1\.6/)
+  // пин эталон-константы (02-09): z сэмпла 1 = 0.8·1 + 0.8·1 = 1.6
+  expect(panel, 'matvec первого шага: пин ETALON_NEURON_SAMPLE_1').toMatch(
+    new RegExp(`z\\s*=\\s*${esc(formatKey(neuronOut(0)))}`),
+  )
   expect(panel).not.toContain('NaN')
   await expect(page.getByTestId('architecture-diagram'), 'forward-фаза — поток к выходу').toHaveAttribute(
     'data-flow',
@@ -434,11 +442,11 @@ test('16) result-zone: входы AND-сэмпла + ŷ/L/LR; футер без 
   await expect(zone).toContainText('0.5')
   await expect(zone).not.toContainText('LOSS')
 
-  // 4 клика = операции 0–3 (matvec…bce): ŷ и L вычислены — interim-числа
-  // живого движка (ŷ = σ(0.8) ≈ 0.69, L = −ln ŷ ≈ 0.3711); пин — 02-09
+  // 4 клика = операции 0–3 (matvec…bce): ŷ и L вычислены — пины эталон-констант
+  // (ŷ = σ(0.8), L = −ln(ŷ) — формат .4g как в UI)
   for (let i = 0; i < 4; i++) await page.getByTestId('btn-next').click()
-  await expect(zone, 'ŷ = σ(0.8) — interim').toContainText('0.69')
-  await expect(zone, 'L = −ln(ŷ) — interim').toContainText('0.3711')
+  await expect(zone, 'ŷ = σ(0.8) — пин ETALON_NEURON_SAMPLE_1').toContainText(formatKey(neuronOut(2)))
+  await expect(zone, 'L = −ln(ŷ) — пин ETALON_NEURON_SAMPLE_1').toContainText(formatKey(neuronOut(3)))
 
   // футер (пункт 8 UAT): LOSS/LR-метрик нет; слева — индикатор позиции
   const footer = page.locator('footer')

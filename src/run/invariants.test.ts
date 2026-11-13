@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { buildStepRecord } from './stepRecords'
-import { XOR_SCENARIO, XOR_START_WEIGHTS } from './scenario'
+import { NEURON_SCENARIO, XOR_SCENARIO, XOR_START_WEIGHTS, type ScenarioModel } from './scenario'
 import { buildModel, SampleCursor, type StepRecord, type TensorValues } from '../tensor'
 import { ETALON_SAMPLE_1 } from './etalon-constants'
 
@@ -32,28 +32,34 @@ interface EpochResult {
   records: StepRecord[]
 }
 
-/** Прогон одной эпохи (4 сэмпла × 13 операций) на свежей модели.
+/** Прогон одной эпохи на свежей модели (сценарий-агностично: walked-опы из
+ *  спека; loss-опа = 3·K, где K — слоёв).
  *  record:true — пошаговый режим UI (рекордер пишет StepRecord после каждой оп);
  *  record:false — пакетный fast-forward без записи. */
-function runEpoch(record: boolean): EpochResult {
-  const model = buildModel(XOR_SCENARIO)
+function runEpochOf(spec: ScenarioModel, record: boolean): EpochResult {
+  const lossOp = 3 * spec.net.length
+  const model = buildModel(spec)
   const losses: number[] = []
   const records: StepRecord[] = []
-  for (const sample of XOR_SCENARIO.samples) {
+  for (const sample of spec.samples) {
     const recorder = record
       ? (cursor: SampleCursor, op: number) => {
-          records.push(buildStepRecord(cursor, op, XOR_SCENARIO))
-          if (op === 6) losses.push(cursor.tensors.L!.data[0]!)
+          records.push(buildStepRecord(cursor, op, spec))
+          if (op === lossOp) losses.push(cursor.tensors.L!.data[0]!)
         }
       : undefined
-    const cursor = new SampleCursor(model, sample.x, sample.y, XOR_SCENARIO.lr, recorder)
+    const cursor = new SampleCursor(model, sample.x, sample.y, spec.lr, recorder)
     while (!cursor.done) {
       const op = cursor.opIndex
       cursor.advance()
-      if (!record && op === 6) losses.push(cursor.tensors.L!.data[0]!)
+      if (!record && op === lossOp) losses.push(cursor.tensors.L!.data[0]!)
     }
   }
   return { weights: model.params().map((p) => Float64Array.from(p.data)), losses, records }
+}
+
+function runEpoch(record: boolean): EpochResult {
+  return runEpochOf(XOR_SCENARIO, record)
 }
 
 describe('инвариант «пошагово = fast-forward» (R1/R3)', () => {
@@ -79,6 +85,29 @@ describe('детерминизм прогона (R3)', () => {
   it('два независимых прогона от стартовых констант дают идентичный результат', () => {
     const first = runEpoch(false)
     const second = runEpoch(false)
+    for (let p = 0; p < first.weights.length; p++) {
+      expect(first.weights[p]!, `прогон 1 vs 2, параметр #${String(p)}`).toEqual(second.weights[p])
+    }
+    expect(first.losses).toEqual(second.losses)
+  })
+})
+
+describe('инварианты сценария «один нейрон» (D-31)', () => {
+  it('«пошагово = fast-forward» бит-в-бит: веса и лосс-точки эпохи идентичны', () => {
+    const stepwise = runEpochOf(NEURON_SCENARIO, true)
+    const batch = runEpochOf(NEURON_SCENARIO, false)
+    expect(stepwise.weights).toHaveLength(batch.weights.length)
+    for (let p = 0; p < batch.weights.length; p++) {
+      expect(stepwise.weights[p]!, `параметр #${String(p)} идентичен бит-в-бит`).toEqual(batch.weights[p])
+    }
+    expect(stepwise.losses).toEqual(batch.losses)
+    expect(stepwise.losses).toHaveLength(NEURON_SCENARIO.samples.length)
+    expect(stepwise.records, '4 сэмпла × 8 оп = 32 записи').toHaveLength(NEURON_SCENARIO.samples.length * NEURON_SCENARIO.ops.length)
+  })
+
+  it('детерминизм: два независимых прогона идентичны', () => {
+    const first = runEpochOf(NEURON_SCENARIO, false)
+    const second = runEpochOf(NEURON_SCENARIO, false)
     for (let p = 0; p < first.weights.length; p++) {
       expect(first.weights[p]!, `прогон 1 vs 2, параметр #${String(p)}`).toEqual(second.weights[p])
     }

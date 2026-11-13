@@ -1,14 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import { buildStepRecord } from './stepRecords'
-import { XOR_SCENARIO } from './scenario'
+import { NEURON_SCENARIO, XOR_SCENARIO, type ScenarioModel } from './scenario'
 import { buildModel, SampleCursor, type StepRecord, type TensorValues } from '../tensor'
-import { ETALON_SAMPLE_1 } from './etalon-constants'
+import { ETALON_NEURON_SAMPLE_1, ETALON_SAMPLE_1, type EtalonStep } from './etalon-constants'
 
 /**
  * Эталон-мостик (NFR-02): живой тензорный движок воспроизводит контрольные
- * константы эталонного сэмпла 1 по ВСЕМ 13 операциям (forward + градиенты),
+ * константы эталонного сэмпла 1 по ВСЕМ операциям (forward + градиенты),
  * rel ≤ 1e-6 (abs-пол 1e-12); формулы и нарративы совпадают строкой.
- * Запись шагов идёт тем же buildStepRecord, что рендерит UI.
+ * Запись шагов идёт тем же buildStepRecord, что рендерит UI. XOR —
+ * регрессия движка (константы фазы 01.1); neuron — константы 02-09,
+ * перекрёстно проверенные gradcheck ДО фиксации.
  */
 
 const REL_TOL = 1e-6
@@ -31,51 +33,44 @@ function expectValuesClose(actual: TensorValues, expected: TensorValues, ctx: st
 }
 
 /** Прогон сэмпла 1 пошагово на живом движке (с записью, как в UI). */
-function runEtalonSample(): StepRecord[] {
-  const model = buildModel(XOR_SCENARIO)
-  const sample = XOR_SCENARIO.samples[0]!
-  const cursor = new SampleCursor(model, sample.x, sample.y, XOR_SCENARIO.lr)
+function runEtalonSample(spec: ScenarioModel = XOR_SCENARIO): StepRecord[] {
+  const model = buildModel(spec)
+  const sample = spec.samples[0]!
+  const cursor = new SampleCursor(model, sample.x, sample.y, spec.lr)
   const records: StepRecord[] = []
   while (!cursor.done) {
     const op = cursor.opIndex
     cursor.advance()
-    records.push(buildStepRecord(cursor, op, XOR_SCENARIO))
+    records.push(buildStepRecord(cursor, op, spec))
   }
   return records
 }
 
+/** Сверка прогона сэмпла 1 против эталон-констант (общая для сценариев). */
+function expectEtalonMatch(spec: ScenarioModel, etalon: readonly EtalonStep[], label: string): void {
+  const records = runEtalonSample(spec)
+  expect(records).toHaveLength(etalon.length)
+  for (let k = 0; k < etalon.length; k++) {
+    const rec = records[k]!
+    const step = etalon[k]!
+    expect(rec.formula, `${label} оп ${String(k)}: формула`).toBe(step.formula)
+    expect(rec.narrative.ru, `${label} оп ${String(k)}: нарратив`).toBe(step.narrative)
+    expectValuesClose(rec.outputs.values, step.outputs, `${label} оп ${String(k)} (${step.op}): outputs`)
+    expect(rec.grads === null, `${label} оп ${String(k)}: наличие grads`).toBe(step.grads === null)
+    if (step.grads === null || rec.grads === null) continue
+    expect(Object.keys(rec.grads).sort(), `${label} оп ${String(k)}: ключи grads`).toEqual(Object.keys(step.grads).sort())
+    for (const [sym, values] of Object.entries(step.grads)) {
+      expectValuesClose(rec.grads[sym]!, values, `${label} оп ${String(k)}: grads[${sym}]`)
+    }
+  }
+}
+
 describe('эталон-мостик: движок ↔ контрольные константы (сэмпл 1, стартовые веса)', () => {
-  it('13 операций; формулы и нарративы совпадают строкой', () => {
-    const records = runEtalonSample()
-    expect(records).toHaveLength(ETALON_SAMPLE_1.length)
-    for (let k = 0; k < ETALON_SAMPLE_1.length; k++) {
-      const rec = records[k]!
-      const etalon = ETALON_SAMPLE_1[k]!
-      expect(rec.formula, `оп ${String(k)}: формула`).toBe(etalon.formula)
-      expect(rec.narrative.ru, `оп ${String(k)}: нарратив`).toBe(etalon.narrative)
-    }
+  it('XOR (регрессия): 13 операций; формулы/нарративы строкой, outputs/grads rel ≤ 1e-6', () => {
+    expectEtalonMatch(XOR_SCENARIO, ETALON_SAMPLE_1, 'XOR')
   })
 
-  it('outputs каждой операции совпадают с константами (rel ≤ 1e-6)', () => {
-    const records = runEtalonSample()
-    for (let k = 0; k < ETALON_SAMPLE_1.length; k++) {
-      const rec = records[k]!
-      const etalon = ETALON_SAMPLE_1[k]!
-      expectValuesClose(rec.outputs.values, etalon.outputs, `оп ${String(k)} (${etalon.op}): outputs`)
-    }
-  })
-
-  it('grads каждой операции совпадают с константами (rel ≤ 1e-6)', () => {
-    const records = runEtalonSample()
-    for (let k = 0; k < ETALON_SAMPLE_1.length; k++) {
-      const rec = records[k]!
-      const etalon = ETALON_SAMPLE_1[k]!
-      expect(rec.grads === null, `оп ${String(k)}: наличие grads`).toBe(etalon.grads === null)
-      if (etalon.grads === null || rec.grads === null) continue
-      expect(Object.keys(rec.grads).sort(), `оп ${String(k)}: ключи grads`).toEqual(Object.keys(etalon.grads).sort())
-      for (const [sym, values] of Object.entries(etalon.grads)) {
-        expectValuesClose(rec.grads[sym]!, values, `оп ${String(k)}: grads[${sym}]`)
-      }
-    }
+  it('neuron: 8 операций; формулы/нарративы строкой, outputs/grads rel ≤ 1e-6', () => {
+    expectEtalonMatch(NEURON_SCENARIO, ETALON_NEURON_SAMPLE_1, 'neuron')
   })
 })
