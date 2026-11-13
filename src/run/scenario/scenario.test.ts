@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { buildModel, SampleCursor } from '../tensor'
-import { NEURON_SCENARIO } from './scenario'
+import { buildModel, SampleCursor } from '../../tensor'
+import { NEURON_SCENARIO } from './index'
 
 /**
  * Правило первого шага (Pitfall 6, D-31): стартовые константы нейрон-сценария

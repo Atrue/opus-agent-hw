@@ -4,9 +4,13 @@
  *
  * История сессии (01.2-02): SampleRecord на границе сэмпла + StartRecord на
  * старте/сбросе прогона; живёт до reload (reset = перезапуск прогона, D-26).
+ *
+ * SegmentId (D-34, 02-11): идентификатор звена живёт в run-слое — закрыта
+ * слой-инверсия run→ui (ui/chain* импортирует отсюда).
  */
 
-import type { SegmentId } from '../ui/chainLinks'
+/** Идентификатор звена цепи формулы-хребта — строка спека (render.segments[].id). */
+export type SegmentId = string
 
 export type Mode = 'default' | 'lecture'
 

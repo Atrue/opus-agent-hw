@@ -16,24 +16,23 @@
   чистого листа, но история сессии (`sampleHistory`, `completedEpochs`) живёт
   до reload; прогоны разделяются `runId`.
 
-## Структура файлов (D-28б, сплит 02-07)
+## Структура (D-28б/D-34: домен = папка, сущность = файл)
 
-Политика прогона разложена по границам ответственности — 1 модуль на файл
-(+ типы): синглтон `run` ← класс `TrainingRun` ← снимки операций
-`stepRecords` ← типы истории `types`; селекторный хук `useRunSlice` поверх
-синглтона. Публичная поверхность модуля:
+Политика прогона разложена по границам ответственности; `stepRecords` —
+связная группа одного субъекта (снимки операций в StepRecord), по инструкции
+гранулометрии не дробится. Публичная поверхность модуля:
 
 | Модуль | Экспорт | Назначение |
 |---|---|---|
 | `run.ts` | `run` | единственный синглтон прогона (реактивный корень, R4) |
 | `useRunSlice.ts` | `useRunSlice` | селекторный хук поверх `useSyncExternalStore` |
 | `trainingRun.ts` | `TrainingRun` | класс прогона (эпохи/FF/reset/история, Set-listeners) |
-| `stepRecords.ts` | `buildStepRecord`, `currentPhase`, `firstOpValue`, `flatWeights` | снимки операций в StepRecord |
-| `types.ts` | `Mode`, `LinkSelection`, `RunScreen`, `EpochSummaryData`, `Drill`, `SampleRecord`, `StartRecord`, `HistoryRecord`, `isSampleRecord` | типы и guard'ы истории сессии |
-| `scenario.ts` | `XOR_SCENARIO`, `SAMPLE_COUNT` | декларативный сценарий (веса, датасет, метаданные ops) |
+| `stepRecords.ts` | `buildStepRecord`, `currentPhase`, `firstOpValue`, `flatWeights` | снимки операций в StepRecord (связная группа) |
+| `types.ts` | `Mode`, `LinkSelection`, `RunScreen`, `EpochSummaryData`, `Drill`, `SampleRecord`, `StartRecord`, `HistoryRecord`, `isSampleRecord`, `SegmentId` | типы и guard'ы истории сессии; SegmentId живёт в run-слое (D-34) |
 | `url.ts` | hash-парсер | `#scenario=` |
-| `history.ts` | построители серий | график лосса, история звена цепи |
 | `etalon-constants.ts` | эталонные константы | plain-TS, 0 импортов (NFR-02) |
+| `scenario/` | `NEURON_SCENARIO`, `XOR_SCENARIO`, `XOR_START_WEIGHTS`, `activeScenario`, `activateScenario`, `netShapeOf`, типы | декларативные модели сценариев: types (14 типов) / bindings (фабрики узлов-рёбер) / xor / neuron / registry (реестр) + баррел; сценарий = файл данных (фаза 3 добавляет MLP-спек файлом) |
+| `history/` | `seriesOf`, `sessionGeometryOf`, `buildLossChartData`, `linkHistoryOf`, `capLinkHistory`, `WEIGHT_ROWS`, типы | история обучения (UX-05/UX-06): series (серии спека) / session (геометрия сессии) / lossChart (график лосса) / linkHistory (история звена) + баррел; LINK_HISTORY_CAP — внутренняя |
 
 Собственные поля `window.*` для состояния не используются (D-33) — стейт
 живёт в синглтоне `run`.

@@ -12,9 +12,7 @@
 
 import { GRAPH_EDGES, GRAPH_NODES, SEGMENT_GROUPS } from './compGraph'
 import { activeScenario, type ScenarioModel } from '../run/scenario'
-
-/** Идентификатор звена — строка спека (render.segments[].id). */
-export type SegmentId = string
+import type { SegmentId } from '../run/types'
 
 export interface ChainSegment {
   id: SegmentId

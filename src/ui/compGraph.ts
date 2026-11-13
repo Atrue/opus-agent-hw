@@ -16,7 +16,7 @@
  */
 
 import { activeScenario, type ScenarioModel } from '../run/scenario'
-import type { SegmentId } from './chainLinks'
+import type { SegmentId } from '../run/types'
 
 export type GraphNodeKind = 'value' | 'op' | 'update'
 export type GraphNodeRole = 'const' | 'param' | 'computed' | 'op'

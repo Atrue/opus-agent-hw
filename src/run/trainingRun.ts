@@ -8,9 +8,8 @@
 
 import { buildModel, SampleCursor, type ScenarioNet, type SampleTensors, type StepRecord } from '../tensor'
 import { activeScenario, type ScenarioModel } from './scenario'
-import type { SegmentId } from '../ui/chainLinks'
 import { buildStepRecord, firstOpValue, flatWeights } from './stepRecords'
-import type { Drill, EpochSummaryData, HistoryRecord, LinkSelection, Mode, RunScreen } from './types'
+import type { Drill, EpochSummaryData, HistoryRecord, LinkSelection, Mode, RunScreen, SegmentId } from './types'
 
 type Listener = () => void
 

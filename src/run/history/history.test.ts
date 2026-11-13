@@ -7,10 +7,10 @@ import {
   seriesOf,
   type LinkHistoryPoint,
   type LinkSeries,
-} from './history'
-import { TrainingRun } from './trainingRun'
-import { isSampleRecord, type SampleRecord } from './types'
-import { XOR_SCENARIO } from './scenario'
+} from './index'
+import { TrainingRun } from '../trainingRun'
+import { isSampleRecord, type SampleRecord } from '../types'
+import { XOR_SCENARIO } from '../scenario'
 
 /**
  * История обучения (UX-05/UX-06, планы 01.1-03 → 01.2-02): per-sample

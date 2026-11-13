@@ -2,7 +2,8 @@ import React from 'react'
 import { run } from '../run/run'
 import { useRunSlice } from '../run/useRunSlice'
 import { activeScenario } from '../run/scenario'
-import { symbolToSegment, type SegmentId } from './chainLinks'
+import { symbolToSegment } from './chainLinks'
+import type { SegmentId } from '../run/types'
 import { SubscriptText } from './SubscriptText'
 
 /**
