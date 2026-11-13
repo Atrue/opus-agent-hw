@@ -17,16 +17,17 @@ Deep-импорты внутренних модулей (`tensor/…`) запр�
 
 ## Состав
 
-| Файл | Ответственность |
+| Файл/папка | Ответственность |
 |---|---|
 | `index.ts` | единственный публичный вход (баррел) |
-| `tensor.ts` | класс Tensor + op-дескриптор BackwardPlan (D-29) |
-| `ops.ts` | чистые ядра/градиенты per-op (порядок суммирования фиксирован) |
+| `tensor.ts` | класс Tensor + типы (OpName/BackwardPlan/TensorInit) |
+| `backward.ts` | диспетчер обратного шага runBackwardPlan + внутренняя accumulate (D-29) |
+| `ops/` | чистые ядра/градиенты ПО ОПЕРАЦИЯМ (matvec/add/tanh/sigmoid/bce — операция и её градиенты в одном файле, зеркально value-ops/; порядок суммирования фиксирован) |
 | `value.ts`, `value-ops/` | скалярный Value-контейнер + backward (общий chain rule) и операции-функции с backwardFn внутри (D-34) |
 | `functional.ts` | `F.bce` (лосс как план backward) |
 | `optim.ts` | SGD |
 | `model.ts` | MLP (обобщается до `buildModel(spec)`, D-30) |
-| `trace.ts` | SampleCursor — пошаговое исполнение сэмпла |
+| `trace/` | пошаговое исполнение walkthrough: types (типы записи) / walk (маршрут) / cursor (SampleCursor) / io (снапшот-хелперы) |
 | `expanders.ts` | ленивые раскрытия drill-down (view над снапшотами чисел) |
 
 Тесты лежат рядом (`*.test.ts`, D-28а); эталон-константы NFR-02 —

@@ -11,19 +11,16 @@
  * показывает ∂L/∂x; requiresGrad маркирует параметры, которые обновляет SGD.
  *
  * Декомпозиция D-29: обратный шаг — ДАННЫЕ (тегированный union BackwardPlan),
- * а не замыкание; исполняет чистая функция-диспетчер runBackwardPlan с теми
- * же ядрами ops.ts и тем же порядком accumulate (бит-идентичность, Pitfall 2).
+ * а не замыкание; исполняет чистая функция-диспетчер runBackwardPlan
+ * (backward.ts) с теми же ядрами ops/ и тем же порядком accumulate
+ * (бит-идентичность, Pitfall 2).
  */
 
+import { runBackwardPlan } from './backward'
 import {
   addForward,
-  bceGradP,
   matvecForward,
-  matvecGradW,
-  matvecGradX,
-  sigmoidBackwardFromOutput,
   sigmoidForward,
-  tanhBackwardFromOutput,
   tanhForward,
 } from './ops'
 
@@ -31,7 +28,8 @@ export type OpName = 'matmul' | 'add' | 'tanh' | 'sigmoid' | 'bce'
 
 /** Дескриптор обратного шага op (D-29): данные вместо замыкания — tagged
  *  union по образцу ExpandRequest (expanders.ts); ровно тот набор ops, что
- *  строит forward (+ F.bce). Исполняет чистый диспетчер runBackwardPlan. */
+ *  строит forward (+ F.bce). Исполняет чистый диспетчер runBackwardPlan
+ *  (backward.ts). */
 export type BackwardPlan =
   | { op: 'matmul'; w: Tensor; x: Tensor; rows: number; cols: number }
   | { op: 'add'; a: Tensor; b: Tensor }
@@ -44,42 +42,6 @@ export interface TensorInit {
   op?: OpName | ''
   parents?: readonly Tensor[]
   plan?: BackwardPlan
-}
-
-/** Аккумуляция градиента на месте: t.grad += delta (ленивая аллокация).
- *  Экспорт для внутренних модулей библиотеки (не реэкспортируется из index.ts). */
-export function accumulate(t: Tensor, delta: Float64Array): void {
-  if (t.grad === null) {
-    t.grad = Float64Array.from(delta)
-    return
-  }
-  for (let i = 0; i < delta.length; i++) t.grad[i] = t.grad[i]! + delta[i]!
-}
-
-/** Чистый диспетчер обратного шага (D-29): switch по plan.op; каждый кейс —
- *  те же вызовы ядер ops.ts и тот же порядок accumulate(родитель A →
- *  родитель B), что исходные замыкания (матмул: сначала w, потом x) —
- *  перестановка меняет биты (Pitfall 2, NFR-02). */
-export function runBackwardPlan(plan: BackwardPlan, out: Tensor): void {
-  if (out.grad === null) return
-  switch (plan.op) {
-    case 'matmul':
-      accumulate(plan.w, matvecGradW(out.grad, plan.x.data, plan.rows, plan.cols))
-      accumulate(plan.x, matvecGradX(plan.w.data, plan.rows, plan.cols, out.grad))
-      return
-    case 'add':
-      accumulate(plan.a, out.grad)
-      accumulate(plan.b, out.grad)
-      return
-    case 'tanh':
-      accumulate(plan.z, tanhBackwardFromOutput(out.data, out.grad))
-      return
-    case 'sigmoid':
-      accumulate(plan.z, sigmoidBackwardFromOutput(out.data, out.grad))
-      return
-    case 'bce':
-      accumulate(plan.p, bceGradP(plan.p.data, plan.t.data))
-  }
 }
 
 export class Tensor {
@@ -187,7 +149,7 @@ export class Tensor {
   }
 
   /** Исполняет обратный шаг только этой op (пошаговый backward):
-   *  диспетчер чистых ядер ops.ts по op-дескриптору (D-29). */
+   *  диспетчер чистых ядер ops/ по op-дескриптору (D-29, backward.ts). */
   runBackward(): void {
     if (this.plan !== null) runBackwardPlan(this.plan, this)
   }
