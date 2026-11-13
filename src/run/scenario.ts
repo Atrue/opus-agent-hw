@@ -248,7 +248,6 @@ const XOR_OPS: readonly ScenarioOpMeta[] = [
 
 // ---- фабрики живых чисел узлов (короткие конструкторы биндингов) ----
 const inB = (index: number): NodeBinding => ({ kind: 'input', index })
-const tgt: NodeBinding = { kind: 'target' }
 const wB = (layer: number, index: number): NodeBinding => ({ kind: 'weight', layer, index })
 const bB = (layer: number, index: number): NodeBinding => ({ kind: 'bias', layer, index })
 const ten = (slot: 'zPre' | 'zPost' | 'h' | 'L', layer: number, index: number, step?: number): NodeBinding =>
@@ -265,7 +264,6 @@ const UPDATE_NODES = ['op:update', ...ALL_PARAMS] as const
 const XOR_NODES: readonly RenderNode[] = [
   { id: 'x[0]', kind: 'value', role: 'const', label: 'x1', col: 0, row: 4, value: inB(0), grad: inB(0), click: { drill: 'x[0]' } },
   { id: 'x[1]', kind: 'value', role: 'const', label: 'x2', col: 0, row: 6, value: inB(1), grad: inB(1), click: { drill: 'x[1]' } },
-  { id: 'y[0]', kind: 'value', role: 'const', label: 'y', col: 14, row: 6, value: tgt, click: { drill: 'y[0]' } },
   ...[0, 1, 2].flatMap((j): RenderNode[] => [
     { id: `W1[${String(j * 2)}]`, kind: 'value', role: 'param', label: `W1[${String(j)},0]`, col: 1, row: j === 0 ? 0 : j === 1 ? 4 : 8, value: wB(0, j * 2), grad: wB(0, j * 2), click: { drill: `W1[${String(j * 2)}]` } },
     { id: `W1[${String(j * 2 + 1)}]`, kind: 'value', role: 'param', label: `W1[${String(j)},1]`, col: 1, row: (j === 0 ? 0 : j === 1 ? 4 : 8) + 1, value: wB(0, j * 2 + 1), grad: wB(0, j * 2 + 1), click: { drill: `W1[${String(j * 2 + 1)}]` } },
@@ -290,9 +288,7 @@ const XOR_NODES: readonly RenderNode[] = [
   { id: 'z2', kind: 'value', role: 'computed', label: 'z2', col: 11, row: 4, value: ten('zPost', 1, 0, 4), grad: ten('zPost', 1, 0) },
   { id: 'op:sigmoid', kind: 'op', role: 'op', label: 'σ', col: 12, row: 4, value: ten('h', 1, 0, 5), grad: ten('h', 1, 0), click: { segment: 'yhat', symbol: 'σ' } },
   { id: 'ŷ', kind: 'value', role: 'computed', label: 'ŷ', col: 13, row: 4, value: ten('h', 1, 0, 5), grad: ten('h', 1, 0), click: { drill: 'ŷ' } },
-  { id: 'op:bce', kind: 'op', role: 'op', label: 'BCE', col: 14, row: 4, value: ten('L', 0, 0, 6), click: { segment: 'L', symbol: 'L' } },
-  { id: 'L', kind: 'value', role: 'computed', label: 'L', col: 15, row: 4, value: ten('L', 0, 0, 6) },
-  { id: 'op:update', kind: 'update', role: 'op', label: 'W ← W − η·∂L/∂W', col: 16, row: 8, click: { segment: 'W', symbol: 'η' } },
+  { id: 'op:update', kind: 'update', role: 'op', label: 'W ← W − η·∂L/∂W', col: 14, row: 8, click: { segment: 'W', symbol: 'η' } },
 ]
 
 /** Рёбра XOR-графа: операнд → операция → результат + update-станция. */
@@ -321,9 +317,6 @@ const XOR_EDGES: readonly RenderEdge[] = [
   flow('op:add2', 'z2'),
   flow('z2', 'op:sigmoid'),
   flow('op:sigmoid', 'ŷ'),
-  flow('ŷ', 'op:bce'),
-  flow('y[0]', 'op:bce'),
-  flow('op:bce', 'L'),
   ...ALL_PARAMS.map(upd),
 ]
 
@@ -335,8 +328,8 @@ const XOR_STEP_GROUPS: readonly (readonly string[])[] = [
   ['op:matvec2', 'W2a1'],
   ['op:add2', 'z2'],
   ['op:sigmoid', 'ŷ'],
-  ['op:bce', 'L'],
-  ['op:bce', 'ŷ', 'L'],
+  ['ŷ'],
+  ['ŷ'],
   ['op:sigmoid', 'z2', 'ŷ'],
   ['op:matvec2', 'W2a1', 'ŷ'],
   ['op:tanh[0]', 'op:tanh[1]', 'op:tanh[2]', 'a1[0]', 'a1[1]', 'a1[2]', 'z1[0]', 'z1[1]', 'z1[2]'],
@@ -401,8 +394,8 @@ const XOR_SEGMENTS: readonly RenderSegment[] = [
     formula: XOR_OPS[6]!.formula,
     symbols: ['y', 'L'],
     numberSyms: ['ŷ', 'y', 'L'],
-    nodes: ['op:bce', 'y[0]', 'L', 'ŷ'],
-    symbolNodes: { y: ['y[0]'], L: ['op:bce', 'y[0]', 'L', 'ŷ'] },
+    nodes: ['ŷ'],
+    symbolNodes: {},
   },
   {
     id: 'W',
@@ -612,10 +605,7 @@ const NEURON_NODES: readonly RenderNode[] = [
   { id: 'z', kind: 'value', role: 'computed', label: 'z', col: 5, row: 4, value: ten('zPost', 0, 0, 1), grad: ten('zPost', 0, 0) },
   { id: 'op:sigmoid', kind: 'op', role: 'op', label: 'σ', col: 6, row: 4, value: ten('h', 0, 0, 2), grad: ten('h', 0, 0), click: { segment: 'yhat', symbol: 'σ' } },
   { id: 'ŷ', kind: 'value', role: 'computed', label: 'ŷ', col: 7, row: 4, value: ten('h', 0, 0, 2), grad: ten('h', 0, 0), click: { drill: 'ŷ' } },
-  { id: 'op:bce', kind: 'op', role: 'op', label: 'BCE', col: 8, row: 4, value: ten('L', 0, 0, 3), click: { segment: 'L', symbol: 'L' } },
-  { id: 'y[0]', kind: 'value', role: 'const', label: 'y', col: 8, row: 6, value: tgt, click: { drill: 'y[0]' } },
-  { id: 'L', kind: 'value', role: 'computed', label: 'L', col: 9, row: 4, value: ten('L', 0, 0, 3) },
-  { id: 'op:update', kind: 'update', role: 'op', label: 'W ← W − η·∂L/∂W', col: 10, row: 8, click: { segment: 'W', symbol: 'η' } },
+  { id: 'op:update', kind: 'update', role: 'op', label: 'W ← W − η·∂L/∂W', col: 8, row: 8, click: { segment: 'W', symbol: 'η' } },
 ]
 
 const NEURON_EDGES: readonly RenderEdge[] = [
@@ -629,9 +619,6 @@ const NEURON_EDGES: readonly RenderEdge[] = [
   flow('op:add', 'z'),
   flow('z', 'op:sigmoid'),
   flow('op:sigmoid', 'ŷ'),
-  flow('ŷ', 'op:bce'),
-  flow('y[0]', 'op:bce'),
-  flow('op:bce', 'L'),
   upd('W[0]'),
   upd('W[1]'),
   upd('b[0]'),
@@ -641,8 +628,8 @@ const NEURON_STEP_GROUPS: readonly (readonly string[])[] = [
   ['op:matvec', 'Wx'],
   ['op:add', 'z'],
   ['op:sigmoid', 'ŷ'],
-  ['op:bce', 'L'],
-  ['op:bce', 'ŷ', 'L'],
+  ['ŷ'],
+  ['ŷ'],
   ['op:sigmoid', 'z', 'ŷ'],
   ['op:matvec', 'Wx', 'z'],
   ['op:update', 'W[0]', 'W[1]', 'b[0]'],
@@ -682,8 +669,8 @@ const NEURON_SEGMENTS: readonly RenderSegment[] = [
     formula: NEURON_OPS[3]!.formula,
     symbols: ['y', 'L'],
     numberSyms: ['ŷ', 'y', 'L'],
-    nodes: ['op:bce', 'y[0]', 'L', 'ŷ'],
-    symbolNodes: { y: ['y[0]'], L: ['op:bce', 'y[0]', 'L', 'ŷ'] },
+    nodes: ['ŷ'],
+    symbolNodes: {},
   },
   {
     id: 'W',

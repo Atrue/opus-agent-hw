@@ -28,8 +28,9 @@ import { ETALON_NEURON_SAMPLE_1, ETALON_SAMPLE_1 } from '../src/run/etalon-const
  *     W[0,1], b[0]) × (2×4 сэмпла + стартовые) = 27 значений; выбор L —
  *     история лосса; после reset история звена и разделители сохраняются;
  * (13) граф: σ-символ подсвечивает группу звена ŷ (.diag-selected); клик по
- *     биас-узлу b[0] → drill; после bce все станции несут числа; клик по узлу
- *     BCE выбирает звено L;
+ *     биас-узлу b[0] → drill; после bce все станции несут числа; звено L
+ *     выбирается символом формулы и подсвечивает ŷ (D-32: loss-узла на графе
+ *     нет — геометрия звена L переопределена на ŷ);
  * (14) граф: градиенты ∂L/∂· под звеньями после backward, hover рёбер —
  *     fwd/bwd-тултип, 8-й шаг sgd — update-станция активна, веса обновились;
  * (15) samples-panel: колонки-переменные, 4 AND-примера, текущий помечен;
@@ -342,17 +343,17 @@ test('13) граф: σ выбирает группу звена ŷ; клик п�
   await expect(page.getByTestId('drill-panel')).toBeVisible()
 
   // 4 клика = операции 0–3 (matvec…bce): все значения/параметры/операции
-  // несут числа, ни одного «н/д»; клик по узлу BCE выбирает звено L
+  // несут числа, ни одного «н/д»; звено L — символом формулы (loss-узла на
+  // графе нет — D-32): выбор подсвечивает ŷ (переопределённая геометрия)
   for (let i = 0; i < 3; i++) await page.getByTestId('btn-next').click()
   const stations = page.getByTestId('station-value')
-  await expect(stations, 'звенья графа со значениями (x×2, W×2, Wx, b, z, ŷ, y, L + оп ×4)').toHaveCount(14)
+  await expect(stations, 'звенья графа со значениями (x×2, W×2, Wx, b, z, ŷ + оп ×3)').toHaveCount(11)
   await expect(stations.filter({ hasText: 'н/д' }), 'после bce все звенья несут числа').toHaveCount(0)
-  await page.getByRole('button', { name: 'Операция BCE' }).click()
-  await expect(page.getByTestId('architecture-diagram'), 'клик по узлу BCE выбирает звено L').toHaveAttribute(
-    'data-selection',
-    'L',
-  )
-  await expect(page.getByTestId('link-panel')).toBeVisible()
+  await page.getByTestId('formula-sym-L').click()
+  await expect(page.getByTestId('architecture-diagram'), 'символ L выбирает звено L').toHaveAttribute('data-selection', 'L')
+  await expect(page.locator('g[data-node="ŷ"]'), 'звено L подсвечивает ŷ (D-32: лосс вне графа)').toHaveClass(/diag-selected/)
+  await expect(page.getByTestId('link-panel'), 'панель звена L жива (лосс — в числах панели)').toBeVisible()
+  await page.getByTestId('formula-sym-L').click()
 })
 
 test('14) граф: градиенты под звеньями, hover рёбер fwd/bwd, update-станция обновляет веса', async ({ page }) => {
