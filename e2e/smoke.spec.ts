@@ -347,8 +347,9 @@ test('13) граф: σ выбирает группу звена ŷ; клик п�
   // графе нет — D-32): выбор подсвечивает ŷ (переопределённая геометрия)
   for (let i = 0; i < 3; i++) await page.getByTestId('btn-next').click()
   const stations = page.getByTestId('station-value')
-  await expect(stations, 'звенья графа со значениями (x×2, W×2, Wx, b, z, ŷ + оп ×3)').toHaveCount(11)
+  await expect(stations, 'звенья графа со значениями (x×2, W×2, b, z, ŷ + оп ×3)').toHaveCount(10)
   await expect(stations.filter({ hasText: 'н/д' }), 'после bce все звенья несут числа').toHaveCount(0)
+  await expect(page.getByTestId('update-station'), 'update-узла на графе нет (2.1-01, расширение D-32)').toHaveCount(0)
   await page.getByTestId('formula-sym-L').click()
   await expect(page.getByTestId('architecture-diagram'), 'символ L выбирает звено L').toHaveAttribute('data-selection', 'L')
   await expect(page.locator('g[data-node="ŷ"]'), 'звено L подсвечивает ŷ (D-32: лосс вне графа)').toHaveClass(/diag-selected/)
@@ -356,7 +357,7 @@ test('13) граф: σ выбирает группу звена ŷ; клик п�
   await page.getByTestId('formula-sym-L').click()
 })
 
-test('14) граф: градиенты под звеньями, hover рёбер fwd/bwd, update-станция обновляет веса', async ({ page }) => {
+test('14) граф: градиенты под звеньями, hover рёбер fwd/bwd, sgd-шаг обновляет веса (update-узла нет)', async ({ page }) => {
   await page.goto('/')
 
   // 7 кликов = операции 0–6 (backward завершён, до sgd): под звеньями
@@ -365,8 +366,8 @@ test('14) граф: градиенты под звеньями, hover рёбер
   const grads = page.getByTestId('node-grad')
   expect(
     await grads.count(),
-    'градиенты под звеньями после backward (x×2, W×2, b, z-цепь, ŷ)',
-  ).toBe(11)
+    'градиенты под звеньями после backward (x×2, W×2, b, z-цепь, ŷ + оп ×3)',
+  ).toBe(10)
   await expect(grads.filter({ hasText: '∂ =' }).first()).toBeVisible()
 
   // hover ребра → тултип с двумя значениями: forward (значение источника)
@@ -378,11 +379,13 @@ test('14) граф: градиенты под звеньями, hover рёбер
   expect(tipText, 'тултип несёт forward-значение источника').toMatch(/=\s*[-−+]?[\d.]/)
   expect(tipText, 'тултип несёт backward-значение (∂L/∂ источника)').toContain('∂L/∂')
 
-  // 8-й шаг — sgd: update-станция активна, параметры обновились (W[0])
+  // 8-й шаг — sgd: update-узла на графе нет (2.1-01), параметры подсвечены
+  // амбером и обновились живым прогоном (W[0])
   const w0Value = page.locator('g[data-node="W[0]"] [data-testid="station-value"]')
   const before = ((await w0Value.textContent()) ?? '').trim()
   await page.getByTestId('btn-next').click()
-  await expect(page.locator('g.g-update.active'), 'update-станция активна на 8-м шаге').toBeAttached()
+  await expect(page.getByTestId('update-station'), 'update-узла на графе нет (2.1-01)').toHaveCount(0)
+  await expect(page.locator('g[data-node="W[0]"]'), 'параметр W[0] подсвечен амбером на sgd-шаге').toHaveClass(/active/)
   const after = ((await w0Value.textContent()) ?? '').trim()
   expect(after, 'вес W[0] обновился на шаге sgd').not.toBe(before)
 })

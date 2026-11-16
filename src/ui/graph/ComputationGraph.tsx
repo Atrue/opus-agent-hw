@@ -9,16 +9,17 @@ import { GRAPH_EDGES, GRAPH_NODES, STEP_GROUPS } from './inventory'
 import { geometryOf } from '../chain/geometry'
 
 /**
- * Граф вычислений (01.2-06, правила владельца): диаграмма = буквальный граф
- * движка — сеть без лосса (D-32: функция потерь не изображается на графе;
- * числа лосса живут в панели звена L, формуле-строке и экране эпохи).
+ * Граф вычислений (01.2-06, правила владельца; 2.1-01/D-35): диаграмма =
+ * буквальный граф движка — сеть без лосса (D-32) и без update-узла
+ * (2.1-01: SGD-шаг живёт в панели операции, звене W, формуле-строке и
+ * drill-down; на графе — только звенья и операции цепи, рёбра «·» → «+»
+ * без промежуточных пересадок).
  * Звено-значение — закруглённый квадрат (константа — белая рамка,
  * параметр — зелёная --color-pos, вычисленное — нейтральная), звено-операция —
  * круг (операции по-элементно); внутри звена — текущее живое значение, после
  * backward-шагов под звеном — градиент (∂L/∂·). Рёбра операнд→оп→результат
- * показывают движение значения; hover — fwd/bwd числа источника. После
- * backward — ЯВНАЯ update-станция «W ← W − η·∂L/∂W» (одна), рёбра ко всем
- * параметрам; на шаге sgd станция активна, параметры обновляются.
+ * показывают движение значения; hover — fwd/bwd числа источника. На шаге sgd
+ * амбером подсвечиваются параметры (значения обновляются живым прогоном).
  *
  * Значения — live-срезы прогона (инвариант «граф = drill-down = движок»):
  * узел показывает число тогда, когда его операция исполнена в текущем сэмпле,
@@ -139,7 +140,6 @@ function clickOf(node: GraphNode): ClickAction {
 /** aria-метка узла (контракт e2e: биасы — «Биас b1[0] = …»; роль — по биндингу). */
 function ariaOf(node: GraphNode, value: number | undefined): string {
   const v = value === undefined ? 'н/д' : formatKey(value)
-  if (node.kind === 'update') return 'Обновление весов: W ← W − η·∂L/∂W'
   if (node.kind === 'op') return `Операция ${node.label}`
   const b = renderNodeById.get(node.id)?.value
   if (b?.kind === 'target') return `Метка y = ${v}`
@@ -191,7 +191,6 @@ function anchor(id: string, side: 'left' | 'right'): { x: number; y: number } {
   const halfW = isOp ? (OP_LABEL_RADIUS[n.label] ?? 14) : NODE_W / 2
   return { x: side === 'right' ? n.x + halfW : n.x - halfW, y: n.y }
 }
-
 /** Уровни зума канвы (детерминированные; 0.5–2.0, шаг 0.25). */
 const ZOOM_MIN = 0.5
 const ZOOM_MAX = 2
@@ -208,7 +207,6 @@ export function ComputationGraph({ record }: { record: StepRecord | null }) {
   const sel = selection === null
     ? { nodes: new Set<string>(), edges: new Set<string>(), plates: new Set<string>(), biases: new Set<string>() }
     : geometryOf(selection.segment)
-  const updateActive = stepIdx === STEP_GROUPS.length - 1
 
   const runClick = (node: GraphNode): void => {
     const action = clickOf(node)
@@ -245,7 +243,7 @@ export function ComputationGraph({ record }: { record: StepRecord | null }) {
           className="graph-canvas"
           style={{ transform: `scale(${zoom})`, transformOrigin: '0 0' }}
           role="img"
-          aria-label={`Граф вычислений ${netShapeOf(activeScenario())}: константы x, параметры W и b, операции слоёв и станция обновления весов; внутри звена — живое значение, под звеном — градиент после backward`}
+          aria-label={`Граф вычислений ${netShapeOf(activeScenario())}: константы x, параметры W и b, операции слоёв; внутри звена — живое значение, под звеном — градиент после backward`}
         >
         {GRAPH_EDGES.map((e) => {
           const from = anchor(e.from, 'right')
@@ -261,7 +259,7 @@ export function ComputationGraph({ record }: { record: StepRecord | null }) {
             <g
               key={e.id}
               data-edge={e.id}
-              className={`diag-edge-g${e.kind === 'update' ? ' g-edge-update' : ''}${active ? ' active' : ''}${selected ? ' diag-selected' : ''}`}
+              className={`diag-edge-g${active ? ' active' : ''}${selected ? ' diag-selected' : ''}`}
             >
               <path d={d} className="diag-edge-selcasing" style={{ stroke: 'var(--color-primary)' }} />
               <path d={d} className="diag-edge-casing" style={{ stroke: 'var(--color-tertiary)' }} />
@@ -298,29 +296,6 @@ export function ComputationGraph({ record }: { record: StepRecord | null }) {
           const action = clickOf(node)
           const clickable = action !== null
           const cls = `g-node g-node-${node.role}${selected ? ' diag-selected' : ''}${active ? ' active' : ''}`
-          if (node.kind === 'update') {
-            return (
-              <g key={node.id} data-node={node.id} className={`g-update${updateActive ? ' active' : ''}${selected ? ' diag-selected' : ''}`}>
-                <rect x={node.x - 78} y={node.y - 18} width={156} height={36} rx={10} data-testid="update-station" />
-                <text x={node.x} y={node.y + 4} textAnchor="middle" className="g-update-label">
-                  W ← W − η·∂L/∂W
-                </text>
-                <rect
-                  x={node.x - 78}
-                  y={node.y - 18}
-                  width={156}
-                  height={36}
-                  className="diag-hit"
-                  style={{ fill: 'transparent' }}
-                  role="button"
-                  tabIndex={0}
-                  aria-label={ariaOf(node, undefined)}
-                  onClick={() => runClick(node)}
-                  onKeyDown={onActivate(() => runClick(node))}
-                />
-              </g>
-            )
-          }
           if (node.kind === 'op') {
             const r = OP_LABEL_RADIUS[node.label] ?? 14
             return (

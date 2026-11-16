@@ -108,14 +108,14 @@ describe('chainLinks XOR: 7 звеньев в порядке цепи (регр�
     })
   })
 
-  it('звено a1 = tanh-опы + a1-значения (≥3 — контракт e2e 8); звено W — станция + все 13 параметров', () => {
+  it('звено a1 = tanh-опы + a1-значения (≥3 — контракт e2e 8); звено W — все 13 параметров, update-узла нет (2.1-01)', () => {
     const ctx = contextOf(XOR_SCENARIO)
     const a1 = geometryOf('a1', undefined, ctx)
     expect(a1.nodes.size).toBeGreaterThanOrEqual(3)
     expect([...a1.nodes].filter((id) => id.startsWith('op:tanh'))).toHaveLength(3)
     expect([...a1.nodes].filter((id) => id.startsWith('a1['))).toHaveLength(3)
     const w = geometryOf('W', undefined, ctx)
-    expect(w.nodes.has('op:update')).toBe(true)
+    expect(w.nodes.has('op:update')).toBe(false)
     expect([...w.nodes].filter((id) => id.startsWith('W1[') || id.startsWith('b1[') || id.startsWith('W2[') || id.startsWith('b2['))).toHaveLength(13)
   })
 })
@@ -123,11 +123,11 @@ describe('chainLinks XOR: 7 звеньев в порядке цепи (регр�
 describe('chainLinks нейрон: цепь сжата до 5 звеньев x → z → ŷ → L → W (D-31)', () => {
   const chain = chainOf(NEURON_SCENARIO)
 
-  it('порядок цепи: x → z → yhat → L → W; звено W — станция + 3 параметра', () => {
+  it('порядок цепи: x → z → yhat → L → W; звено W — 3 параметра, update-узла нет (2.1-01)', () => {
     expect(chain.segments.map((s) => s.id)).toEqual(['x', 'z', 'yhat', 'L', 'W'])
     const ctx = contextOf(NEURON_SCENARIO)
     const w = geometryOf('W', undefined, ctx)
-    expect(w.nodes.has('op:update')).toBe(true)
+    expect(w.nodes.has('op:update')).toBe(false)
     expect([...w.nodes].filter((id) => id === 'W[0]' || id === 'W[1]' || id === 'b[0]')).toHaveLength(3)
   })
 

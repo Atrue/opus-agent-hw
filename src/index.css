@@ -938,8 +938,7 @@ circle.diag-hit:focus-visible {
 }
 .g-node-label,
 .g-node-value,
-.g-op-label,
-.g-update-label {
+.g-op-label {
   pointer-events: none;
 }
 .g-node-selring,
@@ -976,13 +975,6 @@ circle.diag-hit:focus-visible {
 .g-op.diag-selected .g-node-selring {
   opacity: 1;
 }
-.g-edge-update .diag-edge,
-.g-edge-update .diag-edge-casing,
-.g-edge-update .diag-edge-selcasing,
-.g-edge-update .diag-flow {
-  stroke-dasharray: 3 4; /* update-рёбра: тонкий пунктир (не поток данных) */
-  opacity: 0.55;
-}
 .g-tip { /* hover-тултип рёбра: fwd/bwd значения источника (CSS-only) */
   opacity: 0;
   pointer-events: none;
@@ -1003,23 +995,6 @@ circle.diag-hit:focus-visible {
 }
 .g-tip .g-tip-bwd {
   fill: var(--color-on-surface-variant);
-}
-.g-update rect {
-  fill: var(--color-surface-container-lowest);
-  stroke: var(--color-secondary); /* update-фаза (DESIGN §2: phase-upd) */
-  stroke-width: 1.5;
-}
-.g-update.active rect {
-  stroke: var(--color-tertiary); /* активна на 13-м шаге (амбер активного шага) */
-  stroke-width: 3;
-}
-.g-update.diag-selected rect {
-  stroke: var(--color-primary);
-  stroke-width: 3;
-}
-.g-update-label {
-  fill: var(--color-on-surface);
-  font-size: calc(10.5px * var(--diag-scale, 1));
 }
 @media (prefers-reduced-motion: reduce) {
   .g-tip {

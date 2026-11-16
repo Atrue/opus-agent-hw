@@ -5,7 +5,7 @@
  * DOCS-05) и ряды истории. MLP фазы 3 подключается таким же файлом.
  */
 
-import { bB, dot, flow, inB, ten, upd, wB } from './bindings'
+import { bB, dot, flow, inB, ten, wB } from './bindings'
 import type { RenderEdge, RenderNode, RenderSegment, RenderSeries, ScenarioModel, ScenarioOpMeta } from './types'
 
 /** Метаданные 13 операций XOR-walkthrough (формулы/нарративы RU). */
@@ -107,9 +107,12 @@ const W1_IDS = ['W1[0]', 'W1[1]', 'W1[2]', 'W1[3]', 'W1[4]', 'W1[5]'] as const
 const B1_IDS = ['b1[0]', 'b1[1]', 'b1[2]'] as const
 const W2_IDS = ['W2[0]', 'W2[1]', 'W2[2]'] as const
 const ALL_PARAMS = [...W1_IDS, ...B1_IDS, ...W2_IDS, 'b2[0]'] as const
-const UPDATE_NODES = ['op:update', ...ALL_PARAMS] as const
 
-/** Узлы XOR-графа 2-3-1 (43): константы, параметры, операции, значения, станция. */
+/**
+ * Узлы XOR-графа 2-3-1 (35; 2.1-01: update-узел и matvec-промежуточные
+ * W1x/W2a1 удалены — рёбра «·» → «+» без пересадок; b-узлы — в колонке
+ * своих «·», под ними; лосс вне графа — D-32).
+ */
 const XOR_NODES: readonly RenderNode[] = [
   { id: 'x[0]', kind: 'value', role: 'const', label: 'x1', col: 0, row: 4, value: inB(0), grad: inB(0), click: { drill: 'x[0]' } },
   { id: 'x[1]', kind: 'value', role: 'const', label: 'x2', col: 0, row: 6, value: inB(1), grad: inB(1), click: { drill: 'x[1]' } },
@@ -121,34 +124,30 @@ const XOR_NODES: readonly RenderNode[] = [
     id: `op:matvec[${String(j)}]`, kind: 'op', role: 'op', label: '·', col: 2, row: j === 0 ? 0 : j === 1 ? 4 : 8,
     value: dot(0, j, 0), grad: ten('zPost', 0, j), click: { segment: 'z1', symbol: 'W1' },
   })),
-  ...[0, 1, 2].map((j): RenderNode => ({ id: `W1x[${String(j)}]`, kind: 'value', role: 'computed', label: `W1x${String(j + 1)}`, col: 3, row: j === 0 ? 0 : j === 1 ? 4 : 8, value: dot(0, j, 0), grad: ten('zPost', 0, j) })),
-  ...[0, 1, 2].map((j): RenderNode => ({ id: `b1[${String(j)}]`, kind: 'value', role: 'param', label: `b1[${String(j)}]`, col: 3, row: (j === 0 ? 1 : j === 1 ? 5 : 9), value: bB(0, j), grad: bB(0, j), click: { drill: `b1[${String(j)}]` } })),
-  ...[0, 1, 2].map((j): RenderNode => ({ id: `op:add[${String(j)}]`, kind: 'op', role: 'op', label: '+', col: 4, row: j === 0 ? 0 : j === 1 ? 4 : 8, value: ten('zPost', 0, j, 1), grad: ten('zPost', 0, j), click: { segment: 'z1', symbol: 'b1' } })),
-  ...[0, 1, 2].map((j): RenderNode => ({ id: `z1[${String(j)}]`, kind: 'value', role: 'computed', label: `z1[${String(j)}]`, col: 5, row: j === 0 ? 0 : j === 1 ? 4 : 8, value: ten('zPost', 0, j, 1), grad: ten('zPost', 0, j) })),
-  ...[0, 1, 2].map((j): RenderNode => ({ id: `op:tanh[${String(j)}]`, kind: 'op', role: 'op', label: 'tanh', col: 6, row: j === 0 ? 0 : j === 1 ? 4 : 8, value: ten('h', 0, j, 2), grad: ten('h', 0, j), click: { segment: 'a1', symbol: 'tanh' } })),
-  ...[0, 1, 2].map((j): RenderNode => ({ id: `a1[${String(j)}]`, kind: 'value', role: 'computed', label: `a1[${String(j)}]`, col: 7, row: j === 0 ? 0 : j === 1 ? 4 : 8, value: ten('h', 0, j, 2), grad: ten('h', 0, j), click: { drill: `a1[${String(j)}]` } })),
-  { id: 'W2[0]', kind: 'value', role: 'param', label: 'W2[0,0]', col: 7, row: 2, value: wB(1, 0), grad: wB(1, 0), click: { drill: 'W2[0]' } },
-  { id: 'W2[1]', kind: 'value', role: 'param', label: 'W2[0,1]', col: 7, row: 3, value: wB(1, 1), grad: wB(1, 1), click: { drill: 'W2[1]' } },
-  { id: 'W2[2]', kind: 'value', role: 'param', label: 'W2[0,2]', col: 7, row: 6, value: wB(1, 2), grad: wB(1, 2), click: { drill: 'W2[2]' } },
-  { id: 'op:matvec2', kind: 'op', role: 'op', label: '·', col: 8, row: 4, value: dot(1, 0, 3), grad: ten('zPost', 1, 0), click: { segment: 'z2', symbol: 'W2' } },
-  { id: 'W2a1', kind: 'value', role: 'computed', label: 'W2a1', col: 9, row: 4, value: dot(1, 0, 3), grad: ten('zPost', 1, 0) },
-  { id: 'b2[0]', kind: 'value', role: 'param', label: 'b2[0]', col: 9, row: 5, value: bB(1, 0), grad: bB(1, 0), click: { drill: 'b2[0]' } },
-  { id: 'op:add2', kind: 'op', role: 'op', label: '+', col: 10, row: 4, value: ten('zPost', 1, 0, 4), grad: ten('zPost', 1, 0), click: { segment: 'z2', symbol: 'b2' } },
-  { id: 'z2', kind: 'value', role: 'computed', label: 'z2', col: 11, row: 4, value: ten('zPost', 1, 0, 4), grad: ten('zPost', 1, 0) },
-  { id: 'op:sigmoid', kind: 'op', role: 'op', label: 'σ', col: 12, row: 4, value: ten('h', 1, 0, 5), grad: ten('h', 1, 0), click: { segment: 'yhat', symbol: 'σ' } },
-  { id: 'ŷ', kind: 'value', role: 'computed', label: 'ŷ', col: 13, row: 4, value: ten('h', 1, 0, 5), grad: ten('h', 1, 0), click: { drill: 'ŷ' } },
-  { id: 'op:update', kind: 'update', role: 'op', label: 'W ← W − η·∂L/∂W', col: 14, row: 8, click: { segment: 'W', symbol: 'η' } },
+  ...[0, 1, 2].map((j): RenderNode => ({ id: `b1[${String(j)}]`, kind: 'value', role: 'param', label: `b1[${String(j)}]`, col: 2, row: (j === 0 ? 1 : j === 1 ? 5 : 9), value: bB(0, j), grad: bB(0, j), click: { drill: `b1[${String(j)}]` } })),
+  ...[0, 1, 2].map((j): RenderNode => ({ id: `op:add[${String(j)}]`, kind: 'op', role: 'op', label: '+', col: 3, row: j === 0 ? 0 : j === 1 ? 4 : 8, value: ten('zPost', 0, j, 1), grad: ten('zPost', 0, j), click: { segment: 'z1', symbol: 'b1' } })),
+  ...[0, 1, 2].map((j): RenderNode => ({ id: `z1[${String(j)}]`, kind: 'value', role: 'computed', label: `z1[${String(j)}]`, col: 4, row: j === 0 ? 0 : j === 1 ? 4 : 8, value: ten('zPost', 0, j, 1), grad: ten('zPost', 0, j) })),
+  ...[0, 1, 2].map((j): RenderNode => ({ id: `op:tanh[${String(j)}]`, kind: 'op', role: 'op', label: 'tanh', col: 5, row: j === 0 ? 0 : j === 1 ? 4 : 8, value: ten('h', 0, j, 2), grad: ten('h', 0, j), click: { segment: 'a1', symbol: 'tanh' } })),
+  ...[0, 1, 2].map((j): RenderNode => ({ id: `a1[${String(j)}]`, kind: 'value', role: 'computed', label: `a1[${String(j)}]`, col: 6, row: j === 0 ? 0 : j === 1 ? 4 : 8, value: ten('h', 0, j, 2), grad: ten('h', 0, j), click: { drill: `a1[${String(j)}]` } })),
+  { id: 'W2[0]', kind: 'value', role: 'param', label: 'W2[0,0]', col: 6, row: 2, value: wB(1, 0), grad: wB(1, 0), click: { drill: 'W2[0]' } },
+  { id: 'W2[1]', kind: 'value', role: 'param', label: 'W2[0,1]', col: 6, row: 3, value: wB(1, 1), grad: wB(1, 1), click: { drill: 'W2[1]' } },
+  { id: 'W2[2]', kind: 'value', role: 'param', label: 'W2[0,2]', col: 6, row: 6, value: wB(1, 2), grad: wB(1, 2), click: { drill: 'W2[2]' } },
+  { id: 'op:matvec2', kind: 'op', role: 'op', label: '·', col: 7, row: 4, value: dot(1, 0, 3), grad: ten('zPost', 1, 0), click: { segment: 'z2', symbol: 'W2' } },
+  { id: 'b2[0]', kind: 'value', role: 'param', label: 'b2[0]', col: 7, row: 5, value: bB(1, 0), grad: bB(1, 0), click: { drill: 'b2[0]' } },
+  { id: 'op:add2', kind: 'op', role: 'op', label: '+', col: 8, row: 4, value: ten('zPost', 1, 0, 4), grad: ten('zPost', 1, 0), click: { segment: 'z2', symbol: 'b2' } },
+  { id: 'z2', kind: 'value', role: 'computed', label: 'z2', col: 9, row: 4, value: ten('zPost', 1, 0, 4), grad: ten('zPost', 1, 0) },
+  { id: 'op:sigmoid', kind: 'op', role: 'op', label: 'σ', col: 10, row: 4, value: ten('h', 1, 0, 5), grad: ten('h', 1, 0), click: { segment: 'yhat', symbol: 'σ' } },
+  { id: 'ŷ', kind: 'value', role: 'computed', label: 'ŷ', col: 11, row: 4, value: ten('h', 1, 0, 5), grad: ten('h', 1, 0), click: { drill: 'ŷ' } },
 ]
 
-/** Рёбра XOR-графа: операнд → операция → результат + update-станция. */
+/** Рёбра XOR-графа: операнд → операция → операция (без пересадок, 2.1-01). */
 const XOR_EDGES: readonly RenderEdge[] = [
   ...[0, 1, 2].flatMap((j) => [
     flow('x[0]', `op:matvec[${String(j)}]`),
     flow('x[1]', `op:matvec[${String(j)}]`),
     flow(`W1[${String(j * 2)}]`, `op:matvec[${String(j)}]`),
     flow(`W1[${String(j * 2 + 1)}]`, `op:matvec[${String(j)}]`),
-    flow(`op:matvec[${String(j)}]`, `W1x[${String(j)}]`),
-    flow(`W1x[${String(j)}]`, `op:add[${String(j)}]`),
+    flow(`op:matvec[${String(j)}]`, `op:add[${String(j)}]`),
     flow(`b1[${String(j)}]`, `op:add[${String(j)}]`),
     flow(`op:add[${String(j)}]`, `z1[${String(j)}]`),
     flow(`z1[${String(j)}]`, `op:tanh[${String(j)}]`),
@@ -158,35 +157,33 @@ const XOR_EDGES: readonly RenderEdge[] = [
   flow('W2[0]', 'op:matvec2'),
   flow('W2[1]', 'op:matvec2'),
   flow('W2[2]', 'op:matvec2'),
-  flow('op:matvec2', 'W2a1'),
-  flow('W2a1', 'op:add2'),
+  flow('op:matvec2', 'op:add2'),
   flow('b2[0]', 'op:add2'),
   flow('op:add2', 'z2'),
   flow('z2', 'op:sigmoid'),
   flow('op:sigmoid', 'ŷ'),
-  ...ALL_PARAMS.map(upd),
 ]
 
 /** Группы узлов 13 шагов ленты (подсветка активной walked-опы). */
 const XOR_STEP_GROUPS: readonly (readonly string[])[] = [
-  ['op:matvec[0]', 'op:matvec[1]', 'op:matvec[2]', 'W1x[0]', 'W1x[1]', 'W1x[2]'],
+  ['op:matvec[0]', 'op:matvec[1]', 'op:matvec[2]'],
   ['op:add[0]', 'op:add[1]', 'op:add[2]', 'z1[0]', 'z1[1]', 'z1[2]'],
   ['op:tanh[0]', 'op:tanh[1]', 'op:tanh[2]', 'a1[0]', 'a1[1]', 'a1[2]'],
-  ['op:matvec2', 'W2a1'],
+  ['op:matvec2'],
   ['op:add2', 'z2'],
   ['op:sigmoid', 'ŷ'],
   ['ŷ'],
   ['ŷ'],
   ['op:sigmoid', 'z2', 'ŷ'],
-  ['op:matvec2', 'W2a1', 'ŷ'],
+  ['op:matvec2', 'ŷ'],
   ['op:tanh[0]', 'op:tanh[1]', 'op:tanh[2]', 'a1[0]', 'a1[1]', 'a1[2]', 'z1[0]', 'z1[1]', 'z1[2]'],
-  ['op:matvec[0]', 'op:matvec[1]', 'op:matvec[2]', 'W1x[0]', 'W1x[1]', 'W1x[2]', 'z1[0]', 'z1[1]', 'z1[2]'],
-  [...UPDATE_NODES],
+  ['op:matvec[0]', 'op:matvec[1]', 'op:matvec[2]', 'z1[0]', 'z1[1]', 'z1[2]'],
+  [...ALL_PARAMS],
 ]
 
-const Z1_NODES = [...ALL_PARAMS.slice(0, 9), 'op:matvec[0]', 'op:matvec[1]', 'op:matvec[2]', 'W1x[0]', 'W1x[1]', 'W1x[2]', 'op:add[0]', 'op:add[1]', 'op:add[2]', 'z1[0]', 'z1[1]', 'z1[2]'] as const
+const Z1_NODES = [...ALL_PARAMS.slice(0, 9), 'op:matvec[0]', 'op:matvec[1]', 'op:matvec[2]', 'op:add[0]', 'op:add[1]', 'op:add[2]', 'z1[0]', 'z1[1]', 'z1[2]'] as const
 const A1_NODES = ['op:tanh[0]', 'op:tanh[1]', 'op:tanh[2]', 'a1[0]', 'a1[1]', 'a1[2]'] as const
-const Z2_NODES = ['W2[0]', 'W2[1]', 'W2[2]', 'b2[0]', 'op:matvec2', 'W2a1', 'op:add2', 'z2'] as const
+const Z2_NODES = ['W2[0]', 'W2[1]', 'W2[2]', 'b2[0]', 'op:matvec2', 'op:add2', 'z2'] as const
 
 /** Звенья цепи XOR: x → z1 → a1 → z2 → ŷ → L → W. */
 const XOR_SEGMENTS: readonly RenderSegment[] = [
@@ -250,8 +247,8 @@ const XOR_SEGMENTS: readonly RenderSegment[] = [
     formula: XOR_OPS[12]!.formula.replace('=', '←'),
     symbols: ['η', '∂L/∂W'],
     numberSyms: ['η', '∂L/∂W2', 'W2[0,0]'],
-    nodes: [...UPDATE_NODES],
-    symbolNodes: { η: [...UPDATE_NODES], '∂L/∂W': [...UPDATE_NODES] },
+    nodes: [...ALL_PARAMS],
+    symbolNodes: { η: [...ALL_PARAMS], '∂L/∂W': [...ALL_PARAMS] },
   },
 ]
 

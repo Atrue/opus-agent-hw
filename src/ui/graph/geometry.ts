@@ -8,7 +8,7 @@
 
 import { activeScenario, type ScenarioModel } from '../../run/scenario'
 
-export type GraphNodeKind = 'value' | 'op' | 'update'
+export type GraphNodeKind = 'value' | 'op'
 export type GraphNodeRole = 'const' | 'param' | 'computed' | 'op'
 
 export interface GraphNode {
@@ -30,8 +30,6 @@ export interface GraphEdge {
   readonly id: string
   readonly from: string
   readonly to: string
-  /** update-рёбра (параметр → update-станция) рисуются тонким пунктиром. */
-  readonly kind: 'flow' | 'update'
 }
 
 /** Рамки канвы: фиксированные pitch/padding, размер — функция структуры. */

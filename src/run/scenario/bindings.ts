@@ -14,8 +14,5 @@ export const ten = (slot: 'zPre' | 'zPost' | 'h' | 'L', layer: number, index: nu
   step === undefined ? { kind: 'tensor', slot, layer, index } : { kind: 'tensor', slot, layer, index, step }
 export const dot = (layer: number, row: number, step: number): NodeBinding => ({ kind: 'dot', layer, row, step })
 
-/** Ребро потока: операнд → операция → результат. */
+/** Ребро потока: операнд → операция / операция → операция (без пересадок, 2.1-01). */
 export const flow = (from: string, to: string): RenderEdge => ({ from, to })
-
-/** Ребро update-станции: параметр → станция SGD. */
-export const upd = (from: string): RenderEdge => ({ from, to: 'op:update', kind: 'update' })

@@ -1,9 +1,11 @@
 /**
  * Модель графа вычислений (01.2-06, правила владельца 2026-11-05; D-32 —
- * лосс вне графа): диаграмма = буквальный вычислительный граф сети —
+ * лосс вне графа; 2.1-01/D-35 — update-узел вне графа и matvec-промежуточные
+ * без пересадок): диаграмма = буквальный вычислительный граф сети —
  * звено-значение (закруглённый квадрат) и звено-операция (круг), операции
- * по-элементно; константы (x) — белая рамка, параметры — зелёная; ОДНА
- * update-станция «W ← W − η·∂L/∂W»; раскладка детерминирована
+ * по-элементно; константы (x) — белая рамка, параметры — зелёная;
+ * update-узла и рёбер к нему НЕТ (SGD-шаг живёт в панели операции, звене W,
+ * формуле-строке и drill — расширение D-32); раскладка детерминирована
  * (ранг-колонки × строки, фиксированный pitch — рамки канвы вычислимы
  * из структуры).
  *
@@ -37,19 +39,15 @@ function inventoryGates(spec: ScenarioModel, label: string): void {
     }
   })
 
-  it(`${label}: РОВНО ОДНА update-станция связана со всеми параметрами`, () => {
-    expect(inv.nodes.filter((n) => n.id === 'op:update')).toHaveLength(1)
-    const params = inv.nodes.filter((n) => n.role === 'param')
-    const upd = inv.edges.filter((e) => e.to === 'op:update')
-    expect(upd).toHaveLength(params.length)
-    const paramIds = new Set(params.map((p) => p.id))
-    for (const e of upd) expect(paramIds.has(e.from), `${label}: update ← ${e.from}`).toBe(true)
+  it(`${label}: update-узлов и update-рёбер НЕТ (2.1-01, расширение D-32)`, () => {
+    expect(inv.nodes.filter((n) => n.id === 'op:update')).toHaveLength(0)
+    expect(inv.nodes.filter((n) => n.label.includes('←'))).toHaveLength(0)
+    expect(inv.edges.filter((e) => e.to === 'op:update' || e.from === 'op:update')).toHaveLength(0)
   })
 
-  it(`${label}: ранг-колонки растут слева-направо по цепи: входы → ŷ → update (лосс вне графа, D-32)`, () => {
+  it(`${label}: ранг-колонки растут слева-направо по цепи: входы → ŷ (лосс и update вне графа, D-32/2.1)`, () => {
     const byId = new Map<string, GraphNode>(inv.nodes.map((n) => [n.id, n]))
     expect(byId.get('x[0]')!.col).toBeLessThan(byId.get('ŷ')!.col)
-    expect(byId.get('ŷ')!.col).toBeLessThan(byId.get('op:update')!.col)
   })
 
   it(`${label}: ни одной dangling-ссылки — все id групп звеньев/шагов и symbolNodes существуют в графе (T-2-10)`, () => {
@@ -98,6 +96,31 @@ function inventoryGates(spec: ScenarioModel, label: string): void {
       expect(n.y, `${label}: узел ${n.id}: y в рамках`).toBeLessThanOrEqual(h)
     }
   })
+
+  it(`${label}: matvec-промежуточные НЕ порождают звеньев — ребро «·» → «+» без пересадки (2.1-01, фикс 3)`, () => {
+    for (const n of inv.nodes) {
+      expect(n.id.startsWith('W1x') || n.id === 'Wx' || n.id === 'W2a1', `${label}: промежуточный ${n.id} удалён`).toBe(false)
+    }
+    // прямое ребро существует для каждой пары «·» → своя «+»
+    const matvecIds = inv.nodes.filter((n) => n.label === '·').map((n) => n.id)
+    expect(matvecIds.length, `${label}: есть matvec-опы`).toBeGreaterThan(0)
+    for (const mv of matvecIds) {
+      const hasDirect = inv.edges.some((e) => e.from === mv && inv.nodes.find((n) => n.id === e.to)?.label === '+')
+      expect(hasDirect, `${label}: ${mv} → «+» напрямую`).toBe(true)
+    }
+  })
+
+  it(`${label}: каждый b-узел в колонке своей «·»-опы (под/над ней, 2.1-01, фикс 3)`, () => {
+    const byId = new Map<string, GraphNode>(inv.nodes.map((n) => [n.id, n]))
+    for (const n of inv.nodes) {
+      if (n.role === 'param' && n.id.startsWith('b')) {
+        const own = [...byId.values()].find(
+          (op) => op.label === '·' && op.col === n.col && Math.abs(op.row - n.row) <= 2,
+        )
+        expect(own, `${label}: ${n.id} (col ${String(n.col)}) рядом со своей «·»`).toBeDefined()
+      }
+    }
+  })
 }
 
 describe('compGraph: инвентарь звеньев XOR 2-3-1 (регрессия движка)', () => {
@@ -116,10 +139,9 @@ describe('compGraph: инвентарь звеньев XOR 2-3-1 (регресс
     }
   })
 
-  it('операции по-элементно: matvec×3, add×3, tanh×3, matvec2, add2, σ + РОВНО ОДНА update-станция (bce вне графа, D-32)', () => {
-    const ops = inv.nodes.filter((n) => n.kind === 'op' || n.kind === 'update')
-    expect(ops).toHaveLength(13)
-    expect(ops.filter((n) => n.id === 'op:update')).toHaveLength(1)
+  it('операции по-элементно: matvec×3, add×3, tanh×3, matvec2, add2, σ (update и bce вне графа, D-32/2.1)', () => {
+    const ops = inv.nodes.filter((n) => n.kind === 'op')
+    expect(ops).toHaveLength(12)
     expect(ops.filter((n) => n.label === 'tanh')).toHaveLength(3)
     // matvec×3 + matvec2
     expect(ops.filter((n) => n.label === '·')).toHaveLength(4)
@@ -127,19 +149,19 @@ describe('compGraph: инвентарь звеньев XOR 2-3-1 (регресс
     expect(ops.filter((n) => n.label === '+')).toHaveLength(4)
   })
 
-  it('промежуточные значения — отдельные звенья: W1x×3, z1×3, a1×3, W2a1, z2, ŷ', () => {
+  it('промежуточные значения — только именованные звенья цепи: z1×3, a1×3, z2, ŷ (matvec-промежуточные удалены)', () => {
     const computed = inv.nodes.filter((n) => n.role === 'computed')
-    expect(ids(computed).sort()).toEqual(['W1x[0]', 'W1x[1]', 'W1x[2]', 'W2a1', 'a1[0]', 'a1[1]', 'a1[2]', 'z1[0]', 'z1[1]', 'z1[2]', 'z2', 'ŷ'])
+    expect(ids(computed).sort()).toEqual(['a1[0]', 'a1[1]', 'a1[2]', 'z1[0]', 'z1[1]', 'z1[2]', 'z2', 'ŷ'])
   })
 
-  it('итого 40 звеньев: 2 константы + 13 параметров + 13 операций + 12 значений', () => {
-    expect(inv.nodes).toHaveLength(40)
+  it('итого 35 звеньев: 2 константы + 13 параметров + 12 операций + 8 значений', () => {
+    expect(inv.nodes).toHaveLength(35)
   })
 
-  it('13 групп шагов ленты; 13-й (sgd) — update-станция и параметры', () => {
+  it('13 групп шагов ленты; 13-й (sgd) — только параметры (update-узла нет)', () => {
     expect(inv.stepGroups).toHaveLength(13)
     const g = inv.stepGroups[12]!
-    expect(g.nodes.has('op:update')).toBe(true)
+    expect(g.nodes.has('op:update')).toBe(false)
     expect([...g.nodes].filter((id) => id.startsWith('W') || id.startsWith('b')).length).toBe(13)
   })
 })
@@ -147,18 +169,18 @@ describe('compGraph: инвентарь звеньев XOR 2-3-1 (регресс
 describe('compGraph: инвентарь звеньев «один нейрон» 2-1 (D-31)', () => {
   const inv = buildInventory(NEURON_SCENARIO)
 
-  it('12 звеньев: 2 константы (x1, x2) + 3 параметра (W₁, W₂, b) + 4 операции (· + σ + станция) + 3 значения (Wx, z, ŷ); лосс вне графа (D-32)', () => {
-    expect(inv.nodes).toHaveLength(12)
+  it('10 звеньев: 2 константы (x1, x2) + 3 параметра (W₁, W₂, b) + 3 операции (· + σ) + 2 значения (z, ŷ); лосс и update вне графа (D-32/2.1)', () => {
+    expect(inv.nodes).toHaveLength(10)
     expect(ids(inv.nodes.filter((n) => n.role === 'const')).sort()).toEqual(['x[0]', 'x[1]'])
     expect(ids(inv.nodes.filter((n) => n.role === 'param')).sort()).toEqual(['W[0]', 'W[1]', 'b[0]'])
-    expect(inv.nodes.filter((n) => n.kind === 'update')).toHaveLength(1)
-    expect(ids(inv.nodes.filter((n) => n.role === 'computed')).sort()).toEqual(['Wx', 'z', 'ŷ'])
+    expect(inv.nodes.filter((n) => n.kind === 'op')).toHaveLength(3)
+    expect(ids(inv.nodes.filter((n) => n.role === 'computed')).sort()).toEqual(['z', 'ŷ'])
   })
 
-  it('8 групп шагов ленты; 8-й (sgd) — update-станция и все 3 параметра', () => {
+  it('8 групп шагов ленты; 8-й (sgd) — только параметры (update-узла нет)', () => {
     expect(inv.stepGroups).toHaveLength(8)
     const g = inv.stepGroups[7]!
-    expect(g.nodes.has('op:update')).toBe(true)
+    expect(g.nodes.has('op:update')).toBe(false)
     expect([...g.nodes].filter((id) => id === 'W[0]' || id === 'W[1]' || id === 'b[0]')).toHaveLength(3)
   })
 })

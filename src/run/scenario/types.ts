@@ -49,7 +49,7 @@ export type NodeBinding =
   /** Скалярное произведение строки живых весов на вход слоя (W·x live-весов). */
   | { kind: 'dot'; layer: number; row: number; step: number }
 
-export type RenderNodeKind = 'value' | 'op' | 'update'
+export type RenderNodeKind = 'value' | 'op'
 export type RenderNodeRole = 'const' | 'param' | 'computed' | 'op'
 
 /** Узел вычислительного графа: топология + геометрия + живые числа. */
@@ -63,7 +63,7 @@ export interface RenderNode {
   col: number
   /** Строка раскладки (детерминированная таблица). */
   row: number
-  /** Живое значение узла (нет — «н/д» всегда, напр. update-станция). */
+  /** Живое значение узла (нет — «н/д» всегда). */
   value?: NodeBinding
   /** Градиент ∂L/∂· (нет — не показывается). */
   grad?: NodeBinding
@@ -71,11 +71,13 @@ export interface RenderNode {
   click?: { drill: string } | { segment: string; symbol: string }
 }
 
-/** Ребро графа: операнд → операция → результат; update — параметр → станция. */
+/**
+ * Ребро графа: операнд → операция / операция → операция (2.1-01: результат
+ * matvec не порождает звено-пересадку; update-рёбер нет — станция вне графа).
+ */
 export interface RenderEdge {
   from: string
   to: string
-  kind?: 'update'
 }
 
 /** Звено цепи формулы-хребта: заголовок/формула/символы + геометрия группы. */

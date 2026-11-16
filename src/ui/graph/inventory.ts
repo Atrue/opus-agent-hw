@@ -22,12 +22,19 @@ export function buildInventory(spec: ScenarioModel = activeScenario()) {
     id: `${e.from}->${e.to}`,
     from: e.from,
     to: e.to,
-    kind: e.kind === 'update' ? 'update' : 'flow',
   }))
+  // Звено цепи — замкнутая подграф-группа: рёбра МЕЖДУ узлами группы.
   const group = (nodeIds: readonly string[]): NodeGroup => {
     const set = new Set(nodeIds)
     const inner = edges.filter((e) => set.has(e.from) && set.has(e.to)).map((e) => e.id)
     return { nodes: set, edges: new Set(inner) }
+  }
+  // Шаг ленты — активная операция и её поток: рёбра, ВЫХОДЯЩИЕ из узлов
+  // группы (2.1-01: результат matvec — не узел, поток живёт на ребре «·» → «+»).
+  const stepGroup = (nodeIds: readonly string[]): NodeGroup => {
+    const set = new Set(nodeIds)
+    const outgoing = edges.filter((e) => set.has(e.from)).map((e) => e.id)
+    return { nodes: set, edges: new Set(outgoing) }
   }
   return {
     nodes,
@@ -35,7 +42,7 @@ export function buildInventory(spec: ScenarioModel = activeScenario()) {
     segmentGroups: Object.fromEntries(spec.render.segments.map((seg) => [seg.id, group(seg.nodes)])) as Readonly<
       Record<SegmentId, NodeGroup>
     >,
-    stepGroups: spec.render.stepGroups.map((ids) => group(ids)),
+    stepGroups: spec.render.stepGroups.map((ids) => stepGroup(ids)),
   }
 }
 
