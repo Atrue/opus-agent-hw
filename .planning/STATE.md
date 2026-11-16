@@ -3,17 +3,17 @@ gsd_state_version: "1.0"
 current_phase: 02
 current_phase_name: Движок и MVP-walkthrough на одном нейроне
 status: executing
-stopped_at: Gap-цикл закрыт (02-10/11/12 исполнены, D-34 журнализирован, STRUCTURE-GATE зелёный); фаза 02 готова к реверификации (/gsd-verify-work 02, цикл 2) → UAT
-last_updated: "2026-11-13T18:40:00.000Z"
-last_activity: 2026-11-13
-last_activity_desc: Phase 02 gap-цикл — 02-12 исполнен (STRUCTURE-GATE R1/R2/R4 + D-34 docs-sync); все 4 OQ disposition A закрыты
+stopped_at: Roadmap-ревизия владельца (D-35, 2026-11-16): фаза 02 — следующий шаг /gsd-verify-work 02 (реверификация цикл 2) → UAT → закрытие (не пропускать); после закрытия — фаза 2.1 «Правки визуализации графа» (вставлена); фаза 3 = 3 сценария + клиентский роутинг; фаза 4 = shadcn + анимации
+last_updated: "2026-11-16T09:30:00.000Z"
+last_activity: 2026-11-16
+last_activity_desc: Roadmap-ревизия владельца (D-35) — вставлена фаза 2.1, фаза 3 перепрофилирована (3 сценария + клиентский роутинг + режимы «Примеров»), фаза 4 = shadcn/анимации; замер понимания, MNIST, AND/XOR → parking
 state_head: 71cb059
 progress:
-  total_phases: 6
+  total_phases: 7
   completed_phases: 3
   total_plans: 25
   completed_plans: 22
-  percent: 50
+  percent: 43
 ---
 
 # Project State
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-11-03)
 
 ## Current Position
 
-Phase: 02 (Движок и MVP-walkthrough на одном нейроне) — EXECUTING
+Phase: 02 (Движок и MVP-walkthrough на одном нейроне) — EXECUTING → закрытие через реверификацию
 Plan: 12 of 12 (все исполнены: 9 планов фазы + 3 gap-плана)
-Status: Gap-цикл закрыт (OQ-1..4 disposition A исполнены: 02-10 value-ops, 02-11 домены, 02-12 гейт+D-34; 124 unit + 16 e2e зелёные) — фаза готова к реверификации (цикл 2) и UAT
-Last activity: 2026-11-13 — исполнение 02-12 (gap-цикл завершён)
+Status: Gap-цикл закрыт (124 unit + 16 e2e зелёные); фаза закрывается ТОЛЬКО через /gsd-verify-work 02 (реверификация цикл 2) → UAT (решение владельца 2026-11-16 — не пропускать); после закрытия — фаза 2.1 (вставлена 2026-11-16, D-35)
+Last activity: 2026-11-16 — roadmap-ревизия владельца (D-35): вставлена 2.1 «Правки визуализации графа», фаза 3 = 3 сценария + клиентский роутинг, фаза 4 = shadcn + анимации
 
 Progress: [██████░░░░] 60%
 
@@ -138,6 +138,7 @@ Recent decisions affecting current work:
 - [Phase 02 → 02-10 исполнен, 2026-11-13]: OQ-3/OQ-4 закрыты — value-ops/ 8 операций свободными функциями с backwardFn чистых локальных производных внутри (mul→[b,a], div→[1/b,−a/b²], tanh→[1−out²], sigmoid→[out(1−out)], log→[1/a]); Value = контейнер без методов + свободная backward(root) с общим chain rule (порядок topo/вкладов A→B сохранён); value-grads.ts удалён; ulp-дрейф div/log/sigmoid эмпирически в допусках (121 unit + lint 0 + tsc 0 + 16 e2e). Rule 4-девиация с апрувом владельца: замороженный override oxlint regex '^\.\./' конфликтовал с подпапками ('../value' из value-ops) — заменён на '^(\.\./){2,}' (запрет выхода ЗА src/tensor), boundaries-тест зеркалит резолвом пути; изоляция библиотеки сохранена (ноль импортов из приложения/react, deep-импорт-граница не тронута); журнализация — D-34 в 02-12
 - [Phase 02 → 02-11 исполнен, 2026-11-13]: OQ-2 закрыт — tensor: ops/ ПО ОПЕРАЦИЯМ (matvec/add/tanh/sigmoid/bce, зеркально value-ops/) + trace/ домен + backward.ts (accumulate внутренняя); run: scenario/ (types/bindings/xor/neuron/registry, scenarioById внутренняя) + history/ (types/series/session/lossChart/linkHistory, LINK_HISTORY_CAP внутренняя) с баррелами и колоцированными тестами; SegmentId в run/types.ts — слой-инверсия run→ui закрыта (NO-LAYER-INVERSION); format: minus/formatKey/exactRepr + index-баррел (13 импортов); ui: 10 подпапок сущностей, сплиты compGraph→graph/{geometry,inventory}, chainLinks→chain/{links,symbols,geometry} (CHAIN_GEOMETRY_IDS удалён — мёртвый), hintData→numbers/{resolve,hint}, liveValues→chain/liveValues.ts; новое: scenario/bindings.ts — общие фабрики биндингов/рёбер xor+neuron (связный субъект); тела/testid/RU-строки нетронуты (121 unit + lint 0 + tsc 0 + 16 e2e; UI-SUBFOLDERS/MULTI-EXPORT-SPLIT)
 - [Phase 02 → 02-12 исполнен, gap-цикл ЗАКРЫТ, 2026-11-13]: OQ-1 закрыт гибридно — src/structure.test.ts (STRUCTURE-GATE): бинарный минимум R1 (нет export default, якорь начала строки — комментарии не матчатся) / R2 (файлы в корне ui — только README) / R4 (tensor не-тесты — только внутрь библиотеки, дубль границы oxlint с D-34-семантикой резолва); негативы R1/R2/R4 (+escape из trace/) подтверждены эмпирически; подсчёта экспортов/порогов НЕТ. D-34 журнализирован пакетно в DECISIONS.md: гранулометрия-инструкция, гейт R1/R2/R4 + апрувованная правка замороженного override ('^(\.\./){2,}' — подпапки tensor легально импортируют корень), Value-операции-функции с backwardFn (замыкания разрешены в view, запрещены в движке Tensor), ulp-дрейф div/log/sigmoid, ops/ по операциям, SegmentId в run; супрессии A6-чтения D-28 и «замыкания удалены» D-29 (только Value-слой). AGENTS.md №6 расширен на structure.test.ts + новый пункт 7 «Гранулометрия модулей»; глоссарий PROJECT.md +4 термина (value-ops/backwardFn, structure-gate, domain folder; value-grads убран). Все 4 OQ disposition A закрыты — фаза готова к реверификации цикл 2 (124 unit + lint 0 + 16 e2e)
+- [2026-11-16, владелец — roadmap-ревизия, D-35]: (а) вставлена фаза 2.1 «Правки визуализации графа вычислений» (quick-insert после закрытия 02) — 5 UI-фиксов render-слоя: убрать с графа op:update «W ← W − η·∂L/∂W» (расширение D-32; SGD-шаг, звено W, drill-down не меняются); тултипы NumberHint поверх графа; промежуточный результат не порождает звено-узел (x·w[0,0] = Wx, ребро сразу к «+», b[0] под/над «*»); рамка-нейрон с названием и полупрозрачным фоном, двойной клик = коллапс в квадратный блок x→n→y; квадратные узлы, не влезающее значение — над блоком. Движок и NFR-02 не трогаются. (б) фаза 3 = библиотека ровно из 3 сценариев (1 вход–1 нейрон–1 выход «2x+10»; 2 входа–2 нейрона–1 выход «10x+y»; 2 входа–2 скрытых слоя по 3 нейрона–1 выход, спираль TF) + переключатель сценариев + клиентский роутинг (History API) вместо хэша #scenario= (супрессия строки AGENTS.md «URL несёт только #scenario=» — ревизия AGENTS.md в фазе 3) + блок «Примеры» с режимами отображения (формула/таблица/визуализация TF — состав утвердить на планировании). (в) фаза 4 = shadcn + ресёрч анимаций GSAP/motion/Spline (частичная супрессия D-23; решение по итогам ресёрча; новые пакеты — только sanctioned-чекпойнт AGENTS.md №2; reduced-motion-гейты сохраняются). (г) parking без планов: «Замер понимания и подготовка к пилоту» (бывш. фаза 4; DOCS-06, UX-04), MNIST, сценарии neuron(AND)/XOR («больше наборов данных пока не будет»). Закрытие фазы 02 — только через реверификацию цикл 2 + UAT (не пропускать)
 
 ### Pending Todos
 
@@ -145,23 +146,27 @@ Recent decisions affecting current work:
 
 ### Blockers/Concerns
 
-None. Gap-цикл 02-10/11/12 закрыт (disposition OQ-1..4 исполнены, D-34 журнализирован); следующий шаг — /gsd-verify-work 02 (реверификация цикл 2) → UAT.
+None. Gap-цикл 02-10/11/12 закрыт (disposition OQ-1..4 исполнены, D-34 журнализирован); следующий шаг — /gsd-verify-work 02 (реверификация цикл 2) → UAT → закрытие фазы 02; далее фаза 2.1 (правки визуализации графа).
 
 ### Roadmap Evolution
 
 - Phase 1.1 inserted after Phase 1: Архитектурный рефакторинг R1–R5 (URGENT)
 - Phase 01.2 inserted after Phase 01.1 (2026-11-05): Формула-хребет и история звена — UI-правки по ТЗ владельца (9 пунктов), чтобы не смешивать с фазой 2; фаза 2 стартует отдельно после закрытия 01.2
+- Phase 2.1 inserted after Phase 2 (2026-11-16): Правки визуализации графа вычислений — 5 UI-фиксов владельца (D-35)
+- Phase 3/4 перепрофилированы (2026-11-16, D-35): фаза 3 — «Сценарии, клиентский роутинг и лекционный режим» (библиотека из 3 сценариев, роутинг вместо хэша, режимы «Примеров»); фаза 4 — «shadcn и анимация действий»; «Замер понимания и подготовка к пилоту» → parking
 
 ## Deferred Items
 
 | Category | Item | Status | Deferred At | Milestone |
 |----------|------|--------|-------------|-----------|
 | validation | H2/H3: 5 проблем-интервью + 5–8 юзабилити-сессий, агрегаты EVIDENCE.md, go/no-go-вердикт (бывш. Tasks 3–4 плана 01-04), фиксация в STATE/DECISIONS | Отложено решением владельца (D-24); инструменты готовы, пороги зафиксированы; активация — только явный запрос, после фаз 2–4 | 2026-11-05 | post-development (до пилотов) |
+| scope | Замер понимания и подготовка к пилоту (бывш. Phase 4): pre/post-тест (DOCS-06), анонимная аналитика North Star, доступность, харденинг/деплой | Parking по D-35 (2026-11-16) — без даты и планов; возврат по явному запросу владельца | 2026-11-16 | post-phase-4 |
+| scope | Датасеты и сценарии за пределами библиотеки 3 сценариев: MNIST, neuron(AND), XOR | Parking по D-35 (2026-11-16): «больше наборов данных пока не будет»; конкретных планов нет; эталон-регрессии движка в тестах остаются | 2026-11-16 | future |
 
 (v2-требования — CONSTR-01..03, GROWTH-01, B2B-01 — трекаются в REQUIREMENTS.md § v2, вне roadmap.)
 
 ## Session Continuity
 
-Last session: 2026-11-13T12:45:00.000Z
-Stopped at: Gap-планы 02-10/11/12 созданы (disposition 1-a/2-a/3-a/4-a); далее /gsd-execute-phase 02 --gaps-only → реверификация цикл 2
+Last session: 2026-11-16T09:30:00.000Z
+Stopped at: Roadmap-ревизия владельца (D-35) исполнена: фаза 2.1 вставлена, фазы 3/4 перепрофилированы, parking зафиксирован. Фаза 02 — /gsd-verify-work 02 (реверификация цикл 2) → UAT → закрытие; затем планирование фазы 2.1
 Resume file: None
