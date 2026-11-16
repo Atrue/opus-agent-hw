@@ -6,50 +6,45 @@ score: реверификация цикл 2 — все 4 OQ disposition A за�
 reverification: cycle 2 (2026-11-16: gap-планы 02-10/02-11/02-12 исполнены, disposition OQ-1..4 закрыты; авто-прогон верификатора зелёный)
 covered_files:
   - .oxlintrc.json
-  - .planning/phases/02-dvizhok-i-mvp-walkthrough-na-odnom-neyrone/02-01-PLAN.md
-  - .planning/phases/02-dvizhok-i-mvp-walkthrough-na-odnom-neyrone/02-01-SUMMARY.md
-  - .planning/phases/02-dvizhok-i-mvp-walkthrough-na-odnom-neyrone/02-02-PLAN.md
-  - .planning/phases/02-dvizhok-i-mvp-walkthrough-na-odnom-neyrone/02-02-SUMMARY.md
-  - .planning/phases/02-dvizhok-i-mvp-walkthrough-na-odnom-neyrone/02-03-PLAN.md
-  - .planning/phases/02-dvizhok-i-mvp-walkthrough-na-odnom-neyrone/02-03-SUMMARY.md
-  - .planning/phases/02-dvizhok-i-mvp-walkthrough-na-odnom-neyrone/02-04-PLAN.md
-  - .planning/phases/02-dvizhok-i-mvp-walkthrough-na-odnom-neyrone/02-04-SUMMARY.md
-  - .planning/phases/02-dvizhok-i-mvp-walkthrough-na-odnom-neyrone/02-05-PLAN.md
-  - .planning/phases/02-dvizhok-i-mvp-walkthrough-na-odnom-neyrone/02-05-SUMMARY.md
-  - .planning/phases/02-dvizhok-i-mvp-walkthrough-na-odnom-neyrone/02-06-PLAN.md
-  - .planning/phases/02-dvizhok-i-mvp-walkthrough-na-odnom-neyrone/02-06-SUMMARY.md
-  - .planning/phases/02-dvizhok-i-mvp-walkthrough-na-odnom-neyrone/02-07-PLAN.md
-  - .planning/phases/02-dvizhok-i-mvp-walkthrough-na-odnom-neyrone/02-07-SUMMARY.md
-  - .planning/phases/02-dvizhok-i-mvp-walkthrough-na-odnom-neyrone/02-08-PLAN.md
-  - .planning/phases/02-dvizhok-i-mvp-walkthrough-na-odnom-neyrone/02-08-SUMMARY.md
-  - .planning/phases/02-dvizhok-i-mvp-walkthrough-na-odnom-neyrone/02-09-PLAN.md
-  - .planning/phases/02-dvizhok-i-mvp-walkthrough-na-odnom-neyrone/02-09-SUMMARY.md
+  - .planning/phases/02-dvizhok-i-mvp-walkthrough-na-odnom-neyrone/02-10-PLAN.md
+  - .planning/phases/02-dvizhok-i-mvp-walkthrough-na-odnom-neyrone/02-10-SUMMARY.md
+  - .planning/phases/02-dvizhok-i-mvp-walkthrough-na-odnom-neyrone/02-11-PLAN.md
+  - .planning/phases/02-dvizhok-i-mvp-walkthrough-na-odnom-neyrone/02-11-SUMMARY.md
+  - .planning/phases/02-dvizhok-i-mvp-walkthrough-na-odnom-neyrone/02-12-PLAN.md
+  - .planning/phases/02-dvizhok-i-mvp-walkthrough-na-odnom-neyrone/02-12-SUMMARY.md
+  - AGENTS.md
   - DECISIONS.md
   - e2e/smoke.spec.ts
+  - src/run/history/index.ts
+  - src/run/history/linkHistory.ts
   - src/run/etalon-constants.ts
   - src/run/gradcheck.test.ts
-  - src/run/history.ts
   - src/run/invariants.test.ts
-  - src/run/run.ts
-  - src/run/scenario.ts
+  - src/run/scenario/index.ts
+  - src/run/scenario/neuron.ts
+  - src/run/scenario/types.ts
   - src/run/stepRecords.ts
   - src/run/trainingRun.ts
   - src/run/types.ts
   - src/run/url.ts
   - src/run/useRunSlice.ts
+  - src/structure.test.ts
+  - src/tensor/backward.ts
   - src/tensor/boundaries.test.ts
   - src/tensor/index.ts
   - src/tensor/model.ts
-  - src/tensor/ops.ts
+  - src/tensor/ops/index.ts
+  - src/tensor/ops/matvec.ts
   - src/tensor/tensor.ts
-  - src/tensor/trace.ts
-  - src/tensor/value-grads.ts
+  - src/tensor/value-ops/add.ts
+  - src/tensor/value-ops/index.ts
+  - src/tensor/value-ops/sigmoid.ts
   - src/tensor/value.ts
-  - src/ui/App.tsx
+  - src/ui/app/App.tsx
   - src/ui/README.md
-  - src/ui/chainLinks.ts
-  - src/ui/compGraph.ts
-covered_digest: v4:sha256:485f2413ce2215f9776026711a79e92c096ed85220ca5346af3747973d2cc9c4
+  - src/ui/graph/geometry.ts
+  - src/ui/chain/links.ts
+covered_digest: v4:sha256:67796cdb929c4bfbd3693be896e8d2bfcc0183213249d0a29d2bf136e03ef55d
 ---
 
 # Phase 02: Движок и MVP-walkthrough на одном нейроне — Verification Report (цикл 1)
