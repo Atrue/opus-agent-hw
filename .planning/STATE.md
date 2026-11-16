@@ -4,7 +4,7 @@ milestone: v1.3
 current_phase: "2.1"
 current_phase_name: Правки визуализации графа вычислений
 status: planning
-stopped_at: Phase 02 complete, ready to plan Phase 2.1
+stopped_at: Фаза 02 закрыта (реверификация цикл 2 + UAT + transition); фаза 2.1 запланирована (CONTEXT + UI-SPEC + 3 плана) — ревью владельца → исполнение
 last_updated: "2026-11-16T07:38:16.970Z"
 last_activity: 2026-11-16
 last_activity_desc: Phase 02 complete, transitioned to Phase 2.1
@@ -29,9 +29,9 @@ See: .planning/PROJECT.md (updated 2026-11-16)
 ## Current Position
 
 Phase: 2.1 — Правки визуализации графа вычислений
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-11-16 — Phase 02 закрыта: реверификация цикл 2 PASSED (4 OQ disposition A закрыты, 124 unit + 16 e2e + lint 0 + tsc 0) → UAT 3/3 принят владельцем по автоматическим контрактам → transition на 2.1
+Plan: 3 плана созданы (2.1-01…03), волны 1→2→3, готовы к ревью владельца → исполнению
+Status: Planned (awaiting owner review)
+Last activity: 2026-11-16 — Phase 02 закрыта: реверификация цикл 2 PASSED (4 OQ disposition A закрыты, 124 unit + 16 e2e + lint 0 + tsc 0) → UAT 3/3 принят владельцем по автоматическим контрактам → transition на 2.1; фаза 2.1 запланирована (CONTEXT + UI-SPEC + 3 плана: 01 топология без шума — фиксы 1/3, 02 квадратные узлы + тултипы поверх — фиксы 5/2, 03 рамка-нейрон + коллапс + e2e-финал/docs — фикс 4)
 
 Progress: [██████░░░░] 57%
 
