@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 current_phase: 02
 current_phase_name: Движок и MVP-walkthrough на одном нейроне
 status: executing
-stopped_at: 02-10 исполнен (value-ops + backwardFn, OQ-3/OQ-4 закрыты; Rule 4-девиация — апрув владельца на правку границы tensor regex '^(\.\./){2,}'); далее 02-11 → 02-12 → реверификация цикл 2
-last_updated: "2026-11-13T17:30:00.000Z"
+stopped_at: 02-11 исполнен (домены tensor/run/format/ui, SegmentId в run, NO-LAYER-INVERSION); далее 02-12 (гейт R1/R2/R4 + D-34 docs-sync) → реверификация цикл 2
+last_updated: "2026-11-13T18:10:00.000Z"
 last_activity: 2026-11-13
-last_activity_desc: Phase 02 gap-цикл — 02-10 исполнен (value-ops/ 8 функций с backwardFn, Value без методов, value-grads удалён)
+last_activity_desc: Phase 02 gap-цикл — 02-11 исполнен (ops/trace/scenario/history/format/ui домены)
 state_head: 71cb059
 progress:
   total_phases: 6
@@ -28,9 +28,9 @@ See: .planning/PROJECT.md (updated 2026-11-03)
 ## Current Position
 
 Phase: 02 (Движок и MVP-walkthrough на одном нейроне) — EXECUTING
-Plan: 12 of 12 (gap-цикл: 10 исполнено + 02-11/02-12 готовы)
-Status: 02-10 исполнен (OQ-3/OQ-4: value-ops/, Value-контейнер, общий chain rule; 121 unit + 16 e2e зелёные); далее 02-11 (домены/подпапки) → 02-12 (гейт + D-34) → реверификация цикл 2
-Last activity: 2026-11-13 — исполнение 02-10 (gap-цикл)
+Plan: 12 of 12 (gap-цикл: 11 исполнено + 02-12 готов)
+Status: 02-11 исполнен (OQ-2: домены ops/trace/scenario/history/format/ui-подпапки, SegmentId в run; 121 unit + 16 e2e зелёные); далее 02-12 (гейт + D-34) → реверификация цикл 2
+Last activity: 2026-11-13 — исполнение 02-11 (gap-цикл)
 
 Progress: [██████░░░░] 60%
 
@@ -76,6 +76,7 @@ Progress: [██████░░░░] 60%
 | Phase 02 P09 | 20 min | 1 tasks | 5 files |
 | Phase 02 P06 | 22 min | 2 tasks | 8 files |
 | Phase 02 P10 | 12 min | 2 tasks | 15 files |
+| Phase 02 P11 | 32 min | 3 tasks | 74 files |
 
 ## Accumulated Context
 
@@ -134,6 +135,7 @@ Recent decisions affecting current work:
 - [Phase 02 → gap-цикл, 2026-11-13]: disposition владельца — OQ-1..4 ВСЕ маршрутом A (gap-планы сейчас); созданы: 02-10-PLAN (gap_ids OQ-3/OQ-4: value-ops/ — 8 per-op модулей forward+localGrad парой, контракт ValueOpContract + таблица CONTRACTS, value.ts = контейнер + генерический runBackward без switch, value-grads.ts удаляется, бит-идентичность инвариантами), 02-11-PLAN (gap_ids OQ-2: ui → 10 подпапок сущностей app/stepper/formula/graph/chain/operation/numbers/dataset/epoch/typography; scenario.ts(21)/history.ts(12)/ops.ts(10)/trace.ts(12)/compGraph.ts(18)/chainLinks.ts(11)/hintData.ts(5)/numbers.ts(4) → домен-папки с баррелами; чистые git mv, testid/RU-строки/тела не трогаются), 02-12-PLAN (gap_ids OQ-1: structure.test.ts — R1 no export default / R2 ui-корень только README / R3 ≤1 не-типового экспорта вне замороженных исключений / R4 дубль границы tensor; гейт тестом — oxlint гранулометрию не умеет, .oxlintrc.json не трогается; docs-sync D-34 ревизует A6-чтение D-28). Порядок 02-10 → 02-11 → 02-12; после SUMMARY — реверификация цикл 2
 - [Phase 02 → ревью gap-планов, 2026-11-13]: ревью владельцем трёх планов с правкой по пунктам — 02-10: операции = СВОБОДНЫЕ функции (a: Value, b: Value): Value, из Value уходят ВСЕ методы; внутри op-функции объявлен backwardFn — замыкание чистых локальных производных (массив параллельно parents, БЕЗ incoming и мутаций); chain rule общий в свободной backward(root) (topo + parents[i].grad += partials[i]·v.grad, порядок A→B); CONTRACTS-таблица/интерфейс/switch исключены; op-функции внутренние для src/tensor (index.ts не меняется); принят ulp-дрейф div/log/sigmoid (ассоциация partial·incoming; 1e-12/1e-6); машинные структурные гейты убраны — приёмка ручным ревью владельца. 02-11: ops/ ПО ОПЕРАЦИЯМ (matvec/tanh/sigmoid/bce/add — зеркально value-ops, не по категориям); SegmentId поднимается в run/types.ts (закрыта слой-инверсия run→ui: run/types+trainingRun+history импортировали ui/chainLinks); format — чистый index.ts-баррел + правка 13 импортов; тесты колоцируются в папки сущностей; un-export аудит мёртвых символов (scenarioById, accumulate, LINK_HISTORY_CAP, CHAIN_GEOMETRY_IDS); гранулометрия — мягкая инструкция, НЕ машинный гейт; сплиты = новые файлы (git-история только у чистых mv). 02-12: гейт = бинарный минимум R1 (нет export default) / R2 (корень ui только README) / R4 (tensor './…', не-тесты, carve-out зеркалит oxlint) — без подсчёта экспортов/порогов/списков; D-34 пакетный: гранулометрия-инструкция + Value-замыкания (разрешены в view, запрещены в движке) + ulp-дрейф + ops по операциям + SegmentId + состав гейта; супрессии A6-чтения D-28 и «замыкания удалены» D-29 (только Value-слой); AGENTS.md №6 + новый пункт «Гранулометрия модулей»
 - [Phase 02 → 02-10 исполнен, 2026-11-13]: OQ-3/OQ-4 закрыты — value-ops/ 8 операций свободными функциями с backwardFn чистых локальных производных внутри (mul→[b,a], div→[1/b,−a/b²], tanh→[1−out²], sigmoid→[out(1−out)], log→[1/a]); Value = контейнер без методов + свободная backward(root) с общим chain rule (порядок topo/вкладов A→B сохранён); value-grads.ts удалён; ulp-дрейф div/log/sigmoid эмпирически в допусках (121 unit + lint 0 + tsc 0 + 16 e2e). Rule 4-девиация с апрувом владельца: замороженный override oxlint regex '^\.\./' конфликтовал с подпапками ('../value' из value-ops) — заменён на '^(\.\./){2,}' (запрет выхода ЗА src/tensor), boundaries-тест зеркалит резолвом пути; изоляция библиотеки сохранена (ноль импортов из приложения/react, deep-импорт-граница не тронута); журнализация — D-34 в 02-12
+- [Phase 02 → 02-11 исполнен, 2026-11-13]: OQ-2 закрыт — tensor: ops/ ПО ОПЕРАЦИЯМ (matvec/add/tanh/sigmoid/bce, зеркально value-ops/) + trace/ домен + backward.ts (accumulate внутренняя); run: scenario/ (types/bindings/xor/neuron/registry, scenarioById внутренняя) + history/ (types/series/session/lossChart/linkHistory, LINK_HISTORY_CAP внутренняя) с баррелами и колоцированными тестами; SegmentId в run/types.ts — слой-инверсия run→ui закрыта (NO-LAYER-INVERSION); format: minus/formatKey/exactRepr + index-баррел (13 импортов); ui: 10 подпапок сущностей, сплиты compGraph→graph/{geometry,inventory}, chainLinks→chain/{links,symbols,geometry} (CHAIN_GEOMETRY_IDS удалён — мёртвый), hintData→numbers/{resolve,hint}, liveValues→chain/liveValues.ts; новое: scenario/bindings.ts — общие фабрики биндингов/рёбер xor+neuron (связный субъект); тела/testid/RU-строки нетронуты (121 unit + lint 0 + tsc 0 + 16 e2e; UI-SUBFOLDERS/MULTI-EXPORT-SPLIT)
 
 ### Pending Todos
 
