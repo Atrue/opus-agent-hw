@@ -13,9 +13,10 @@
  */
 
 import { describe, expect, it } from 'vitest'
-import { chainOf, geometryOf, type GeometryContext, type SegmentGeometry } from './chainLinks'
-import { buildInventory } from './compGraph'
-import { NEURON_SCENARIO, XOR_SCENARIO, type ScenarioModel } from '../run/scenario'
+import { chainOf } from './links'
+import { geometryOf, type GeometryContext, type SegmentGeometry } from './geometry'
+import { buildInventory } from '../graph/inventory'
+import { NEURON_SCENARIO, XOR_SCENARIO, type ScenarioModel } from '../../run/scenario'
 
 /** Контекст геометрии спека (рёбра/группы + символы). */
 function contextOf(spec: ScenarioModel): GeometryContext {

@@ -1,9 +1,9 @@
-import { useRunSlice } from '../run/useRunSlice'
-import { capLinkHistory, linkHistoryOf, type LinkHistoryPoint, type LinkSeries } from '../run/history'
-import { liveValues } from './LinkPanel'
-import { formatKey } from '../format/numbers'
-import { SubscriptText } from './SubscriptText'
-import type { SegmentId } from '../run/types'
+import { useRunSlice } from '../../run/useRunSlice'
+import { capLinkHistory, linkHistoryOf, type LinkHistoryPoint, type LinkSeries } from '../../run/history'
+import { liveValues } from './liveValues'
+import { formatKey } from '../../format'
+import { SubscriptText } from '../typography/SubscriptText'
+import type { SegmentId } from '../../run/types'
 
 /**
  * История звена (01.2-02, пункт 4 ТЗ): раскрывающаяся секция в панели звена

@@ -1,13 +1,13 @@
 import { Fragment } from 'react'
-import { run } from '../run/run'
-import { activeScenario } from '../run/scenario'
-import type { StepRecord } from '../tensor'
-import { formatKey } from '../format/numbers'
+import { run } from '../../run/run'
+import { activeScenario } from '../../run/scenario'
+import type { StepRecord } from '../../tensor'
+import { formatKey } from '../../format'
 import { buildOperationRows, type NumberRow } from './operationRows'
-import { NarrativeLine } from './NarrativeLine'
-import { NumberHint } from './NumberHint'
-import { buildHintData } from './hintData'
-import { SubscriptText } from './SubscriptText'
+import { NarrativeLine } from '../typography/NarrativeLine'
+import { NumberHint } from '../numbers/NumberHint'
+import { buildHintData } from '../numbers/hint'
+import { SubscriptText } from '../typography/SubscriptText'
 
 /**
  * Панель операции — дефолтный вид: формула + входы/выходы/градиенты операции,

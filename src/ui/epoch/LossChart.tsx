@@ -1,7 +1,7 @@
-import { useRunSlice } from '../run/useRunSlice'
-import { buildLossChartData, sessionGeometryOf } from '../run/history'
-import { activeScenario } from '../run/scenario'
-import { formatKey } from '../format/numbers'
+import { useRunSlice } from '../../run/useRunSlice'
+import { buildLossChartData, sessionGeometryOf } from '../../run/history'
+import { activeScenario } from '../../run/scenario'
+import { formatKey } from '../../format'
 
 /**
  * График лосса (UX-05): SVG polyline по лосс-точкам текущей эпохи (ось —

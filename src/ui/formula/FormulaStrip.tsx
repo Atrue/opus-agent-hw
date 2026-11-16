@@ -1,10 +1,10 @@
 import React from 'react'
-import { run } from '../run/run'
-import { useRunSlice } from '../run/useRunSlice'
-import { activeScenario } from '../run/scenario'
-import { symbolToSegment } from './chainLinks'
-import type { SegmentId } from '../run/types'
-import { SubscriptText } from './SubscriptText'
+import { run } from '../../run/run'
+import { useRunSlice } from '../../run/useRunSlice'
+import { activeScenario } from '../../run/scenario'
+import { symbolToSegment } from '../chain/symbols'
+import type { SegmentId } from '../../run/types'
+import { SubscriptText } from '../typography/SubscriptText'
 
 /**
  * Формула-строка (01.2-01) — навигационное ядро экрана: полная формула

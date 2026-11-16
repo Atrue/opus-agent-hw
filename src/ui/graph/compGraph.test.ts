@@ -15,8 +15,9 @@
  */
 
 import { describe, expect, it } from 'vitest'
-import { buildGraph, buildInventory, graphBounds, type GraphNode } from './compGraph'
-import { NEURON_SCENARIO, XOR_SCENARIO, type ScenarioModel } from '../run/scenario'
+import { buildGraph, graphBounds, type GraphNode } from './geometry'
+import { buildInventory } from './inventory'
+import { NEURON_SCENARIO, XOR_SCENARIO, type ScenarioModel } from '../../run/scenario'
 
 const ids = (xs: readonly { id: string }[]): string[] => xs.map((n) => n.id)
 

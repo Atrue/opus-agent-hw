@@ -11,9 +11,9 @@ import {
   useInteractions,
   useRole,
 } from '@floating-ui/react'
-import { formatKey } from '../format/numbers'
-import type { HintData } from './hintData'
-import { SubscriptText } from './SubscriptText'
+import { formatKey } from '../../format'
+import type { HintData } from './hint'
+import { SubscriptText } from '../typography/SubscriptText'
 
 /**
  * NumberHint (R5 §4.5) — tier 1 прогрессивного оголения чисел: hover/focus на

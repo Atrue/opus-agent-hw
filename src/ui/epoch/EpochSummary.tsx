@@ -1,6 +1,6 @@
-import { useRunSlice } from '../run/useRunSlice'
-import { formatKey } from '../format/numbers'
-import { SubscriptText } from './SubscriptText'
+import { useRunSlice } from '../../run/useRunSlice'
+import { formatKey } from '../../format'
+import { SubscriptText } from '../typography/SubscriptText'
 
 /**
  * Экран завершения эпохи (R3): замещает содержимое слота панели (как

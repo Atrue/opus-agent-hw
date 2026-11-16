@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { MINUS, exactRepr, formatKey } from './numbers'
+import { MINUS, exactRepr, formatKey } from './index'
 import { ETALON_SAMPLE_1 } from '../run/etalon-constants'
 
 /** Все числовые листья контрольных констант walkthrough (NFR-02). */

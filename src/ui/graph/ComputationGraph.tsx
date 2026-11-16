@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { run } from '../run/run'
-import { useRunSlice } from '../run/useRunSlice'
-import { activeScenario, netShapeOf, type NodeBinding, type RenderNode } from '../run/scenario'
-import type { SampleCursor, StepRecord, Tensor } from '../tensor'
-import { formatKey } from '../format/numbers'
-import { GRAPH_EDGES, GRAPH_NODES, NODE_H, NODE_W, STEP_GROUPS, buildGraph, type GraphNode } from './compGraph'
-import { geometryOf } from './chainLinks'
+import { run } from '../../run/run'
+import { useRunSlice } from '../../run/useRunSlice'
+import { activeScenario, netShapeOf, type NodeBinding, type RenderNode } from '../../run/scenario'
+import type { SampleCursor, StepRecord, Tensor } from '../../tensor'
+import { formatKey } from '../../format'
+import { NODE_H, NODE_W, buildGraph, type GraphNode } from './geometry'
+import { GRAPH_EDGES, GRAPH_NODES, STEP_GROUPS } from './inventory'
+import { geometryOf } from '../chain/geometry'
 
 /**
  * Граф вычислений (01.2-06, правила владельца): диаграмма = буквальный граф

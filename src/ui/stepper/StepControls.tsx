@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
-import { run } from '../run/run'
-import { useRunSlice } from '../run/useRunSlice'
+import { run } from '../../run/run'
+import { useRunSlice } from '../../run/useRunSlice'
 
 /**
  * Контролы прогона (R3, forward-only; redesign — транспорт в шапке):

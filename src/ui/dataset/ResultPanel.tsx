@@ -1,7 +1,7 @@
-import { useRunSlice } from '../run/useRunSlice'
-import { activeScenario } from '../run/scenario'
-import { formatKey } from '../format/numbers'
-import { SubscriptText } from './SubscriptText'
+import { useRunSlice } from '../../run/useRunSlice'
+import { activeScenario } from '../../run/scenario'
+import { formatKey } from '../../format'
+import { SubscriptText } from '../typography/SubscriptText'
 
 /**
  * «Результат — текущий пример» (01.2-05, пункты 3/8 UAT): фокус-карточка

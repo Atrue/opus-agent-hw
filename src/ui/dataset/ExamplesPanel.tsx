@@ -1,7 +1,7 @@
-import { useRunSlice } from '../run/useRunSlice'
-import { activeScenario } from '../run/scenario'
-import { formatKey } from '../format/numbers'
-import { SubscriptText } from './SubscriptText'
+import { useRunSlice } from '../../run/useRunSlice'
+import { activeScenario } from '../../run/scenario'
+import { formatKey } from '../../format'
+import { SubscriptText } from '../typography/SubscriptText'
 
 /**
  * «Примеры» (01.2-05; таблица-датасет — 01.2-07, пункт 8 цикла 2): обучающая

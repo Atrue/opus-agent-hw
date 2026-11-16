@@ -1,6 +1,6 @@
 import { expect, test } from 'playwright/test'
 import { mkdirSync, rmSync } from 'node:fs'
-import { formatKey } from '../src/format/numbers'
+import { formatKey } from '../src/format'
 import { ETALON_NEURON_SAMPLE_1, ETALON_SAMPLE_1 } from '../src/run/etalon-constants'
 
 /**

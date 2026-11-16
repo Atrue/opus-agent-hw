@@ -1,10 +1,10 @@
-import { run } from '../run/run'
-import { activeScenario } from '../run/scenario'
-import type { Drill } from '../run/types'
-import type { StepRecord } from '../tensor'
-import { exactRepr, formatKey } from '../format/numbers'
-import { flattenTensorValues, resolveRef, type ResolvedNumber } from './hintData'
-import { SubscriptText } from './SubscriptText'
+import { run } from '../../run/run'
+import { activeScenario } from '../../run/scenario'
+import type { Drill } from '../../run/types'
+import type { StepRecord } from '../../tensor'
+import { exactRepr, formatKey } from '../../format'
+import { flattenTensorValues, resolveRef, type ResolvedNumber } from './resolve'
+import { SubscriptText } from '../typography/SubscriptText'
 
 /**
  * NumberDrilldown (Interaction Contract): открывается в слоте панели

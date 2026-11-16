@@ -1,4 +1,4 @@
-import type { StepRecord, TensorValues } from '../tensor'
+import type { StepRecord, TensorValues } from '../../tensor'
 
 /**
  * Чистая модель дефолтного вида ОПЕРАЦИИ (без React): какие числа показать,

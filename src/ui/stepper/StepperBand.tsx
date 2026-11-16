@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react'
-import { useRunSlice } from '../run/useRunSlice'
-import { activeScenario } from '../run/scenario'
-import { formatKey } from '../format/numbers'
-import { SubscriptText } from './SubscriptText'
+import { useRunSlice } from '../../run/useRunSlice'
+import { activeScenario } from '../../run/scenario'
+import { formatKey } from '../../format'
+import { SubscriptText } from '../typography/SubscriptText'
 
 /**
  * Лента шагов (DESIGN.md §4/§9; 01.2-01 пункт 5 ТЗ) — ОДНА горизонтальная
