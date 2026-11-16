@@ -34,11 +34,12 @@ export interface GraphEdge {
 
 /** Рамки канвы: фиксированные pitch/padding, размер — функция структуры. */
 export const PITCH_X = 78
-export const PITCH_Y = 44
+export const PITCH_Y = 56
 export const PAD_X = 34
 export const PAD_Y = 26
-export const NODE_W = 62
-export const NODE_H = 30
+/** Узел-значение — квадрат 1:1 (2.1-02, фикс 5). */
+export const NODE_W = 48
+export const NODE_H = 48
 
 /** Рамки канвы из данных спека (максимум col/row + один pitch запас). */
 export function graphBounds(spec: ScenarioModel = activeScenario()): { w: number; h: number } {

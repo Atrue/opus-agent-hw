@@ -930,6 +930,10 @@ circle.diag-hit:focus-visible {
   fill: var(--color-on-surface);
   font-size: calc(10px * var(--diag-scale, 1));
 }
+.g-node-value-over { /* значение НАД блоком, когда не влезло (2.1-02, фикс 5) */
+  fill: var(--color-on-surface-variant);
+  font-size: calc(9px * var(--diag-scale, 1));
+}
 .node-grad { /* ∂L/∂· под звеном — приглушённый моно (после backward) */
   fill: var(--color-on-surface-variant);
   opacity: 0.85;
@@ -975,14 +979,13 @@ circle.diag-hit:focus-visible {
 .g-op.diag-selected .g-node-selring {
   opacity: 1;
 }
-.g-tip { /* hover-тултип рёбра: fwd/bwd значения источника (CSS-only) */
+.g-tip { /* hover-тултип рёбра: fwd/bwd значения источника; верхний слой SVG (2.1-02) */
   opacity: 0;
   pointer-events: none;
   transition: opacity 120ms ease;
   text-anchor: middle;
 }
-.diag-edge-g:hover .g-tip,
-.diag-edge-g:focus-within .g-tip {
+.g-tip.visible {
   opacity: 1;
 }
 .g-tip rect {

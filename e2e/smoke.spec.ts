@@ -371,13 +371,27 @@ test('14) граф: градиенты под звеньями, hover рёбер
   await expect(grads.filter({ hasText: '∂ =' }).first()).toBeVisible()
 
   // hover ребра → тултип с двумя значениями: forward (значение источника)
-  // и backward (градиент источника ∂L/∂·)
+  // и backward (градиент источника ∂L/∂·); тултип — в верхнем слое SVG
+  // (2.1-02: не перекрывается узлами/звеньями)
+  const tipLayer = page.getByTestId('g-tip-layer')
+  await expect(tipLayer, 'слой тултипов — последний в SVG (поверх узлов)').toBeAttached()
   await page.locator('.diag-edge-g .diag-hit').first().hover()
   const tipOpacity = await page.locator('.g-tip').first().evaluate((el) => getComputedStyle(el).opacity)
   expect(tipOpacity, 'тултип ребра видим при hover (opacity → 1)').toBe('1')
   const tipText = (await page.locator('.g-tip').first().textContent()) ?? ''
   expect(tipText, 'тултип несёт forward-значение источника').toMatch(/=\s*[-−+]?[\d.]/)
   expect(tipText, 'тултип несёт backward-значение (∂L/∂ источника)').toContain('∂L/∂')
+
+  // hover узла-звена → tier-1 NumberHint поверх графа (2.1-02, фикс 2):
+  // портал document.body (вне SVG), значение + градиент живого среза
+  await page.locator('g[data-node="W[0]"] .diag-hit').hover()
+  const nodeHintEl = page.getByTestId('number-hint')
+  await expect(nodeHintEl, 'тултип числа узла видим').toBeVisible()
+  await expect(nodeHintEl).toContainText('∂L/∂')
+  expect(
+    await nodeHintEl.evaluate((el) => el.closest('svg')),
+    'тултип числа живёт в портале (вне SVG графа) — поверх него',
+  ).toBeNull()
 
   // 8-й шаг — sgd: update-узла на графе нет (2.1-01), параметры подсвечены
   // амбером и обновились живым прогоном (W[0])
