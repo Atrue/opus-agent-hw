@@ -6,7 +6,7 @@
  */
 
 import { bB, dot, flow, inB, ten, wB } from './bindings'
-import type { RenderEdge, RenderNode, RenderSegment, RenderSeries, ScenarioModel, ScenarioOpMeta } from './types'
+import type { RenderEdge, RenderFrame, RenderNode, RenderSegment, RenderSeries, ScenarioModel, ScenarioOpMeta } from './types'
 
 /** Метаданные 13 операций XOR-walkthrough (формулы/нарративы RU). */
 const XOR_OPS: readonly ScenarioOpMeta[] = [
@@ -252,6 +252,24 @@ const XOR_SEGMENTS: readonly RenderSegment[] = [
   },
 ]
 
+/** Рамки-нейроны XOR (2.1-03, фикс 4): 3 скрытых + выходной. */
+const XOR_FRAMES: readonly RenderFrame[] = [
+  ...[0, 1, 2].map((j): RenderFrame => ({
+    id: `n${String(j + 1)}`,
+    title: `Нейрон ${String(j + 1)}`,
+    nodes: [`op:matvec[${String(j)}]`, `op:add[${String(j)}]`, `z1[${String(j)}]`, `op:tanh[${String(j)}]`, `a1[${String(j)}]`],
+    output: ten('h', 0, j, 2),
+    drill: `a1[${String(j)}]`,
+  })),
+  {
+    id: 'n4',
+    title: 'Нейрон 4',
+    nodes: ['op:matvec2', 'op:add2', 'z2', 'op:sigmoid', 'ŷ'],
+    output: ten('h', 1, 0, 5),
+    drill: 'ŷ',
+  },
+]
+
 /** Ряды истории звена XOR: узловые поля SampleRecord + плоские срезы весов. */
 const XOR_SERIES: RenderSeries = {
   node: {
@@ -365,6 +383,7 @@ export const XOR_SCENARIO: ScenarioModel = {
     edges: XOR_EDGES,
     stepGroups: XOR_STEP_GROUPS,
     segments: XOR_SEGMENTS,
+    frames: XOR_FRAMES,
     series: XOR_SERIES,
   },
 }

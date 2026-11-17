@@ -52,6 +52,12 @@ describe('NEURON_SCENARIO: состав (D-31/A4)', () => {
       expect(o.narrative.trim().length, `нарратив ${o.op}`).toBeGreaterThan(0)
     }
   })
+
+  it('рамка-нейрон одна — «Нейрон 1», выход — ŷ, drill жив (2.1-03)', () => {
+    expect(NEURON_SCENARIO.render.frames).toHaveLength(1)
+    expect(NEURON_SCENARIO.render.frames[0]!.title).toBe('Нейрон 1')
+    expect(NEURON_SCENARIO.render.frames[0]!.drill).toBe('ŷ')
+  })
 })
 
 describe('NEURON_SCENARIO: правило стартовых весов первого шага (Pitfall 6)', () => {

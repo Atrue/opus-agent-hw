@@ -7,7 +7,8 @@ import { formatKey } from '../../format'
 import { fitsValue } from './capacity'
 import { NODE_H, NODE_W, buildGraph, type GraphNode } from './geometry'
 import { GRAPH_EDGES, GRAPH_NODES, STEP_GROUPS } from './inventory'
-import { nodeGrad, nodeHint, nodeValue, renderNodeOf } from './graphHint'
+import { type FrameBox, FRAME_TITLE_H, frameGeometry, frameOfNode } from './frames'
+import { bindingGrad, bindingValue, nodeGrad, nodeHint, nodeValue, renderNodeOf } from './graphHint'
 import { NumberHint } from '../numbers/NumberHint'
 import { geometryOf } from '../chain/geometry'
 
@@ -114,6 +115,10 @@ function onActivate(open: () => void): (event: React.KeyboardEvent) => void {
 
 const nodeById = new Map(GRAPH_NODES.map((n) => [n.id, n]))
 
+/** Рамки-нейроны активного сценария (топология статична — как инвентарь). */
+const FRAMES: readonly FrameBox[] = frameGeometry()
+const NODE_FRAME: ReadonlyMap<string, string> = frameOfNode()
+
 /** Точка присоединения ребра к узлу (бок по направлению). */
 function anchor(id: string, side: 'left' | 'right'): { x: number; y: number } {
   const n = nodeById.get(id)!
@@ -134,6 +139,28 @@ export function ComputationGraph({ record }: { record: StepRecord | null }) {
   // 2.1-02 (фикс 2): hover/focus hit-ребра открывает его тултип в ВЕРХНЕМ
   // слое SVG (после узлов — paint order) — не перекрывается узлами/звеньями
   const [hoveredEdge, setHoveredEdge] = useState<string | null>(null)
+  // 2.1-03 (фикс 4): коллапс рамок-нейронов — локальный UI-state, по умолчанию
+  // все рамки раскрыты; переключение — двойной клик по рамке/блоку или
+  // Enter/Space на заголовке рамки (a11y); мгновенно, без transition
+  const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set())
+  const toggleFrame = (frameId: string): void => {
+    setCollapsed((prev) => {
+      const next = new Set(prev)
+      if (next.has(frameId)) next.delete(frameId)
+      else next.add(frameId)
+      return next
+    })
+  }
+  const frameBoxById = new Map(FRAMES.map((f) => [f.id, f]))
+  /** Якорь ребра с учётом коллапса: член свёрнутой рамки → граница блока. */
+  const anchorWithCollapse = (id: string, side: 'left' | 'right'): { x: number; y: number } => {
+    const frameId = NODE_FRAME.get(id)
+    if (frameId !== undefined && collapsed.has(frameId)) {
+      const box = frameBoxById.get(frameId)!
+      return { x: side === 'right' ? box.cx + NODE_W / 2 : box.cx - NODE_W / 2, y: box.cy }
+    }
+    return anchor(id, side)
+  }
   const { view } = buildGraph()
   const stepIdx = stepIndexOf(record)
   const activeGroup = stepIdx === null ? null : STEP_GROUPS[stepIdx]!
@@ -178,9 +205,47 @@ export function ComputationGraph({ record }: { record: StepRecord | null }) {
           role="img"
           aria-label={`Граф вычислений ${netShapeOf(activeScenario())}: константы x, параметры W и b, операции слоёв; внутри звена — живое значение, под звеном — градиент после backward`}
         >
+        {/* рамки-нейроны (2.1-03): фон-контейнер ПОД рёбрами и узлами;
+            двойной клик по рамке — коллапс, заголовок — кнопка (a11y) */}
+        {FRAMES.map((f) => {
+          const isCollapsed = collapsed.has(f.id)
+          return (
+            <g key={f.id} data-frame={f.id} data-collapsed={isCollapsed ? 'true' : undefined}>
+              <rect
+                x={f.x}
+                y={f.y}
+                width={f.w}
+                height={f.h}
+                rx={10}
+                className="g-frame-box"
+                onDoubleClick={() => toggleFrame(f.id)}
+              />
+              <rect
+                x={f.x}
+                y={f.y - FRAME_TITLE_H}
+                width={Math.max(f.w, 96)}
+                height={FRAME_TITLE_H}
+                className="g-frame-title-hit"
+                role="button"
+                tabIndex={0}
+                aria-expanded={isCollapsed ? 'true' : 'false'}
+                aria-label={`${f.title}: ${isCollapsed ? 'раскрыть' : 'свернуть'} (двойной клик)`}
+                onClick={() => toggleFrame(f.id)}
+                onKeyDown={onActivate(() => toggleFrame(f.id))}
+              />
+              <text x={f.x + 6} y={f.y - 4} className="g-frame-title">
+                {f.title}
+              </text>
+            </g>
+          )
+        })}
         {GRAPH_EDGES.map((e) => {
-          const from = anchor(e.from, 'right')
-          const to = anchor(e.to, 'left')
+          const fromFrame = NODE_FRAME.get(e.from)
+          const toFrame = NODE_FRAME.get(e.to)
+          // внутренние рёбра свёрнутой рамки не рисуются (содержимое скрыто)
+          if (fromFrame !== undefined && fromFrame === toFrame && collapsed.has(fromFrame)) return null
+          const from = anchorWithCollapse(e.from, 'right')
+          const to = anchorWithCollapse(e.to, 'left')
           const active = activeGroup?.edges.has(e.id) === true
           const selected = sel.edges.has(e.id)
           const src = nodeById.get(e.from)!
@@ -213,6 +278,9 @@ export function ComputationGraph({ record }: { record: StepRecord | null }) {
           )
         })}
         {GRAPH_NODES.map((node) => {
+          // члены свёрнутой рамки скрыты — вместо них коллапс-блок (ниже)
+          const nodeFrame = NODE_FRAME.get(node.id)
+          if (nodeFrame !== undefined && collapsed.has(nodeFrame)) return null
           const active = activeGroup?.nodes.has(node.id) === true
           const selected = sel.nodes.has(node.id)
           const value = nodeValue(node.id)
@@ -300,14 +368,50 @@ export function ComputationGraph({ record }: { record: StepRecord | null }) {
             </g>
           )
         })}
+        {/* коллапс-блоки свёрнутых рамок (2.1-03): квадратный блок-нейрон
+            x → n → y — имя + живое выходное значение; клик — drill, двойной
+            клик/заголовок — раскрытие */}
+        {FRAMES.filter((f) => collapsed.has(f.id)).map((f) => {
+          const frame = activeScenario().render.frames.find((fr) => fr.id === f.id)!
+          const value = bindingValue(frame.output)
+          const grad = bindingGrad(frame.output)
+          return (
+            <g key={`block:${f.id}`} data-node={f.id} data-testid="frame-block" className="g-frame-block">
+              <rect x={f.cx - NODE_W / 2} y={f.cy - NODE_H / 2} width={NODE_W} height={NODE_H} rx={8} className="g-node-box" />
+              <SvgSubLabel text={f.id} x={f.cx} y={f.cy - 8} className="g-node-label" />
+              <text x={f.cx} y={f.cy + 12} textAnchor="middle" data-testid="station-value" className="g-node-value">
+                {value === undefined ? 'н/д' : formatKey(value)}
+              </text>
+              {grad !== undefined && (
+                <text x={f.cx} y={f.cy + NODE_H / 2 + 14} textAnchor="middle" data-testid="node-grad" className="node-grad">
+                  ∂ = {formatKey(grad)}
+                </text>
+              )}
+              <rect
+                x={f.cx - NODE_W / 2 - 3}
+                y={f.cy - NODE_H / 2 - 3}
+                width={NODE_W + 6}
+                height={NODE_H + 6}
+                className="diag-hit"
+                style={{ fill: 'transparent' }}
+                role="button"
+                tabIndex={0}
+                aria-label={`${f.title} свёрнут: значение ${value === undefined ? 'н/д' : formatKey(value)}; двойной клик раскрывает`}
+                onClick={() => run.openDrill(frame.drill)}
+                onDoubleClick={() => toggleFrame(f.id)}
+                onKeyDown={onActivate(() => toggleFrame(f.id))}
+              />
+            </g>
+          )
+        })}
         {/* 2.1-02 (фикс 2): верхний слой тултипов рёбер — ПОСЛЕ узлов
             (SVG paint order), не перекрывается узлами/звеньями; видимость —
             hoveredEdge (hover/focus hit-ребра) */}
         <g className="g-tip-layer" data-testid="g-tip-layer">
           {GRAPH_EDGES.map((e) => {
             if (hoveredEdge !== e.id) return null
-            const from = anchor(e.from, 'right')
-            const to = anchor(e.to, 'left')
+            const from = anchorWithCollapse(e.from, 'right')
+            const to = anchorWithCollapse(e.to, 'left')
             const src = nodeById.get(e.from)!
             const fwd = nodeValue(e.from)
             const bwd = nodeGrad(e.from)

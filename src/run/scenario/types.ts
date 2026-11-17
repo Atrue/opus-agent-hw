@@ -80,6 +80,23 @@ export interface RenderEdge {
   to: string
 }
 
+/**
+ * Рамка-нейрон (2.1-03, фикс 4): контейнер звеньев нейрона — название,
+ * полупрозрачный фон; двойной клик/Enter сворачивает содержимое в один
+ * квадратный блок-нейрон (цепь читается x → n → y), повторный — раскрывает.
+ */
+export interface RenderFrame {
+  id: string
+  /** RU-заголовок рамки («Нейрон 1»). */
+  title: string
+  /** Узлы-члены рамки (скрываются при коллапсе). */
+  nodes: readonly string[]
+  /** Живое выходное значение нейрона (коллапс-блок, станция station-value). */
+  output: NodeBinding
+  /** Drill-реф выходного значения (клик по коллапс-блоку). */
+  drill: string
+}
+
 /** Звено цепи формулы-хребта: заголовок/формула/символы + геометрия группы. */
 export interface RenderSegment {
   id: string
@@ -124,6 +141,8 @@ export interface ScenarioRender {
   stepGroups: readonly (readonly string[])[]
   /** Звенья цепи формулы-хребта. */
   segments: readonly RenderSegment[]
+  /** Рамки-нейроны (2.1-03): контейнеры звеньев с коллапсом. */
+  frames: readonly RenderFrame[]
   /** Ряды истории звена. */
   series: RenderSeries
 }

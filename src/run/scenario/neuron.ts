@@ -5,7 +5,7 @@
  */
 
 import { bB, dot, flow, inB, ten, wB } from './bindings'
-import type { RenderEdge, RenderNode, RenderSegment, RenderSeries, ScenarioModel, ScenarioOpMeta } from './types'
+import type { RenderEdge, RenderFrame, RenderNode, RenderSegment, RenderSeries, ScenarioModel, ScenarioOpMeta } from './types'
 
 /** Метаданные 8 операций нейрон-walkthrough (формулы/нарративы RU). */
 const NEURON_OPS: readonly ScenarioOpMeta[] = [
@@ -110,8 +110,7 @@ const NEURON_STEP_GROUPS: readonly (readonly string[])[] = [
   ['W[0]', 'W[1]', 'b[0]'],
 ]
 
-const NEURON_SEGMENTS: readonly RenderSegment[] = [
-  {
+const NEURON_SEGMENTS: readonly RenderSegment[] = [  {
     id: 'x',
     title: 'x — вход примера',
     formula: 'x = (x1, x2)',
@@ -155,6 +154,17 @@ const NEURON_SEGMENTS: readonly RenderSegment[] = [
     numberSyms: ['η', '∂L/∂W', 'W[0,0]'],
     nodes: ['W[0]', 'W[1]', 'b[0]'],
     symbolNodes: { η: ['W[0]', 'W[1]', 'b[0]'], '∂L/∂W': ['W[0]', 'W[1]', 'b[0]'] },
+  },
+]
+
+/** Рамка-нейрон (2.1-03, фикс 4): звенья нейрона в контейнере с коллапсом. */
+const NEURON_FRAMES: readonly RenderFrame[] = [
+  {
+    id: 'n1',
+    title: 'Нейрон 1',
+    nodes: ['op:matvec', 'op:add', 'z', 'op:sigmoid', 'ŷ'],
+    output: ten('h', 0, 0, 2),
+    drill: 'ŷ',
   },
 ]
 
@@ -245,6 +255,7 @@ export const NEURON_SCENARIO: ScenarioModel = {
     edges: NEURON_EDGES,
     stepGroups: NEURON_STEP_GROUPS,
     segments: NEURON_SEGMENTS,
+    frames: NEURON_FRAMES,
     series: NEURON_SERIES,
   },
 }

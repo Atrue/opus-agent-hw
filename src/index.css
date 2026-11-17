@@ -934,6 +934,25 @@ circle.diag-hit:focus-visible {
   fill: var(--color-on-surface-variant);
   font-size: calc(9px * var(--diag-scale, 1));
 }
+/* Рамка-нейрон (2.1-03, фикс 4): слабый полупрозрачный фон-контейнер */
+.g-frame-box {
+  fill: color-mix(in srgb, var(--color-surface-container) 45%, transparent);
+  stroke: var(--color-outline-variant);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+}
+.g-frame-title-hit {
+  fill: transparent;
+  cursor: pointer;
+}
+.g-frame-title {
+  fill: var(--color-on-surface-variant);
+  font-size: calc(9.5px * var(--diag-scale, 1));
+  pointer-events: none;
+}
+.g-frame-block .g-node-box {
+  stroke: var(--color-secondary); /* свёрнутый нейрон — рамка вторичного контура */
+}
 .node-grad { /* ∂L/∂· под звеном — приглушённый моно (после backward) */
   fill: var(--color-on-surface-variant);
   opacity: 0.85;

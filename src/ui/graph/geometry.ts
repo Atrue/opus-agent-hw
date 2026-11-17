@@ -36,7 +36,8 @@ export interface GraphEdge {
 export const PITCH_X = 78
 export const PITCH_Y = 56
 export const PAD_X = 34
-export const PAD_Y = 26
+/** 2.1-03: запас под рамку-нейрон строки 0 (полублок 24 + FRAME_PAD 12 + заголовок). */
+export const PAD_Y = 56
 /** Узел-значение — квадрат 1:1 (2.1-02, фикс 5). */
 export const NODE_W = 48
 export const NODE_H = 48
