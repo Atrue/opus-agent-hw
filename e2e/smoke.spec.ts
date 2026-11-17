@@ -474,30 +474,34 @@ test('16) result-zone: входы AND-сэмпла + ŷ/L/LR; футер без 
   await expect(page.getByTestId('step-indicator')).toHaveText('Эпоха 1 · пример 1 · шаг 5')
 })
 
-test('17) рамка-нейрон: двойной клик сворачивает в блок x → n → y, заголовок раскрывает; значение живое', async ({ page }) => {
+test('17) рамка-нейрон: внутри — веса и «·»/«+», снаружи — z/σ/ŷ; двойной клик сворачивает в блок, заголовок раскрывает; значение живое', async ({ page }) => {
   await page.goto('/')
   const frame = page.locator('g[data-frame="n1"]')
   await expect(frame, 'рамка «Нейрон 1» на графе (2.1-03)').toBeAttached()
   await expect(frame).not.toHaveAttribute('data-collapsed')
   await expect(page.locator('g[data-node="op:matvec"]'), 'члены рамки раскрыты').toBeVisible()
+  await expect(page.locator('g[data-node="W[0]"]'), 'веса — члены рамки (ревью UAT)').toBeVisible()
   await expect(page.getByTestId('frame-block'), 'коллапс-блока нет').toHaveCount(0)
   const title = frame.locator('.g-frame-title-hit')
   await expect(title).toHaveAttribute('aria-expanded', 'false')
 
-  // двойной клик по рамке — коллапс: члены скрыты, квадратный блок-нейрон
-  // с живым выходным значением (до forward — «н/д»); клик — по свободной
-  // полосе отступа рамки (узлы-члены поверх фона рамки)
-  await frame.locator('.g-frame-box').dblclick({ position: { x: 12, y: 6 } })
+  // двойной клик по рамке — коллапс: члены (w, b, «·», «+») скрыты, квадратный
+  // блок-нейрон с живым z (выход взвешенной суммы); последующие вычисления
+  // (z, σ, ŷ) остаются на графе — клик по свободной полосе отступа рамки
+  // (узлы-члены поверх фона рамки)
+  await frame.locator('.g-frame-box').dblclick({ position: { x: 6, y: 6 } })
   await expect(frame).toHaveAttribute('data-collapsed', 'true')
   await expect(title).toHaveAttribute('aria-expanded', 'true')
   await expect(page.locator('g[data-node="op:matvec"]'), 'члены скрыты при коллапсе').toHaveCount(0)
+  await expect(page.locator('g[data-node="W[0]"]'), 'веса скрыты при коллапсе').toHaveCount(0)
+  await expect(page.locator('g[data-node="z"]'), 'z — последующее вычисление — остаётся на графе').toBeVisible()
   const block = page.getByTestId('frame-block')
-  await expect(block, 'коллапс-блок x → n → y').toBeVisible()
+  await expect(block, 'коллапс-блок-нейрон').toBeVisible()
   await expect(block.locator('[data-testid="station-value"]'), 'до forward — н/д').toHaveText('н/д')
 
-  // 3 шага = matvec, add, sigmoid: блок несёт живое выходное ŷ нейрона
-  for (let i = 0; i < 3; i++) await page.getByTestId('btn-next').click()
-  await expect(block.locator('[data-testid="station-value"]'), 'блок несёт живое ŷ').not.toHaveText('н/д')
+  // 2 шага = matvec, add: блок несёт живое z нейрона (выход взвешенной суммы)
+  for (let i = 0; i < 2; i++) await page.getByTestId('btn-next').click()
+  await expect(block.locator('[data-testid="station-value"]'), 'блок несёт живое z').not.toHaveText('н/д')
 
   // клик по блоку — drill выходного значения (tier 2)
   await block.locator('.diag-hit').click()

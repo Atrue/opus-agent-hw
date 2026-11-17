@@ -11,6 +11,8 @@ import { buildGraph, NODE_H, NODE_W } from './geometry'
 export const FRAME_PAD = 12
 /** Место под заголовок рамки над коробкой. */
 export const FRAME_TITLE_H = 16
+/** Полуразмер оп-узла в геометрии рамок (круг + запас подсветки). */
+export const FRAME_OP_HALF = 21
 
 export interface FrameBox {
   readonly id: string
@@ -37,8 +39,8 @@ export function frameGeometry(spec: ScenarioModel = activeScenario()): readonly 
     for (const id of f.nodes) {
       const n = byId.get(id)
       if (n === undefined) continue
-      const half = n.kind === 'op' ? 21 : NODE_W / 2
-      const halfY = n.kind === 'op' ? 21 : NODE_H / 2
+      const half = n.kind === 'op' ? FRAME_OP_HALF : NODE_W / 2
+      const halfY = n.kind === 'op' ? FRAME_OP_HALF : NODE_H / 2
       minX = Math.min(minX, n.x - half)
       maxX = Math.max(maxX, n.x + half)
       minY = Math.min(minY, n.y - halfY)

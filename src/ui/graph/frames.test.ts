@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import { NEURON_SCENARIO, XOR_SCENARIO } from '../../run/scenario'
 import { buildGraph, graphBounds, NODE_H, NODE_W } from './geometry'
-import { FRAME_PAD, frameGeometry, frameOfNode } from './frames'
+import { FRAME_OP_HALF, FRAME_PAD, frameGeometry, frameOfNode } from './frames'
 
 /**
- * Гейты рамок-нейронов (2.1-03, фикс 4): геометрия — чистая функция
- * структуры (детерминизм), каждый член существует и принадлежит ровно
- * одной рамке, коробка вмещает всех членов и не выходит за канву.
+ * Гейты рамок-нейронов (2.1-03, фикс 4; ревизия ревью UAT 2026-11-17):
+ * рамка охватывает внутренние веса и вычисления нейрона — параметры (w, b)
+ * и операции взвешенной суммы («·», «+») — и НЕ охватывает последующие
+ * вычисления (z, a1, ŷ), активации (σ/tanh) и входы. Геометрия — чистая
+ * функция структуры (детерминизм), каждый член существует и принадлежит
+ * ровно одной рамке, коробка вмещает членов, не-члены вне коробок.
  */
 describe('frames: рамки-нейроны neuron (1) и XOR (4)', () => {
   it('neuron — ровно 1 рамка «Нейрон 1»; XOR — ровно 4 (скрытые 1–3 + выходной 4)', () => {
@@ -25,6 +28,20 @@ describe('frames: рамки-нейроны neuron (1) и XOR (4)', () => {
           expect(known.has(id), `${f.id}: член ${id} существует`).toBe(true)
           expect(owner.has(id), `${id} не в двух рамках`).toBe(false)
           owner.set(id, f.id)
+        }
+      }
+    }
+  })
+
+  it('члены — только внутренние веса и вычисления (w, b, «·», «+»); значения/активации/входы — не члены (ревью UAT)', () => {
+    for (const spec of [NEURON_SCENARIO, XOR_SCENARIO]) {
+      const members = new Set(spec.render.frames.flatMap((f) => f.nodes))
+      for (const n of spec.render.nodes) {
+        const internal = n.role === 'param' || (n.kind === 'op' && (n.label === '·' || n.label === '+'))
+        if (internal) {
+          expect(members.has(n.id), `${n.id} — внутренний вес/вычисление нейрона — член рамки`).toBe(true)
+        } else {
+          expect(members.has(n.id), `${n.id} (${n.role}${n.kind === 'op' ? ` ${n.label}` : ''}) — последующее вычисление — вне рамки`).toBe(false)
         }
       }
     }
@@ -79,11 +96,32 @@ describe('frames: рамки-нейроны neuron (1) и XOR (4)', () => {
     }
   })
 
-  it('frameOfNode: член → своя рамка; post-frame минимум отступа учтён', () => {
+  it('не-члены геометрически вне коробок: рамка не накрывает последующие вычисления (z, a1, ŷ, σ/tanh, входы)', () => {
+    for (const spec of [NEURON_SCENARIO, XOR_SCENARIO]) {
+      const members = new Set(spec.render.frames.flatMap((f) => f.nodes))
+      const nodes = buildGraph(spec).nodes
+      for (const box of frameGeometry(spec)) {
+        for (const n of nodes) {
+          if (members.has(n.id)) continue
+          const hx = n.kind === 'op' ? FRAME_OP_HALF : NODE_W / 2
+          const hy = n.kind === 'op' ? FRAME_OP_HALF : NODE_H / 2
+          const overlap = n.x + hx > box.x && n.x - hx < box.x + box.w && n.y + hy > box.y && n.y - hy < box.y + box.h
+          expect(overlap, `${n.id} не накрыт коробкой рамки ${box.id}`).toBe(false)
+        }
+      }
+    }
+  })
+
+  it('frameOfNode: параметры и «·»/«+» — члены; входы/значения/активации — нет', () => {
     const owner = frameOfNode(NEURON_SCENARIO)
+    expect(owner.get('W[0]'), 'вес — внутри рамки (ревью UAT)').toBe('n1')
+    expect(owner.get('b[0]'), 'биас — внутри рамки').toBe('n1')
     expect(owner.get('op:matvec')).toBe('n1')
+    expect(owner.get('op:add')).toBe('n1')
     expect(owner.has('x[0]'), 'входы вне рамки').toBe(false)
-    expect(owner.has('W[0]'), 'параметры вне рамки').toBe(false)
+    expect(owner.has('z'), 'z — последующее вычисление — вне рамки').toBe(false)
+    expect(owner.has('op:sigmoid'), 'активация вне рамки').toBe(false)
+    expect(owner.has('ŷ'), 'ŷ вне рамки').toBe(false)
     expect(FRAME_PAD).toBe(12)
     expect(NODE_W).toBe(NODE_H) // квадратные блоки (фикс 5)
   })

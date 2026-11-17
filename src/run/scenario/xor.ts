@@ -111,7 +111,10 @@ const ALL_PARAMS = [...W1_IDS, ...B1_IDS, ...W2_IDS, 'b2[0]'] as const
 /**
  * Узлы XOR-графа 2-3-1 (35; 2.1-01: update-узел и matvec-промежуточные
  * W1x/W2a1 удалены — рёбра «·» → «+» без пересадок; b-узлы — в колонке
- * своих «·», под ними; лосс вне графа — D-32).
+ * своих «·», под ними; лосс вне графа — D-32). Ревью UAT 2026-11-17:
+ * W2/b2/«·»/«+» выходного нейрона — правее колонки a1 (col ≥ 7), чтобы
+ * рамка «Нейрон 4» накрывала свои веса, не задевая a1; хвост z2 → σ → ŷ
+ * сдвинут на колонку вправо.
  */
 const XOR_NODES: readonly RenderNode[] = [
   { id: 'x[0]', kind: 'value', role: 'const', label: 'x1', col: 0, row: 4, value: inB(0), grad: inB(0), click: { drill: 'x[0]' } },
@@ -129,15 +132,15 @@ const XOR_NODES: readonly RenderNode[] = [
   ...[0, 1, 2].map((j): RenderNode => ({ id: `z1[${String(j)}]`, kind: 'value', role: 'computed', label: `z1[${String(j)}]`, col: 4, row: j === 0 ? 0 : j === 1 ? 4 : 8, value: ten('zPost', 0, j, 1), grad: ten('zPost', 0, j) })),
   ...[0, 1, 2].map((j): RenderNode => ({ id: `op:tanh[${String(j)}]`, kind: 'op', role: 'op', label: 'tanh', col: 5, row: j === 0 ? 0 : j === 1 ? 4 : 8, value: ten('h', 0, j, 2), grad: ten('h', 0, j), click: { segment: 'a1', symbol: 'tanh' } })),
   ...[0, 1, 2].map((j): RenderNode => ({ id: `a1[${String(j)}]`, kind: 'value', role: 'computed', label: `a1[${String(j)}]`, col: 6, row: j === 0 ? 0 : j === 1 ? 4 : 8, value: ten('h', 0, j, 2), grad: ten('h', 0, j), click: { drill: `a1[${String(j)}]` } })),
-  { id: 'W2[0]', kind: 'value', role: 'param', label: 'W2[0,0]', col: 6, row: 2, value: wB(1, 0), grad: wB(1, 0), click: { drill: 'W2[0]' } },
-  { id: 'W2[1]', kind: 'value', role: 'param', label: 'W2[0,1]', col: 6, row: 3, value: wB(1, 1), grad: wB(1, 1), click: { drill: 'W2[1]' } },
-  { id: 'W2[2]', kind: 'value', role: 'param', label: 'W2[0,2]', col: 6, row: 6, value: wB(1, 2), grad: wB(1, 2), click: { drill: 'W2[2]' } },
-  { id: 'op:matvec2', kind: 'op', role: 'op', label: '·', col: 7, row: 4, value: dot(1, 0, 3), grad: ten('zPost', 1, 0), click: { segment: 'z2', symbol: 'W2' } },
-  { id: 'b2[0]', kind: 'value', role: 'param', label: 'b2[0]', col: 7, row: 5, value: bB(1, 0), grad: bB(1, 0), click: { drill: 'b2[0]' } },
-  { id: 'op:add2', kind: 'op', role: 'op', label: '+', col: 8, row: 4, value: ten('zPost', 1, 0, 4), grad: ten('zPost', 1, 0), click: { segment: 'z2', symbol: 'b2' } },
-  { id: 'z2', kind: 'value', role: 'computed', label: 'z2', col: 9, row: 4, value: ten('zPost', 1, 0, 4), grad: ten('zPost', 1, 0) },
-  { id: 'op:sigmoid', kind: 'op', role: 'op', label: 'σ', col: 10, row: 4, value: ten('h', 1, 0, 5), grad: ten('h', 1, 0), click: { segment: 'yhat', symbol: 'σ' } },
-  { id: 'ŷ', kind: 'value', role: 'computed', label: 'ŷ', col: 11, row: 4, value: ten('h', 1, 0, 5), grad: ten('h', 1, 0), click: { drill: 'ŷ' } },
+  { id: 'W2[0]', kind: 'value', role: 'param', label: 'W2[0,0]', col: 7, row: 2, value: wB(1, 0), grad: wB(1, 0), click: { drill: 'W2[0]' } },
+  { id: 'W2[1]', kind: 'value', role: 'param', label: 'W2[0,1]', col: 7, row: 3, value: wB(1, 1), grad: wB(1, 1), click: { drill: 'W2[1]' } },
+  { id: 'W2[2]', kind: 'value', role: 'param', label: 'W2[0,2]', col: 7, row: 6, value: wB(1, 2), grad: wB(1, 2), click: { drill: 'W2[2]' } },
+  { id: 'op:matvec2', kind: 'op', role: 'op', label: '·', col: 8, row: 4, value: dot(1, 0, 3), grad: ten('zPost', 1, 0), click: { segment: 'z2', symbol: 'W2' } },
+  { id: 'b2[0]', kind: 'value', role: 'param', label: 'b2[0]', col: 8, row: 5, value: bB(1, 0), grad: bB(1, 0), click: { drill: 'b2[0]' } },
+  { id: 'op:add2', kind: 'op', role: 'op', label: '+', col: 9, row: 4, value: ten('zPost', 1, 0, 4), grad: ten('zPost', 1, 0), click: { segment: 'z2', symbol: 'b2' } },
+  { id: 'z2', kind: 'value', role: 'computed', label: 'z2', col: 10, row: 4, value: ten('zPost', 1, 0, 4), grad: ten('zPost', 1, 0) },
+  { id: 'op:sigmoid', kind: 'op', role: 'op', label: 'σ', col: 11, row: 4, value: ten('h', 1, 0, 5), grad: ten('h', 1, 0), click: { segment: 'yhat', symbol: 'σ' } },
+  { id: 'ŷ', kind: 'value', role: 'computed', label: 'ŷ', col: 12, row: 4, value: ten('h', 1, 0, 5), grad: ten('h', 1, 0), click: { drill: 'ŷ' } },
 ]
 
 /** Рёбра XOR-графа: операнд → операция → операция (без пересадок, 2.1-01). */
@@ -252,21 +255,26 @@ const XOR_SEGMENTS: readonly RenderSegment[] = [
   },
 ]
 
-/** Рамки-нейроны XOR (2.1-03, фикс 4): 3 скрытых + выходной. */
+/**
+ * Рамки-нейроны XOR (2.1-03, фикс 4; ревизия ревью UAT 2026-11-17): 3
+ * скрытых + выходной; члены — внутренние веса и вычисления нейрона
+ * (параметры W/b + «·»/«+»); z1/a1, tanh, z2/σ/ŷ — последующие
+ * вычисления — вне рамок. Коллапс-блок несёт живое z своего нейрона.
+ */
 const XOR_FRAMES: readonly RenderFrame[] = [
   ...[0, 1, 2].map((j): RenderFrame => ({
     id: `n${String(j + 1)}`,
     title: `Нейрон ${String(j + 1)}`,
-    nodes: [`op:matvec[${String(j)}]`, `op:add[${String(j)}]`, `z1[${String(j)}]`, `op:tanh[${String(j)}]`, `a1[${String(j)}]`],
-    output: ten('h', 0, j, 2),
-    drill: `a1[${String(j)}]`,
+    nodes: [`W1[${String(j * 2)}]`, `W1[${String(j * 2 + 1)}]`, `b1[${String(j)}]`, `op:matvec[${String(j)}]`, `op:add[${String(j)}]`],
+    output: ten('zPost', 0, j, 1),
+    drill: `z1[${String(j)}]`,
   })),
   {
     id: 'n4',
     title: 'Нейрон 4',
-    nodes: ['op:matvec2', 'op:add2', 'z2', 'op:sigmoid', 'ŷ'],
-    output: ten('h', 1, 0, 5),
-    drill: 'ŷ',
+    nodes: ['W2[0]', 'W2[1]', 'W2[2]', 'b2[0]', 'op:matvec2', 'op:add2'],
+    output: ten('zPost', 1, 0, 4),
+    drill: 'z2',
   },
 ]
 

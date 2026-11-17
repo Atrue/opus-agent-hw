@@ -368,9 +368,10 @@ export function ComputationGraph({ record }: { record: StepRecord | null }) {
             </g>
           )
         })}
-        {/* коллапс-блоки свёрнутых рамок (2.1-03): квадратный блок-нейрон
-            x → n → y — имя + живое выходное значение; клик — drill, двойной
-            клик/заголовок — раскрытие */}
+        {/* коллапс-блоки свёрнутых рамок (2.1-03): квадратный блок-нейрон —
+            имя + живое z (выход взвешенной суммы); последующие вычисления
+            (z, σ, ŷ) остаются на графе — цепь читается x → n → z → σ → ŷ;
+            клик — drill, двойной клик/заголовок — раскрытие */}
         {FRAMES.filter((f) => collapsed.has(f.id)).map((f) => {
           const frame = activeScenario().render.frames.find((fr) => fr.id === f.id)!
           const value = bindingValue(frame.output)

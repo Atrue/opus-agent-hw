@@ -53,10 +53,13 @@ describe('NEURON_SCENARIO: состав (D-31/A4)', () => {
     }
   })
 
-  it('рамка-нейрон одна — «Нейрон 1», выход — ŷ, drill жив (2.1-03)', () => {
+  it('рамка-нейрон одна — «Нейрон 1»: члены = веса W, b и «·»/«+» (z/σ/ŷ вне); выход = z, drill z (2.1-03 + ревью UAT)', () => {
+    const frame = NEURON_SCENARIO.render.frames[0]!
     expect(NEURON_SCENARIO.render.frames).toHaveLength(1)
-    expect(NEURON_SCENARIO.render.frames[0]!.title).toBe('Нейрон 1')
-    expect(NEURON_SCENARIO.render.frames[0]!.drill).toBe('ŷ')
+    expect(frame.title).toBe('Нейрон 1')
+    expect([...frame.nodes].sort()).toEqual(['W[0]', 'W[1]', 'b[0]', 'op:add', 'op:matvec'])
+    expect(frame.output).toEqual({ kind: 'tensor', slot: 'zPost', layer: 0, index: 0, step: 1 })
+    expect(frame.drill).toBe('z')
   })
 })
 
