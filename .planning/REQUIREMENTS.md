@@ -96,23 +96,24 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | DOCS-01 | Phase 2 | Complete (носитель neuron D-31; эталон+gradcheck+инварианты — 02-05/02-09) |
 | DOCS-02 | Phase 2 | Complete (drill-down + D-32: граф = сеть, лосс = числа — 02-04/02-06) |
-| DOCS-03 | Phase 3 | Pending |
-| DOCS-04 | Phase 3 | Pending |
-| DOCS-05 | Phase 3 | Pending |
-| DOCS-06 | Phase 4 | Pending |
+| DOCS-03 | Phase 4 | Pending (перенос D-37: сценарии — фаза 4) |
+| DOCS-04 | Phase 4 | Pending (перенос D-37) |
+| DOCS-05 | Phase 4 | Pending (перенос D-37) |
+| DOCS-06 | Parking (D-35) | Pending (возврат — только явный запрос владельца) |
 | UX-02 | Phase 2 | Complete (e2e 7–10: →/Space/PgDn вперёд, ←/Backspace/PgUp инертны) |
-| UX-03 | Phase 3 | Pending |
-| UX-04 | Phase 4 | Pending |
+| UX-03 | Phase 4 | Pending (перенос D-37) |
+| UX-04 | Parking (D-35) | Pending (возврат — только явный запрос владельца) |
 | UX-05 | Phase 1.1 | Complete |
 | UX-06 | Phase 01.2 | Complete (переписан D-26: история звена вместо таблицы весов) |
 
 **Coverage:**
 - v1 requirements: 11 total
-- Mapped to phases: 11
+- Mapped to phases: 9
+- Parking (D-35, без планов): 2 (DOCS-06, UX-04 — «Замер понимания и подготовка к пилоту»; возврат по явному запросу владельца)
 - Unmapped: 0 ✓
 
 > UX-01 (шаг назад) удалён ревью R3 (forward-only). UX-05/UX-06 отражены в Phase 1.1 — под-фаза вставляется командой `/gsd-phase --insert` (архитектурный рефакторинг R1–R5). UX-06 переписан решением D-26 (2026-11-05) и закрыт заново фазой 01.2: таблица весов по эпохам → история звена цепи по сэмплам; канонические acceptance criteria — корневой `REQUIREMENTS.md` (ревизия v1.2).
 
 ---
 *Requirements defined: 2026-11-02*
-*Last updated: 2026-11-05 — UX-06 переписан (D-26, Phase 01.2)*
+*Last updated: 2026-11-17 — фазы 3↔4 поменяны местами (D-37): DOCS-03..05/UX-03 → Phase 4; DOCS-06/UX-04 → Parking (D-35)*
