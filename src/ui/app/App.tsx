@@ -3,6 +3,7 @@ import { useRunSlice } from '../../run/useRunSlice'
 import { activeScenario, netShapeOf } from '../../run/scenario'
 import { parseHash, toHash } from '../../run/url'
 import type { Phase } from '../../tensor'
+import { MotionConfig } from 'motion/react'
 import { ComputationGraph } from '../graph/ComputationGraph'
 import { EpochSummary } from '../epoch/EpochSummary'
 import { ExamplesPanel } from '../dataset/ExamplesPanel'
@@ -68,7 +69,8 @@ export function App() {
   const phaseVar = PHASE_COLOR_VAR[phase]
 
   return (
-    <div className={`flex min-h-screen flex-col bg-background font-sans text-on-surface xl:h-screen${mode === 'lecture' ? ' lecture' : ''}`}>
+    <MotionConfig reducedMotion="user">
+      <div className={`flex min-h-screen flex-col bg-background font-sans text-on-surface xl:h-screen${mode === 'lecture' ? ' lecture' : ''}`}>
       <header className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-2 border-b border-outline-variant px-4 py-2 xl:h-14">
         <h1 className="app-heading mr-auto min-w-0 shrink truncate">{activeScenario().title}</h1>
         <span
@@ -189,5 +191,6 @@ export function App() {
         </span>
       </footer>
     </div>
+    </MotionConfig>
   )
 }

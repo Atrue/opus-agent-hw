@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { AnimatePresence, motion } from 'motion/react'
 import { run } from '../../run/run'
 import { useRunSlice } from '../../run/useRunSlice'
 import { activeScenario, netShapeOf } from '../../run/scenario'
@@ -116,6 +117,12 @@ function onActivate(open: () => void): (event: React.KeyboardEvent) => void {
 
 const nodeById = new Map(GRAPH_NODES.map((n) => [n.id, n]))
 
+/** Переход коллапса (точка 2 D-47, движок D-50 = motion): 250 мс ease-in-out
+ *  (конверт D-48). Интерполяция origin-агностична: translate к центру блока
+ *  (dx/dy из детерминированной геометрии frames.ts) + opacity — без
+ *  scale/origin-зависимых трансформов и без измерений DOM. */
+const COLLAPSE_TRANSITION = { duration: 0.25, ease: 'easeInOut' } as const
+
 /** Рамки-нейроны активного сценария (топология статична — как инвентарь). */
 const FRAMES: readonly FrameBox[] = frameGeometry()
 const NODE_FRAME: ReadonlyMap<string, string> = frameOfNode()
@@ -142,7 +149,15 @@ export function ComputationGraph({ record }: { record: StepRecord | null }) {
   const [hoveredEdge, setHoveredEdge] = useState<string | null>(null)
   // 2.1-03 (фикс 4): коллапс рамок-нейронов — локальный UI-state, по умолчанию
   // все рамки раскрыты; переключение — двойной клик по рамке/блоку или
-  // Enter/Space на заголовке рамки (a11y); мгновенно, без transition
+  // Enter/Space на заголовке рамки (a11y). Фаза 3 (точка 2 D-47, движок
+  // D-50 = motion): переключение даёт переходное состояние — члены рамки и
+  // блок-нейрон интерполируют transform/opacity между двумя детерминированными
+  // кадрами (AnimatePresence + animate/exit, 250 мс ease-in-out, конверт D-48);
+  // повторный dblclick ретаргетит анимацию с текущего кадра (interrupt-restart
+  // by design); конечные кадры бит-идентичны прежним (D-38), station-value
+  // остаются живыми. reduced-motion: MotionConfig reducedMotion="user" на
+  // корне (гасит transform; opacity-фейд конечен), CSS-гейт index.css guards
+  // остальной график. Зум-обёртка и --diag-scale НЕ анимируются (Pitfall 6).
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set())
   const toggleFrame = (frameId: string): void => {
     setCollapsed((prev) => {
@@ -278,8 +293,13 @@ export function ComputationGraph({ record }: { record: StepRecord | null }) {
             </g>
           )
         })}
+        {/* члены рамок под motion (точка 2 D-47, D-50): AnimatePresence
+            доигрывает exit при коллапсе (схлоп к центру блока) и re-enter
+            при раскрытии; прочие узлы проходят транзитом без анимаций */}
+        <AnimatePresence initial={false}>
         {GRAPH_NODES.map((node) => {
-          // члены свёрнутой рамки скрыты — вместо них коллапс-блок (ниже)
+          // члены свёрнутой рамки скрыты — вместо них коллапс-блок (ниже);
+          // AnimatePresence доигрывает exit (схлоп к центру блока)
           const nodeFrame = NODE_FRAME.get(node.id)
           if (nodeFrame !== undefined && collapsed.has(nodeFrame)) return null
           const active = activeGroup?.nodes.has(node.id) === true
@@ -289,10 +309,22 @@ export function ComputationGraph({ record }: { record: StepRecord | null }) {
           const action = clickOf(node)
           const clickable = action !== null
           const cls = `g-node g-node-${node.role}${selected ? ' diag-selected' : ''}${active ? ' active' : ''}`
+          // член рамки: известный конечный кадр коллапса — центр блока (cx, cy)
+          const memberBox = nodeFrame !== undefined ? frameBoxById.get(nodeFrame)! : null
+          const collapseFrame = memberBox !== null ? { x: memberBox.cx - node.x, y: memberBox.cy - node.y } : null
+          const memberMotion =
+            collapseFrame !== null
+              ? {
+                  initial: { opacity: 0, x: collapseFrame.x, y: collapseFrame.y },
+                  animate: { opacity: 1, x: 0, y: 0 },
+                  exit: { opacity: 0, x: collapseFrame.x, y: collapseFrame.y },
+                  transition: COLLAPSE_TRANSITION,
+                }
+              : { animate: { opacity: 1 } }
           if (node.kind === 'op') {
             const r = OP_LABEL_RADIUS[node.label] ?? 14
             return (
-              <g key={node.id} data-node={node.id} className={`g-op${selected ? ' diag-selected' : ''}${active ? ' active' : ''}`}>
+              <motion.g key={node.id} data-node={node.id} className={`g-op${selected ? ' diag-selected' : ''}${active ? ' active' : ''}`} {...memberMotion}>
                 <circle cx={node.x} cy={node.y} r={r + 4} className="g-node-selring" />
                 <circle cx={node.x} cy={node.y} r={r} />
                 <text x={node.x} y={node.y + 3} textAnchor="middle" className="g-op-label">
@@ -320,11 +352,11 @@ export function ComputationGraph({ record }: { record: StepRecord | null }) {
                     onKeyDown={onActivate(() => runClick(node))}
                   />
                 )}
-              </g>
+              </motion.g>
             )
           }
           return (
-            <g key={node.id} data-node={node.id} className={cls}>
+            <motion.g key={node.id} data-node={node.id} className={cls} {...memberMotion}>
               {/* квадрат 1:1 (2.1-02, фикс 5): метка сверху, значение внутри;
                   не влезло (fitsValue) — значение НАД блоком, блок не растягивается */}
               <rect x={node.x - NODE_W / 2} y={node.y - NODE_H / 2} width={NODE_W} height={NODE_H} rx={8} className="g-node-box" />
@@ -366,19 +398,31 @@ export function ComputationGraph({ record }: { record: StepRecord | null }) {
                   />
                 </NumberHint>
               )}
-            </g>
+            </motion.g>
           )
         })}
+        </AnimatePresence>
         {/* коллапс-блоки свёрнутых рамок (2.1-03): квадратный блок-нейрон —
             имя + живое z (выход взвешенной суммы); последующие вычисления
             (z, σ, ŷ) остаются на графе — цепь читается x → n → z → σ → ŷ;
-            клик — drill, двойной клик/заголовок — раскрытие */}
+            клик — drill, двойной клик/заголовок — раскрытие; фаза 3 — блок
+            приезжает fade-in (motion, D-50), exit — симметричный fade-out */}
+        <AnimatePresence initial={false}>
         {FRAMES.filter((f) => collapsed.has(f.id)).map((f) => {
           const frame = activeScenario().render.frames.find((fr) => fr.id === f.id)!
           const value = bindingValue(frame.output)
           const grad = bindingGrad(frame.output)
           return (
-            <g key={`block:${f.id}`} data-node={f.id} data-testid="frame-block" className="g-frame-block">
+            <motion.g
+              key={`block:${f.id}`}
+              data-node={f.id}
+              data-testid="frame-block"
+              className="g-frame-block"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={COLLAPSE_TRANSITION}
+            >
               <rect x={f.cx - NODE_W / 2} y={f.cy - NODE_H / 2} width={NODE_W} height={NODE_H} rx={8} className="g-node-box" />
               <SvgSubLabel text={f.id} x={f.cx} y={f.cy - 8} className="g-node-label" />
               <text x={f.cx} y={f.cy + 12} textAnchor="middle" data-testid="station-value" className="g-node-value">
@@ -403,9 +447,10 @@ export function ComputationGraph({ record }: { record: StepRecord | null }) {
                 onDoubleClick={() => toggleFrame(f.id)}
                 onKeyDown={onActivate(() => toggleFrame(f.id))}
               />
-            </g>
+            </motion.g>
           )
         })}
+        </AnimatePresence>
         {/* 2.1-02 (фикс 2): верхний слой тултипов рёбер — ПОСЛЕ узлов
             (SVG paint order), не перекрывается узлами/звеньями; видимость —
             hoveredEdge (hover/focus hit-ребра) */}

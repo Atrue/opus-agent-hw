@@ -808,8 +808,13 @@ circle.diag-hit:focus-visible {
 /*
  * Гейты (R5 §4.2): prefers-reduced-motion гасит анимации и переходы ГЛОБАЛЬНО
  * (e2e проверяет computed animation-name активного .diag-flow === 'none');
- * @media print останавливает пунктир и пульс — статичный кадр. .lecture поток
- * НЕ выключает: направление вычисления — дидактический контент.
+ * JS-слой motion (D-50: коллапс рамки-нейрона) гасится MotionConfig
+ * reducedMotion="user" на корне App (transform мгновенно; opacity-фейд
+ * конечен 250 мс) — per-point ассерты конечных состояний в e2e (тест 19).
+ * @media print останавливает пунктир, пульс и пиннит коллапс-блок в конечном
+ * состоянии — статичный кадр (JS-анимации конечны: завершаются в
+ * детерминированные кадры за 250 мс). .lecture поток НЕ выключает:
+ * направление вычисления — дидактический контент.
  */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -823,6 +828,11 @@ circle.diag-hit:focus-visible {
   .diag-edge-g.active .diag-flow,
   .step-pill-active::after {
     animation: none;
+  }
+  /* D-50 (03-04): коллапс-блок свёрнутой рамки — терминальное состояние,
+     печать ловит его полным (fade-in блока пиннится в 1) */
+  .g-frame-block {
+    opacity: 1;
   }
 }
 

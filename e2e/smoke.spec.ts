@@ -42,6 +42,9 @@ import { ETALON_NEURON_SAMPLE_1, ETALON_SAMPLE_1 } from '../src/run/etalon-const
  *     4), «дождь» (3 узла подряд → 0 открытых number-hint), «края» (тултип
  *     целиком в viewport у правого края), touch-тап → drill без тултипа
  *     (LOCKED R5 §2c к3), open-зеркало Collapsible (атрибут + DOM-свойство).
+ * (19) коллапс рамки-нейрона (точка 2 D-47, движок D-50 = motion): per-point
+ *     ассерты конечных состояний (Pitfall 5), interrupt-restart тройным
+ *     dblclick, живые station-value после цикла коллапсов, ввод не блокируется.
  *
  * Скриншот-self-check (baseline 18): перед записью директория очищается;
  * сохраняются скриншоты каждой операции сэмпла 1 (8) и экрана завершения
@@ -615,4 +618,39 @@ test('18) пилот D-40: radix Tooltip/Collapsible — гейты enter/exit, 
     await collapsibleBody.evaluate((el) => getComputedStyle(el).animationName),
     'reduced-motion: collapsible-down/up погашены',
   ).toBe('none')
+})
+
+test('19) плавный коллапс рамки-нейрона прерываем (точка 2 D-47, движок D-50=motion)', async ({ page }) => {
+  await page.goto('/')
+  const frame = page.locator('g[data-frame="n1"]')
+  const title = frame.locator('.g-frame-title-hit')
+  await expect(frame).not.toHaveAttribute('data-collapsed')
+
+  // пер-point ассерт конечного состояния (Pitfall 5, D-50): коллапс доводит
+  // до детерминированного кадра — члены скрыты (exit доигран и unmount),
+  // блок несёт живое значение; reducedMotion эмуляция — transform мгновенный,
+  // проверяется логика пути (плавность — скрин-ревью 03-05)
+  await frame.locator('.g-frame-box').dblclick({ position: { x: 6, y: 6 } })
+  await expect(frame).toHaveAttribute('data-collapsed', 'true')
+  await expect(page.locator('g[data-node="op:matvec"]'), 'exit доигран — члены unmount').toHaveCount(0)
+  await expect(page.getByTestId('frame-block'), 'блок-нейрон приезжает').toBeVisible()
+
+  // interrupt-restart: повторный dblclick немедленно (в середине перехода)
+  // перебивает анимацию и доводит до противоположного конечного состояния —
+  // без очередей и блокировки ввода
+  await frame.locator('.g-frame-box').dblclick({ position: { x: 6, y: 6 } })
+  await frame.locator('.g-frame-box').dblclick({ position: { x: 6, y: 6 } })
+  await expect(frame).toHaveAttribute('data-collapsed', 'true')
+  await expect(page.locator('g[data-node="op:matvec"]'), 'после тройного переключения — члены снова скрыты').toHaveCount(0)
+
+  // финальное раскрытие: члены видимы, числа живые (station-value в DOM),
+  // блок ушёл; шаги продолжают исполняться (ввод не блокировался)
+  await title.click()
+  await expect(frame).not.toHaveAttribute('data-collapsed')
+  await expect(page.locator('g[data-node="op:matvec"]'), 'члены снова видны').toBeVisible()
+  await expect(page.getByTestId('frame-block')).toHaveCount(0)
+  for (let i = 0; i < 2; i++) await page.getByTestId('btn-next').click()
+  await expect(page.getByTestId('step-indicator')).toHaveText('Эпоха 1 · пример 1 · шаг 3')
+  const station = page.locator('g[data-node="op:matvec"] [data-testid="station-value"]')
+  await expect(station, 'живое значение члена после цикла коллапсов').not.toHaveText('н/д')
 })
