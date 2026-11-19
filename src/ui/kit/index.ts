@@ -4,3 +4,5 @@
  * shadcn CLI с локальными правками по D-44 (см. README и пометки в файлах).
  */
 export { Button, buttonVariants } from './button'
+export { Card, CardHeader, CardFooter, CardTitle, CardAction, CardDescription, CardContent } from './card'
+export { Kbd } from './kbd'

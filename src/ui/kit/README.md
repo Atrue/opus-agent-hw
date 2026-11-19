@@ -13,7 +13,7 @@
   (гейт R1 `src/structure.test.ts` действует на кит тоже: дефолт-экспорты
   запрещены).
 - **Иконки** — только Material Symbols (`@fontsource/material-symbols-outlined`,
-  D-41): `lucide-react` из генераций вычищается, пакет не ставится.
+  D-41): люциде-иконки из генераций вычищаются, их пакет не ставится.
 - **Пакеты**: ядро `cva`/`clsx`/`tailwind-merge`/`tw-animate-css` + radix
   per-component — утверждены пакетным апрувом 03-01 (AGENTS.md №2, D-42).
   Пакеты `cn` и монопакет `radix-ui` НЕ ставятся (Q1-политика «а»): генерации,
@@ -32,6 +32,8 @@ sanctioned-чекпойнт владельца.
 ## Файлы
 
 - `button.tsx` — Button (variant default-CTA / quiet / toggle; size default / icon-sm);
+- `card.tsx` — Card +Header/Title/Action/Description/Content/Footer (контракты .card-семейства, radius 2, padding 16);
+- `kbd.tsx` — Kbd (моно 11px, container, усиленный низ бордера, radius 4);
 - `utils.ts` — cn (clsx + tailwind-merge), локальная замена пакета cn;
 - `index.ts` — баррел публичной поверхности;
 - `token-bridge.test.ts` — контракт токен-моста D-39 (index.css ↔ кит).
