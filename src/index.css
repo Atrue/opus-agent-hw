@@ -670,10 +670,12 @@ circle.diag-hit:focus-visible {
  * амбер (градиентная волна, DESIGN.md §7/§8); направление разворачивает
  * ОДИН селектор по data-flow-атрибуту корня svg. CSS-only, 0 зависимостей.
  */
-/* Конверт подсветки графа (точка 1 D-47, симметрия): переходы 180 мс —
-   в конверте D-48 150–400 мс; фаза 3 добавила узлы/операции (.g-node-box,
-   .g-op circle, selring) — амбер активной op приезжает И гаснет тем же
-   конвертом (прежде узлы переключались мгновенно при переходных рёбрах) */
+/* Конверт подсветки графа (точка 1 D-47, симметрия): 250 мс ease-out —
+   «обводка приезжает» на следующем шаге ЗАМЕТНО (ревью владельца 03-05:
+   180 мс без ease глазу мгновенны), в конверте D-48 150–400 мс; узлы/операции
+   (.g-node-box, .g-op circle, selring) включены — амбер активной op
+   приезжает И гаснет тем же конвертом (симметричный transition out);
+   рёбра/кейсинг/подсветка звена — единый ритм с лентой */
 .diag-node,
 .diag-edge,
 .diag-edge-casing,
@@ -683,10 +685,10 @@ circle.diag-hit:focus-visible {
 .g-op circle,
 .g-node-selring {
   transition:
-    stroke 180ms,
-    fill 180ms,
-    opacity 180ms,
-    stroke-width 180ms;
+    stroke 250ms ease-out,
+    fill 250ms ease-out,
+    opacity 250ms ease-out,
+    stroke-width 250ms ease-out;
 }
 .diag-edge-casing {
   /* постоянный рендер кейсинга: условный mount не анимируется transition'ом —
