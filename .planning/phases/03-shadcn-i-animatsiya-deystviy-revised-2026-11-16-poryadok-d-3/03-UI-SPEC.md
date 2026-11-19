@@ -46,7 +46,13 @@ created: "2026-11-19"
   `class-variance-authority@0.7.1`, `clsx@2.1.1`, `tailwind-merge@3.7.0`, `tw-animate-css@1.4.0`,
   `@radix-ui/react-tooltip@1.4.1`, `@radix-ui/react-collapsible@1.2.1` (пакетный апрув владельца,
   approve-exact-list).
-- Перечисление пополняется планами 03-02/03-03 (card/kbd/tooltip/collapsible).
+- **2026-11-19, план 03-02:** `add card kbd` (CLI 4.23.0 через npx public-registry). Компонентов: **2**
+  (`card.tsx` адаптирован: контракты .card — container-low/bg-card, radius 2, p-4, gap 8, CardTitle=h2;
+  `kbd.tsx` — контракт .kbd, моно 11px). Новых пакетов нет (реестр-блоки на ядре 03-01).
+- **2026-11-19, план 03-03:** `add tooltip collapsible` (CLI 4.23.0 через npx public-registry). Компонентов: **2**
+  (`tooltip.tsx` — @radix-ui/react-tooltip (апрув 03-01), Arrow убран; `collapsible.tsx` —
+  @radix-ui/react-collapsible + collapsible-down/up в базовом классе). Пакетов не добавлено;
+  по вердикту D-40 удалён `@floating-ui/react@0.27.20` (delay-200-remove-floating).
 
 Целевой состав кита (план-контракт; таблица — non-exhaustive, не закрытый allowlist):
 
