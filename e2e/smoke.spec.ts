@@ -45,6 +45,9 @@ import { ETALON_NEURON_SAMPLE_1, ETALON_SAMPLE_1 } from '../src/run/etalon-const
  * (19) коллапс рамки-нейрона (точка 2 D-47, движок D-50 = motion): per-point
  *     ассерты конечных состояний (Pitfall 5), interrupt-restart тройным
  *     dblclick, живые station-value после цикла коллапсов, ввод не блокируется.
+ * (20) точки 1/3: travel-гало ленты совпадает с активной пилюлей (x/width,
+ *     функция структуры), переезжает по шагам; каскад волны — индексы
+ *     --flow-i 0..k-1 на активных рёбрах, анимация погашена reduce-гейтом.
  *
  * Скриншот-self-check (baseline 18): перед записью директория очищается;
  * сохраняются скриншоты каждой операции сэмпла 1 (8) и экрана завершения
@@ -653,4 +656,43 @@ test('19) плавный коллапс рамки-нейрона прерыва
   await expect(page.getByTestId('step-indicator')).toHaveText('Эпоха 1 · пример 1 · шаг 3')
   const station = page.locator('g[data-node="op:matvec"] [data-testid="station-value"]')
   await expect(station, 'живое значение члена после цикла коллапсов').not.toHaveText('н/д')
+})
+
+test('20) точки 1/3: travel-гало ленты совпадает с активной пилюлей; каскад волны --flow-i', async ({ page }) => {
+  await page.goto('/')
+
+  // точка 1: гало-оверлей существует и стоит на активной пилюле (позиция =
+  // f(структуры); под reduce transition отключён — координаты точные)
+  const band = page.getByTestId('step-band')
+  const halo = band.locator('.step-halo')
+  await expect(halo).toBeAttached()
+  const assertHaloOnActive = async (label: string): Promise<void> => {
+    const active = band.locator('.step-pill-active')
+    await expect(active).toHaveCount(1)
+    const a = await active.evaluate((el) => el.getBoundingClientRect())
+    const h = await halo.evaluate((el) => el.getBoundingClientRect())
+    expect(Math.abs(h.x - a.x), `${label}: x гало = x пилюли`).toBeLessThanOrEqual(1)
+    expect(Math.abs(h.width - a.width), `${label}: ширина гало = ширина пилюли`).toBeLessThanOrEqual(1)
+  }
+  await assertHaloOnActive('шаг 1')
+  await page.getByTestId('btn-next').click()
+  await assertHaloOnActive('шаг 2 — гало переехало')
+  await page.getByTestId('btn-next').click()
+  await assertHaloOnActive('шаг 3 — ретаргет')
+
+  // точка 3: delay-каскад волны — детерминированный индекс --flow-i на
+  // активных рёбрах (0..k-1 в порядке структуры); сама анимация погашена
+  // reduce-гейтом (animation-name === none — тест 1)
+  const flowIndices = await page.locator('.diag-edge-g.active').evaluateAll((els) =>
+    els.map((el) => Number(el.style.getPropertyValue('--flow-i'))),
+  )
+  expect(flowIndices.length, 'активные рёбра несут каскад').toBeGreaterThanOrEqual(1)
+  flowIndices.forEach((v, i) => {
+    expect(v, `индекс каскада ребра ${String(i)} = ${String(i)} (структура, без DOM-измерений)`).toBe(i)
+  })
+  const flowAnimation = await page
+    .locator('.diag-edge-g.active .diag-flow')
+    .first()
+    .evaluate((el) => getComputedStyle(el).animationName)
+  expect(flowAnimation, 'reduced-motion: каскад волны погашен').toBe('none')
 })

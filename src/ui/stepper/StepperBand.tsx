@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 import { useRunSlice } from '../../run/useRunSlice'
 import { activeScenario } from '../../run/scenario'
 import { formatKey } from '../../format'
@@ -12,6 +12,14 @@ import { SubscriptText } from '../typography/SubscriptText'
  * пилюля скроллится в центр (scrollIntoView inline:center; reduced-motion →
  * behavior auto). Пилюли не переносятся — высота полосы фиксирована
  * (.step-band в index.css: grid-auto-flow column, overflow-x auto).
+ *
+ * Точка 1 D-47 (фаза 3, движок D-50): акцент активной пилюли «переезжает» —
+ * travel-гало .step-halo (единственный оверлей, pointer-events: none):
+ * позиция/ширина = offsetLeft/offsetWidth активной пилюли (та же bandRef-
+ * механика, что автоскролл; функция структуры — не времени), плавность —
+ * CSS-transition 250 мс (ретаргет = interrupt-restart при спаме «Шаг»);
+ * reduced-motion гасит глобальный гейт (мгновенная установка). Пульс
+ * активной пилюли (2 s loop) — континуальный индикатор, не трогается.
  *
  * Индикатор, НЕ навигация: прогон forward-only (AGENTS.md/D-21) — клика назад
  * нет; конфликт с DESIGN.md §7 зафиксирован в D-25. Точка пилюли — фазный
@@ -36,16 +44,35 @@ export function StepperBand() {
   const screen = useRunSlice((r) => r.screen)
   const values = useRunSlice((r) => r.sampleOpValues)
   const bandRef = useRef<HTMLDivElement>(null)
+  const haloRef = useRef<HTMLDivElement>(null)
   const epochDone = screen === 'epoch-end'
 
   // автоскролл к активной пилюле (центр полосы); reduced-motion → auto
   useEffect(() => {
     const band = bandRef.current
     if (band === null || epochDone) return
-    const active = band.children[stepInSample - 1]
+    const active = band.querySelectorAll('.step-pill')[stepInSample - 1]
     if (active === undefined) return
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     active.scrollIntoView({ block: 'nearest', inline: 'center', behavior: reduce ? 'auto' : 'smooth' })
+  }, [stepInSample, epochDone])
+
+  // travel-гало (точка 1 D-47): цель = геометрия активной пилюли; useLayoutEffect
+  // ставит позицию до отрисовки (первый кадр — без анимации), далее CSS-
+  // transition перевозит (retarget при rapid-interact); на экране эпохи
+  // активной пилюли нет — гало скрыто
+  useLayoutEffect(() => {
+    const halo = haloRef.current
+    const band = bandRef.current
+    if (halo === null || band === null) return
+    const active = epochDone ? undefined : band.querySelectorAll('.step-pill')[stepInSample - 1]
+    if (active === undefined || !(active instanceof HTMLElement)) {
+      halo.style.opacity = '0'
+      return
+    }
+    halo.style.opacity = '1'
+    halo.style.width = `${String(active.offsetWidth)}px`
+    halo.style.transform = `translateX(${String(active.offsetLeft)}px)`
   }, [stepInSample, epochDone])
 
   return (
@@ -56,6 +83,7 @@ export function StepperBand() {
       aria-label={`Лента шагов сэмпла: ${String(stepInSample)} из ${String(activeScenario().ops.length)}`}
       className="step-band"
     >
+      <div ref={haloRef} className="step-halo" aria-hidden="true" />
       {activeScenario().ops.map((meta, i) => {
         const step = i + 1
         const done = epochDone || step < stepInSample

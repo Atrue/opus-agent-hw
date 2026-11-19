@@ -262,9 +262,19 @@ sub { /* подстрочные индексы (план Б §5.5: ASCII z1 + <s
 .value-btn:active {
   color: var(--color-primary);
 }
-.value-changed { /* изменившееся: on-surface + tertiary-тинт 10% (D-25) */
+.value-changed { /* изменившееся: on-surface + tertiary-тинт 10% (D-25);
+   фаза 3 (точка 1, A6): значение шага «приезжает» fade+rise ≤ 200 мс
+   ease-out (DESIGN §8) — класс вешается на смене числа, анимация играется
+   на добавлении класса; reduced-motion/print гасят глобальные гейты */
   background: color-mix(in srgb, var(--color-tertiary) 10%, transparent);
   color: var(--color-on-surface);
+  animation: step-value-rise 200ms ease-out;
+}
+@keyframes step-value-rise {
+  from {
+    opacity: 0;
+    translate: 0 3px;
+  }
 }
 .value-unchanged { /* неизменившееся: вторичный текст */
   color: var(--color-on-surface-variant);
@@ -282,12 +292,30 @@ sub { /* подстрочные индексы (план Б §5.5: ASCII z1 + <s
   border-bottom: 1px solid var(--color-outline-variant);
 }
 .step-band {
+  position: relative; /* positional-предок travel-гало (точка 1 D-47) */
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: minmax(108px, max-content);
   gap: 4px;
   overflow-x: auto;
   scrollbar-width: thin;
+}
+/* Travel-гало (точка 1 D-47, движок D-50): акцент активной пилюли (ring +
+   тинт) переезжает к новой пилюле одним оверлеем — позиция = f(структуры)
+   (offsetLeft/offsetWidth активной пилюли, StepperBand-эффект), плавность —
+   transition (retarget = interrupt-restart, rapid-interact без стеков);
+   reduced-motion гасится глобальным гейтом (мгновенная установка) */
+.step-halo {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  border-radius: 4px;
+  background: var(--color-surface-container-high);
+  box-shadow: inset 0 0 0 1px var(--color-primary); /* ring-1 primary */
+  pointer-events: none;
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1), width 250ms cubic-bezier(0, 0, 0.2, 1);
+  will-change: transform;
 }
 .step-pill {
   position: relative;
@@ -329,9 +357,10 @@ sub { /* подстрочные индексы (план Б §5.5: ASCII z1 + <s
 }
 .step-pill-done { opacity: 80%; }
 .step-pill-future { opacity: 60%; }
+/* активная пилюля: фон/ринг переехали в travel-гало (.step-halo) — пилюля
+   прозрачна, чтобы гало (под пилюлями) читалось; пульс ::after не меняется */
 .step-pill-active {
-  background: var(--color-surface-container-high);
-  box-shadow: inset 0 0 0 1px var(--color-primary); /* ring-1 primary */
+  background: transparent;
 }
 .step-pill-active::after { /* оверлей primary/10, пульс 2 s */
   content: "";
@@ -641,11 +670,18 @@ circle.diag-hit:focus-visible {
  * амбер (градиентная волна, DESIGN.md §7/§8); направление разворачивает
  * ОДИН селектор по data-flow-атрибуту корня svg. CSS-only, 0 зависимостей.
  */
+/* Конверт подсветки графа (точка 1 D-47, симметрия): переходы 180 мс —
+   в конверте D-48 150–400 мс; фаза 3 добавила узлы/операции (.g-node-box,
+   .g-op circle, selring) — амбер активной op приезжает И гаснет тем же
+   конвертом (прежде узлы переключались мгновенно при переходных рёбрах) */
 .diag-node,
 .diag-edge,
 .diag-edge-casing,
 .diag-flow,
-.diag-edge-label {
+.diag-edge-label,
+.g-node-box,
+.g-op circle,
+.g-node-selring {
   transition:
     stroke 180ms,
     fill 180ms,
@@ -671,6 +707,10 @@ circle.diag-hit:focus-visible {
 .diag-edge-g.active .diag-flow {
   opacity: 1;
   animation: diag-flow-run 1.2s linear infinite;
+  /* Точка 3 D-47 — delay-каскад: ребро вступает в волну через индекс × 60 мс
+     (индекс --flow-i — детерминированный порядок в цепочке активных рёбер,
+     inline-переменная на группе из структуры, без DOM-измерений) */
+  animation-delay: calc(var(--flow-i, 0) * 60ms);
 }
 [data-flow="backward"] .diag-edge-g.active .diag-flow {
   stroke: var(--color-tertiary); /* градиентная волна амбер: ŷ → h → x */
@@ -833,6 +873,17 @@ circle.diag-hit:focus-visible {
      печать ловит его полным (fade-in блока пиннится в 1) */
   .g-frame-block {
     opacity: 1;
+  }
+  /* 03-05 (финализация): печать ловит конечное состояние ВСЕХ новых
+     анимаций фазы — enter/exit кита (тултип/коллапсибл, tw-animate-css),
+     travel-гало ленты (transition → мгновенная позиция), fade+rise
+     значений; delay-каскад волны погашен выше (.diag-flow) */
+  [data-slot='tooltip-content'],
+  [data-slot='collapsible-content'],
+  .step-halo,
+  .value-changed {
+    animation: none;
+    transition: none;
   }
 }
 

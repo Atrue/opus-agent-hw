@@ -183,6 +183,15 @@ export function ComputationGraph({ record }: { record: StepRecord | null }) {
   const sel = selection === null
     ? { nodes: new Set<string>(), edges: new Set<string>(), plates: new Set<string>(), biases: new Set<string>() }
     : geometryOf(selection.segment)
+  // точка 3 D-47: порядковый индекс активного ребра в цепочке шага —
+  // детерминированная функция структуры (порядок GRAPH_EDGES), без DOM
+  const flowIndexOf = new Map<string, number>()
+  if (activeGroup !== null) {
+    let flowIdx = 0
+    for (const e of GRAPH_EDGES) {
+      if (activeGroup.edges.has(e.id)) flowIndexOf.set(e.id, flowIdx++)
+    }
+  }
 
   const runClick = (node: GraphNode): void => {
     const action = clickOf(node)
@@ -263,6 +272,7 @@ export function ComputationGraph({ record }: { record: StepRecord | null }) {
           const from = anchorWithCollapse(e.from, 'right')
           const to = anchorWithCollapse(e.to, 'left')
           const active = activeGroup?.edges.has(e.id) === true
+          const flowIndex = flowIndexOf.get(e.id) ?? 0
           const selected = sel.edges.has(e.id)
           const src = nodeById.get(e.from)!
           const fwd = nodeValue(e.from)
@@ -273,6 +283,9 @@ export function ComputationGraph({ record }: { record: StepRecord | null }) {
               key={e.id}
               data-edge={e.id}
               className={`diag-edge-g${active ? ' active' : ''}${selected ? ' diag-selected' : ''}`}
+              /* точка 3 D-47: индекс ребра в цепочке активных → delay-каскад
+                 волны (animation-delay: calc(var(--flow-i) × 60ms), index.css) */
+              style={active ? ({ '--flow-i': String(flowIndex) } as React.CSSProperties) : undefined}
             >
               <path d={d} className="diag-edge-selcasing" style={{ stroke: 'var(--color-primary)' }} />
               <path d={d} className="diag-edge-casing" style={{ stroke: 'var(--color-tertiary)' }} />
