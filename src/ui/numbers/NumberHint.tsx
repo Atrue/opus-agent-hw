@@ -12,8 +12,9 @@ import { SubscriptText } from '../typography/SubscriptText'
  * тултип не показывает (тап ведёт сразу в drill, LOCKED-решение R5 §2c к3).
  * ЕДИНАЯ обёртка над тултип-механикой — изоляция библиотеки для будущей
  * замены: весь Radix Tooltip живёт только в этом файле и kit/tooltip
- * (пилот D-40, фаза 3: radix сменил @floating-ui/react; откат дёшев — вернуть
- * прежнее тело на floating, докомментарий и контракт в 03-03-SUMMARY).
+ * (вердикт D-40 исполнен 2026-11-19, план 03-03: radix покрыл контракт,
+ * @floating-ui/react удалён из dependencies — владелец, delay-200;
+ * откат дёшев — вернуть тело на floating отдельным решением).
  *
  * Контракт прежний (PATTERNS §NumberHint): портал в document.body, z-50
  * поверх SVG-графа (D-35 фикс 2), sideOffset 6, flip/shift у краёв
