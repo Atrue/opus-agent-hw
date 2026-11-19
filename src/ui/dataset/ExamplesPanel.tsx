@@ -1,6 +1,7 @@
 import { useRunSlice } from '../../run/useRunSlice'
 import { activeScenario } from '../../run/scenario'
 import { formatKey } from '../../format'
+import { Card, CardAction, CardHeader, CardTitle } from '../kit'
 import { SubscriptText } from '../typography/SubscriptText'
 
 /**
@@ -30,14 +31,14 @@ export function ExamplesPanel() {
   }
 
   return (
-    <section aria-label="Примеры" data-testid="samples-panel" className="card min-h-[220px]">
-      <div className="card-head">
+    <Card aria-label="Примеры" data-testid="samples-panel" className="min-h-[220px]">
+      <CardHeader>
         <span className="icon" aria-hidden="true">
           target
         </span>
-        <h2 className="card-title">Примеры</h2>
-        <span className="card-meta ui-label">{spec.datasetLabel}</span>
-      </div>
+        <CardTitle>Примеры</CardTitle>
+        <CardAction className="ui-label">{spec.datasetLabel}</CardAction>
+      </CardHeader>
       <div className="samples-table-wrap">
         <table className="samples-table num" aria-label="Примеры обучающей выборки: переменные по колонкам">
           <thead>
@@ -91,6 +92,6 @@ export function ExamplesPanel() {
           </tbody>
         </table>
       </div>
-    </section>
+    </Card>
   )
 }

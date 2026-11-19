@@ -208,33 +208,9 @@ sub { /* подстрочные индексы (план Б §5.5: ASCII z1 + <s
   user-select: none;
 }
 
-/* Карточка (DESIGN.md §5): container-low, radius 2, паддинг 16, шапка с иконкой */
-.card {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-height: 0;
-  padding: 16px;
-  border-radius: 2px;
-  background: var(--color-surface-container-low);
-  color: var(--color-on-surface);
-  box-shadow: var(--shadow-card);
-}
-.card-head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.card-title { /* заголовок карточки — headline-sm, Space Grotesk */
-  font-family: var(--font-display);
-  font-size: calc(var(--ui-size) + 2px);
-  font-weight: 600;
-  line-height: 1.2;
-}
-.card-meta { /* правый мета-бейдж шапки */
-  margin-left: auto;
-  color: var(--color-on-surface-variant);
-}
+/* Карточки — kit Card (D-43, 03-02): .card-семейство удалено с последним
+   потребителем; .screen/.screen-scroll — продуктовые классы «экрана» внутри
+   карточек, остаются */
 .screen { /* «экран» внутри карточки: SVG-канвас, код — container-lowest */
   border-radius: 2px;
   background: var(--color-surface-container-lowest);
@@ -262,51 +238,9 @@ sub { /* подстрочные индексы (план Б §5.5: ASCII z1 + <s
   flex: none;
 }
 
-/* Кнопки (redesign): quiet-рецепт по умолчанию — прозрачный фон +
-   hairline-бордер, hover container-high; primary («Шаг») — единственная
-   заливка (primary-container → primary на hover). Лейблы sentence case,
-   nowrap (49a). Активное состояние — нажатие темнее (26b). */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  min-height: 40px;
-  padding: 8px 12px;
-  border: 1px solid var(--color-outline-variant);
-  border-radius: 4px;
-  cursor: pointer;
-  background: transparent;
-  color: var(--color-on-surface);
-  white-space: nowrap;
-  transition: background-color 150ms ease-out, color 150ms ease-out, border-color 150ms ease-out;
-}
-.btn:hover:not(:disabled) {
-  background: var(--color-surface-container-high);
-  border-color: var(--color-outline);
-}
-.btn:active:not(:disabled) {
-  background: var(--color-surface-container-highest);
-}
-.btn-primary { /* primary CTA «Шаг» / «Следующая эпоха» — одна заливка на экран */
-  background: var(--color-primary-container);
-  border-color: transparent;
-  color: var(--color-on-primary-container);
-}
-.btn-primary:hover:not(:disabled) {
-  background: var(--color-primary);
-}
-.btn-primary:active:not(:disabled) {
-  background: color-mix(in srgb, var(--color-primary-container) 85%, black);
-}
-.btn:disabled {
-  opacity: 60%;
-  cursor: not-allowed;
-}
-.btn[aria-pressed="true"] { /* активный toggle «Лекционный режим»: мятный контур, не заливка */
-  background: transparent;
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-}
+/* Кнопки — kit Button (D-43, 03-02): .btn/.btn-primary удалены с последним
+   потребителем; toggle-состояние — variant toggle кита. Focus-ring остаётся
+   глобальным (kit Button наследует как нативная button). */
 :is(button, a, [tabindex]):focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
@@ -578,17 +512,7 @@ sub { /* подстрочные индексы (план Б §5.5: ASCII z1 + <s
   height: 14px;
   background: var(--color-outline-variant);
 }
-.kbd {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  line-height: 1.2;
-  padding: 2px 4px;
-  border: 1px solid var(--color-outline-variant);
-  border-bottom-width: 2px;
-  border-radius: 4px;
-  background: var(--color-surface-container);
-  color: var(--color-on-surface);
-}
+/* Kbd — kit Kbd (D-43, 03-02): .kbd удалён с последним потребителем */
 
 /* Зона результата (redesign): ŷ/y/L крупным моно — акцент на результате.
    Лекционный режим масштабирует через --num-size; вес 400 (DESIGN.md §3). */
@@ -1081,10 +1005,8 @@ circle.diag-hit:focus-visible {
   gap: 4px;
   width: fit-content;
 }
-.graph-zoom .btn {
-  min-width: 34px;
-  padding: 2px 8px;
-}
+/* зум-кнопки — kit Button size icon-sm (min-width 34, padding 2×8 — D-38
+   locked-исключение); .graph-zoom .btn-оверрайд удалён с последним потребителем */
 .samples-table-wrap { /* таблица-датасет «Примеры» (01.2-07): колонки = переменные */
   overflow-x: auto;
   min-height: 0;

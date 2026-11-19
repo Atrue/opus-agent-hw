@@ -9,6 +9,7 @@ import { NODE_H, NODE_W, buildGraph, type GraphNode } from './geometry'
 import { GRAPH_EDGES, GRAPH_NODES, STEP_GROUPS } from './inventory'
 import { type FrameBox, FRAME_TITLE_H, frameGeometry, frameOfNode } from './frames'
 import { bindingGrad, bindingValue, nodeGrad, nodeHint, nodeValue, renderNodeOf } from './graphHint'
+import { Button } from '../kit'
 import { NumberHint } from '../numbers/NumberHint'
 import { geometryOf } from '../chain/geometry'
 
@@ -181,15 +182,15 @@ export function ComputationGraph({ record }: { record: StepRecord | null }) {
           обёртке не ломает скролл (габарит обёртки = масштаб канвы);
           лекционный --diag-scale суммируется, не подменяется */}
       <div className="graph-zoom" role="group" aria-label="Масштаб графа">
-        <button type="button" data-testid="graph-zoom-out" className="btn ui-label" aria-label="Уменьшить масштаб" disabled={zoom <= ZOOM_MIN} onClick={() => setZoom((z) => Math.max(ZOOM_MIN, +(z - ZOOM_STEP).toFixed(2)))}>
+        <Button type="button" size="icon-sm" data-testid="graph-zoom-out" className="ui-label" aria-label="Уменьшить масштаб" disabled={zoom <= ZOOM_MIN} onClick={() => setZoom((z) => Math.max(ZOOM_MIN, +(z - ZOOM_STEP).toFixed(2)))}>
           −
-        </button>
-        <button type="button" data-testid="graph-zoom-reset" className="btn ui-label" aria-label="Сбросить масштаб" onClick={() => setZoom(1)}>
+        </Button>
+        <Button type="button" size="icon-sm" data-testid="graph-zoom-reset" className="ui-label" aria-label="Сбросить масштаб" onClick={() => setZoom(1)}>
           {Math.round(zoom * 100)}%
-        </button>
-        <button type="button" data-testid="graph-zoom-in" className="btn ui-label" aria-label="Увеличить масштаб" disabled={zoom >= ZOOM_MAX} onClick={() => setZoom((z) => Math.min(ZOOM_MAX, +(z + ZOOM_STEP).toFixed(2)))}>
+        </Button>
+        <Button type="button" size="icon-sm" data-testid="graph-zoom-in" className="ui-label" aria-label="Увеличить масштаб" disabled={zoom >= ZOOM_MAX} onClick={() => setZoom((z) => Math.min(ZOOM_MAX, +(z + ZOOM_STEP).toFixed(2)))}>
           +
-        </button>
+        </Button>
       </div>
       <div className="graph-zoom-layer" style={{ width: view.w * zoom, height: view.h * zoom }}>
         <svg

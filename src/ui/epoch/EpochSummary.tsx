@@ -1,5 +1,6 @@
 import { useRunSlice } from '../../run/useRunSlice'
 import { formatKey } from '../../format'
+import { Card, CardAction, CardHeader, CardTitle } from '../kit'
 import { SubscriptText } from '../typography/SubscriptText'
 
 /**
@@ -19,16 +20,14 @@ export function EpochSummary() {
   if (summary === null) return null
 
   return (
-    <div data-testid="epoch-summary" className="card h-full overflow-auto">
-      <div className="card-head">
+    <Card data-testid="epoch-summary" className="h-full overflow-auto">
+      <CardHeader>
         <span className="icon" aria-hidden="true">
           flag
         </span>
-        <h2 data-testid="epoch-title" className="card-title">
-          Эпоха {summary.epoch} завершена
-        </h2>
-        <span className="card-meta ui-label">Точность {formatKey(summary.accuracy)}</span>
-      </div>
+        <CardTitle data-testid="epoch-title">Эпоха {summary.epoch} завершена</CardTitle>
+        <CardAction className="ui-label">Точность {formatKey(summary.accuracy)}</CardAction>
+      </CardHeader>
       <div className="flex flex-col gap-2">
         <p data-testid="epoch-loss-before" className="num text-on-surface">
           <SubscriptText text="L в начале эпохи" /> = {formatKey(summary.lossBefore)}
@@ -44,6 +43,6 @@ export function EpochSummary() {
         «Следующая эпоха» продолжает обучение: эпохи не кончаются. Числа этой эпохи идентичны пошаговому проходу и
         fast-forward «Запустить эпоху».
       </p>
-    </div>
+    </Card>
   )
 }

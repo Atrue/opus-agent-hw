@@ -9,6 +9,7 @@ import { ExamplesPanel } from '../dataset/ExamplesPanel'
 import { FormulaStrip } from '../formula/FormulaStrip'
 import { LinkPanel } from '../chain/LinkPanel'
 import { LossChart } from '../epoch/LossChart'
+import { Button, Card, CardAction, CardHeader, CardTitle, Kbd } from '../kit'
 import { NumberDrilldown } from '../numbers/NumberDrilldown'
 import { OperationPanel } from '../operation/OperationPanel'
 import { ResultPanel } from '../dataset/ResultPanel'
@@ -79,15 +80,16 @@ export function App() {
           {PHASE_LABEL[phase]}
         </span>
         <StepControls />
-        <button
+        <Button
           type="button"
+          variant="toggle"
           data-testid="toggle-lecture"
-          className="btn ui-label whitespace-nowrap"
+          className="ui-label"
           aria-pressed={mode === 'lecture'}
           onClick={() => run.toggleMode()}
         >
           Лекционный режим
-        </button>
+        </Button>
       </header>
 
       {/* Формула-хребет (01.2-01): полная формула сети — навигационное ядро;
@@ -107,18 +109,22 @@ export function App() {
             активная op, клик → drill; ниже — история полосой (UX-05/UX-06).
             Мобильный порядок: сцена первой — лента не закапывает диаграмму */}
         <div className="flex min-h-0 flex-col gap-4 max-xl:order-first md:col-span-1 xl:col-span-8 xl:order-none">
-          <section aria-label="Слот графа вычислений" data-testid="diagram-slot" className="card min-h-[320px] flex-1">
-            <div className="card-head">
+          <Card
+            aria-label="Слот графа вычислений"
+            data-testid="diagram-slot"
+            className="min-h-[320px] flex-1"
+          >
+            <CardHeader>
               <span className="icon" aria-hidden="true">
                 hub
               </span>
-              <h2 className="card-title">Граф вычислений {netShapeOf(activeScenario())}</h2>
-              <span className="card-meta ui-label">живые значения и градиенты</span>
-            </div>
+              <CardTitle>Граф вычислений {netShapeOf(activeScenario())}</CardTitle>
+              <CardAction className="ui-label">живые значения и градиенты</CardAction>
+            </CardHeader>
             <div className="screen min-h-0 flex-1">
               <ComputationGraph record={record} />
             </div>
-          </section>
+          </Card>
           {/* История обучения (01.2-02; 01.2-05, пункт 3 UAT): полоса из двух
               карточек — график лосса на оси сэмплов сессии | «Примеры»
               (вся выборка XOR с вердиктами); таблица весов уступила место
@@ -128,18 +134,18 @@ export function App() {
             data-testid="history-zone"
             className="grid min-h-0 grid-cols-1 gap-4 xl:h-60 xl:grid-cols-2"
           >
-            <div className="card min-h-[220px] xl:min-h-0">
-              <div className="card-head">
+            <Card className="min-h-[220px] xl:min-h-0">
+              <CardHeader>
                 <span className="icon" aria-hidden="true">
                   monitoring
                 </span>
-                <h2 className="card-title">Лосс по сэмплам</h2>
-                <span className="card-meta ui-label">сэмплы сессии</span>
-              </div>
+                <CardTitle>Лосс по сэмплам</CardTitle>
+                <CardAction className="ui-label">сэмплы сессии</CardAction>
+              </CardHeader>
               <div className="screen min-h-0 flex-1">
                 <LossChart />
               </div>
-            </div>
+            </Card>
             <ExamplesPanel />
           </div>
         </div>
@@ -177,9 +183,9 @@ export function App() {
             .join(' · ')}
         </span>
         <span className="ml-auto hidden items-center gap-2 whitespace-nowrap text-on-surface-variant ui-label lg:flex">
-          <kbd className="kbd">Space</kbd> шаг
+          <Kbd>Space</Kbd> шаг
           <span className="meta-sep" aria-hidden="true" />
-          <kbd className="kbd">Esc</kbd> к шагу
+          <Kbd>Esc</Kbd> к шагу
         </span>
       </footer>
     </div>

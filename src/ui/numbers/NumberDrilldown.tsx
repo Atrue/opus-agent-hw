@@ -3,6 +3,7 @@ import { activeScenario } from '../../run/scenario'
 import type { Drill } from '../../run/types'
 import type { StepRecord } from '../../tensor'
 import { exactRepr, formatKey } from '../../format'
+import { Button, Card, CardHeader, CardTitle } from '../kit'
 import { flattenTensorValues, resolveRef, type ResolvedNumber } from './resolve'
 import { SubscriptText } from '../typography/SubscriptText'
 
@@ -63,17 +64,23 @@ export function NumberDrilldown({ record, drill }: { record: StepRecord; drill: 
   const isBackward = record.phase === 'backward'
 
   return (
-    <div
+    <Card
       data-testid="drill-panel"
-      className="card h-full overflow-auto"
+      className="h-full overflow-auto"
     >
-      <div className="card-head">
+      <CardHeader>
         <span className="icon" aria-hidden="true">edit_note</span>
-        <h2 className="card-title">Разбор числа</h2>
-        <button type="button" data-testid="drill-back" className="btn ui-label card-meta whitespace-nowrap" onClick={() => run.closeDrill()}>
+        <CardTitle>Разбор числа</CardTitle>
+        <Button
+          type="button"
+          variant="quiet"
+          data-testid="drill-back"
+          className="ui-label ml-auto text-on-surface-variant"
+          onClick={() => run.closeDrill()}
+        >
           ← к шагу
-        </button>
-      </div>
+        </Button>
+      </CardHeader>
 
       {resolved === null ? (
         <p className="ui-text text-on-surface-variant">Число не найдено в текущей операции прогона.</p>
@@ -117,6 +124,6 @@ export function NumberDrilldown({ record, drill }: { record: StepRecord; drill: 
           )}
         </>
       )}
-    </div>
+    </Card>
   )
 }

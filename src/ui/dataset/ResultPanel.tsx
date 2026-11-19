@@ -1,6 +1,7 @@
 import { useRunSlice } from '../../run/useRunSlice'
 import { activeScenario } from '../../run/scenario'
 import { formatKey } from '../../format'
+import { Card, CardAction, CardHeader, CardTitle } from '../kit'
 import { SubscriptText } from '../typography/SubscriptText'
 
 /**
@@ -39,14 +40,14 @@ export function ResultPanel() {
   const verdictText = correct === null ? 'ŷ и L появятся по ходу прохода' : correct ? '✓ Верно' : 'Не сошлось'
 
   return (
-    <section aria-label="Результат — текущий пример" data-testid="result-zone" className="card shrink-0">
-      <div className="card-head">
+    <Card aria-label="Результат — текущий пример" data-testid="result-zone" className="shrink-0">
+      <CardHeader>
         <span className="icon" aria-hidden="true">
           check_circle
         </span>
-        <h2 className="card-title">Результат</h2>
-        <span className="card-meta ui-label">текущий пример</span>
-      </div>
+        <CardTitle>Результат</CardTitle>
+        <CardAction className="ui-label">текущий пример</CardAction>
+      </CardHeader>
       <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
         <div className="flex min-w-0 flex-col gap-1">
           <span className="ui-label text-on-surface-variant">вход</span>
@@ -87,6 +88,6 @@ export function ResultPanel() {
           LR <span className="text-on-surface-variant">{formatKey(SPEC.lr)}</span>
         </span>
       </div>
-    </section>
+    </Card>
   )
 }

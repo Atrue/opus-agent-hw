@@ -4,6 +4,7 @@ import { useRunSlice } from '../../run/useRunSlice'
 import { SEGMENTS } from './links'
 import { SEGMENT_NUMBER_SYMS } from './symbols'
 import { formatKey } from '../../format'
+import { Button } from '../kit'
 import { liveValues } from './liveValues'
 import { SubscriptText } from '../typography/SubscriptText'
 import { LinkHistory } from './LinkHistory'
@@ -54,17 +55,18 @@ export function LinkPanel() {
   const segment = SEGMENTS.find((s) => s.id === selection.segment)!
   return (
     <section data-testid="link-panel" className="link-panel" aria-label={`Панель звена: ${segment.title}`}>
-      <button
+      <Button
         type="button"
+        variant="quiet"
         data-testid="link-close"
-        className="btn ui-label link-close"
+        className="ui-label link-close"
         aria-label="Снять выбор звена"
         onClick={() => run.clearLink()}
       >
         <span className="icon" aria-hidden="true">
           close
         </span>
-      </button>
+      </Button>
       <div className="link-panel-main">
         <h2 className="ui-label text-on-surface-variant">
           <SubscriptText text={segment.title} />

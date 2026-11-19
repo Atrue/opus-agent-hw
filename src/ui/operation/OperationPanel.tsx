@@ -3,6 +3,7 @@ import { run } from '../../run/run'
 import { activeScenario } from '../../run/scenario'
 import type { StepRecord } from '../../tensor'
 import { formatKey } from '../../format'
+import { Card, CardAction, CardHeader, CardTitle } from '../kit'
 import { buildOperationRows, type NumberRow } from './operationRows'
 import { NarrativeLine } from '../typography/NarrativeLine'
 import { NumberHint } from '../numbers/NumberHint'
@@ -56,36 +57,36 @@ export function OperationPanel({ record }: { record: StepRecord | null }) {
   // До первого шага: предстоящая операция — без чисел (они появятся после «Шага»)
   if (record === null) {
     return (
-      <div data-testid="step-panel" className="card h-full">
-        <div className="card-head">
+      <Card data-testid="step-panel" className="h-full">
+        <CardHeader>
           <span className="icon" aria-hidden="true">
             functions
           </span>
-          <h2 className="card-title">Панель операции</h2>
-          <span className="card-meta ui-label">шаг 1/{String(activeScenario().ops.length)}</span>
-        </div>
+          <CardTitle>Панель операции</CardTitle>
+          <CardAction className="ui-label">шаг 1/{String(activeScenario().ops.length)}</CardAction>
+        </CardHeader>
         <NarrativeLine text={INTRO.narrative} />
         <p data-testid="step-formula" className="num text-on-surface">
           <SubscriptText text={INTRO.formula} />
         </p>
         <p className="ui-text text-on-surface-variant">Нажмите «Шаг»: движок исполнит первую операцию, и здесь появятся её числа.</p>
-      </div>
+      </Card>
     )
   }
   const rows = buildOperationRows(record)
   // update: массив значений — «до → после»
   const joiner = record.phase === 'update' ? '→' : ','
   return (
-    <div data-testid="step-panel" className="card h-full overflow-auto">
-      <div className="card-head">
+    <Card data-testid="step-panel" className="h-full overflow-auto">
+      <CardHeader>
         <span className="icon" aria-hidden="true">
           functions
         </span>
-        <h2 className="card-title">Панель операции</h2>
-        <span className="card-meta ui-label">
+        <CardTitle>Панель операции</CardTitle>
+        <CardAction className="ui-label">
           шаг {String(record.index + 1)}/{String(activeScenario().ops.length)}
-        </span>
-      </div>
+        </CardAction>
+      </CardHeader>
       <NarrativeLine text={record.narrative.ru} />
       <p data-testid="step-formula" className="num text-on-surface">
         <SubscriptText text={record.formula} />
@@ -95,6 +96,6 @@ export function OperationPanel({ record }: { record: StepRecord | null }) {
           <NumberRowView key={`${row.kind}:${row.sym}`} row={row} joiner={joiner} record={record} />
         ))}
       </div>
-    </div>
+    </Card>
   )
 }
