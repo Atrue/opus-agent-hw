@@ -36,10 +36,17 @@ created: "2026-11-19"
 
 ## Component Inventory
 
-Could not enumerate: shadcn ещё не подключён — `components.json` отсутствует в корне
-(проверено `ls components.json`, 2026-11-19); кит появляется в `src/ui/kit/` в этой фазе
-по настоящему контракту. После инициализации и первого `shadcn add` план обязан заменить
-эту строку на фактическую (команда + число + `package@version` + дата).
+Фактическое перечисление (обновляется планами по мере `shadcn add`; инвентарь-обязательство из план-ревью закрыт планом 03-01):
+
+- **2026-11-19, план 03-01:** `npx -registry=https://registry.npmjs.org shadcn@4.23.0 add button --yes --overwrite`
+  (эквивалент `pnpm dlx shadcn@4.23.0 add button`; корп-зеркало nexus карантинит CLI-депу
+  electron-to-chromium — CLI запущен через публичный реестр, генерация та же).
+  Компонентов: **1** (`button.tsx`, адаптирован по D-44: cn локальный, без Slot/asChild,
+  варианты default-CTA/quiet/toggle, размеры default/icon-sm). Пакеты фазы:
+  `class-variance-authority@0.7.1`, `clsx@2.1.1`, `tailwind-merge@3.7.0`, `tw-animate-css@1.4.0`,
+  `@radix-ui/react-tooltip@1.4.1`, `@radix-ui/react-collapsible@1.2.1` (пакетный апрув владельца,
+  approve-exact-list).
+- Перечисление пополняется планами 03-02/03-03 (card/kbd/tooltip/collapsible).
 
 Целевой состав кита (план-контракт; таблица — non-exhaustive, не закрытый allowlist):
 
@@ -341,7 +348,7 @@ DOCS-04 < 300 KB gz общий ориентир бандла — контекс�
 - [x] Dimension 4 Typography: PASS (FLAG → принят: kbd 11px записан как сохраняемый exception)
 - [x] Dimension 5 Spacing: PASS (FLAG → принят: locked-исключения 34/2/6 перечислены явно)
 - [x] Dimension 6 Registry Safety: PASS
-- [x] Dimension 7 Inventory Provenance: PASS (FLAG → принят: честный «Could not enumerate», замена на перечисление — обязанность плана после первого `shadcn add`)
+- [x] Dimension 7 Inventory Provenance: PASS (FLAG → исполнен планом 03-01: Inventory перечислен фактически после первого `shadcn add`; исходная формулировка FLAG — «честный отказ от перечисления до инициализации», обязательство замены закрыто 2026-11-19)
 
 **Approval:** APPROVED (gsd-ui-checker, 2026-11-19; вердикт `## UI-SPEC VERIFIED`, 3 non-blocking FLAG приняты с правками выше)
 
