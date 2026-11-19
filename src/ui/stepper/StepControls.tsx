@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { run } from '../../run/run'
 import { useRunSlice } from '../../run/useRunSlice'
+import { Button } from '../kit'
 
 /**
  * Контролы прогона (R3, forward-only; redesign — транспорт в шапке):
@@ -10,6 +11,8 @@ import { useRunSlice } from '../../run/useRunSlice'
  * эпохи бесконечны, «Шаг» никогда не disabled. Перехода назад нет ни кнопкой,
  * ни клавиатурой. Клавиатура: → / Space / PgDn → следующая операция (с экрана
  * эпохи — следующая эпоха), Esc → закрыть drill. Focus-ring — в CSS.
+ * Кнопки — kit Button (D-43, трейсер 03-01): variant quiet / default CTA;
+ * testid, RU-лейблы и ui-label-типографика не меняются (D-38).
  */
 export function StepControls() {
   const screen = useRunSlice((r) => r.screen)
@@ -36,42 +39,46 @@ export function StepControls() {
 
   return (
     <div className="flex items-center gap-2" role="group" aria-label="Управление прогоном">
-      <button
+      <Button
         type="button"
+        variant="quiet"
         data-testid="btn-reset"
-        className="btn ui-label"
+        className="ui-label"
         onClick={() => run.reset()}
       >
         Сброс
-      </button>
+      </Button>
       {screen === 'walkthrough' && (
-        <button
+        <Button
           type="button"
+          variant="quiet"
           data-testid="btn-epoch"
-          className="btn ui-label whitespace-nowrap"
+          className="ui-label whitespace-nowrap"
           onClick={() => run.runEpoch()}
         >
           Запустить эпоху
-        </button>
+        </Button>
       )}
       {screen === 'epoch-end' ? (
-        <button
+        <Button
           type="button"
+          variant="default"
           data-testid="btn-epoch-next"
-          className="btn btn-primary ui-label"
+          className="ui-label"
           onClick={() => run.advance()}
         >
           Следующая эпоха
-        </button>
+        </Button>
       ) : (
-        <button
+        <Button
           type="button"
+          variant="default"
           data-testid="btn-next"
-          className="btn btn-primary ui-label"
+          className="ui-label"
           onClick={() => run.advance()}
         >
           Шаг
-        </button>
+        </Button>
       )}
     </div>
   )

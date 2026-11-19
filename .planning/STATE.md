@@ -1,18 +1,18 @@
 ---
 gsd_state_version: "1.0"
 milestone: v1.3
-current_phase: 3
+current_phase: 03
 current_phase_name: shadcn и анимация действий
-status: planning
-stopped_at: "Phase 3 context gathered (D-38..D-48: агрессивная замена shadcn, кит src/ui/kit/, Material Symbols only, ресэрч GSAP vs motion vs CSS-only)"
-last_updated: "2026-11-19T07:42:36.053Z"
-last_activity: 2026-11-17
-last_activity_desc: Phases 3 and 4 swapped (D-37); ready to plan phase 3 (shadcn)
-state_head: c45d7cd120828fbc86f9f78148499956bd44adfe
+status: executing
+stopped_at: "Phase 3 план-ревью: D-49 (ревизия D-38) — стилистика вместо pixel-perfect; анимационный журнал → D-50; ждём решения по запуску /gsd-execute-phase 03"
+last_updated: "2026-11-19T12:05:44.068Z"
+last_activity: 2026-11-19
+last_activity_desc: Phase 03 execution started
+state_head: d1852512fc1e1327f66c358e16575c4fd1368245
 progress:
   total_phases: 7
   completed_phases: 5
-  total_plans: 31
+  total_plans: 36
   completed_plans: 31
 ---
 
@@ -23,14 +23,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-11-16)
 
 **Core value:** Пользователь сам пошагово исполняет forward/backward-pass готового сценария и видит каждый градиент числом — в браузере, без регистрации, по одной ссылке (первый шаг < 1 мин).
-**Current focus:** Phase 3 — shadcn и анимация действий (планирование; порядок фаз 3↔4 изменён D-37)
+**Current focus:** Phase 03 — shadcn и анимация действий
 
 ## Current Position
 
-Phase: 3 — shadcn и анимация действий
-Plan: 0 (готова к планированию — CONTEXT/UI-SPEC/планы, ревью владельца)
-Status: Ready to plan — фаза 2.1 закрыта (UAT 3/3, D-36); фазы 3↔4 поменяны местами (D-37, аменд порядка D-35): фаза 3 = подключение shadcn (sanctioned-чекпойнт AGENTS.md №2) + ресёрч анимаций GSAP/motion/Spline с выбором точек применения, reduced-motion-гейты, e2e-детерминизм; сценарная библиотека (3 сценария, History API-роутинг, режимы «Примеров») → фаза 4
-Last activity: 2026-11-17 — фазы 3 и 4 поменяны местами по указанию владельца (D-37, журнализирован в DECISIONS.md); ROADMAP/STATE/state.json/REQUIREMENTS/PROJECT/DESIGN синхронизированы
+Phase: 03 (shadcn и анимация действий) — EXECUTING
+Plan: 1 of 5
+Status: Executing Phase 03
+Last activity: 2026-11-19 — Phase 03 execution started
 
 Progress: [███████░░░] 71%
 
@@ -175,6 +175,6 @@ None. Фаза 2.1 закрыта (UAT 3/3, D-36); следующий шаг —
 
 ## Session Continuity
 
-Last session: 2026-11-19T07:42:35.524Z
-Stopped at: Phase 3 context gathered (D-38..D-48: агрессивная замена shadcn, кит src/ui/kit/, Material Symbols only, ресэрч GSAP vs motion vs CSS-only)
-Resume file: .planning/phases/03-shadcn-i-animatsiya-deystviy-revised-2026-11-16-poryadok-d-3/03-CONTEXT.md
+Last session: 2026-11-19T12:01:54.823Z
+Stopped at: Phase 3 план-ревью: D-49 (ревизия D-38) — стилистика вместо pixel-perfect; анимационный журнал → D-50; ждём решения по запуску /gsd-execute-phase 03
+Resume file: .planning/phases/03-shadcn-i-animatsiya-deystviy-revised-2026-11-16-poryadok-d-3/03-01-PLAN.md

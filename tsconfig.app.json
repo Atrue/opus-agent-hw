@@ -8,6 +8,13 @@
     "allowArbitraryExtensions": true,
     "skipLibCheck": true,
 
+    /* Алиас @ → src (shadcn CLI, RESEARCH §1.1): генерации кита
+       импортируют '@/ui/kit/...' — сборка обязана резолвить так же */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
