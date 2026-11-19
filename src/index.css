@@ -881,7 +881,8 @@ circle.diag-hit:focus-visible {
   [data-slot='tooltip-content'],
   [data-slot='collapsible-content'],
   .step-halo,
-  .value-changed {
+  .value-changed,
+  .graph-zoom-layer {
     animation: none;
     transition: none;
   }
@@ -939,6 +940,19 @@ circle.diag-hit:focus-visible {
   overflow: auto; /* обе оси: рамки канвы не сжимаются (ответ владельца) */
   min-height: 0;
   height: 100%;
+}
+/* Точка «zoom» (дополнение владельца, ревью 03-05 Task 3; движок D-50 —
+   CSS-слой): плавный зум канвы 0.5–2.0 — transform + габариты обёртки
+   единым transition (габарит = масштаб канвы — скролл остаётся честным);
+   250 мс cubic-bezier(0,0,0.2,1) в конверте D-48; rapid-клики ретаргетят.
+   Pitfall 6 соблюдён: канал зум-обёртки отдельен от motion-групп коллапса
+   (внутри svg) и от --diag-scale; reduced-motion/print гасят глобальные
+   гейты (мгновенный зум — детерминизм e2e) */
+.graph-zoom-layer {
+  transition:
+    transform 250ms cubic-bezier(0, 0, 0.2, 1),
+    width 250ms cubic-bezier(0, 0, 0.2, 1),
+    height 250ms cubic-bezier(0, 0, 0.2, 1);
 }
 .graph-canvas {
   display: block;
