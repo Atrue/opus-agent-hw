@@ -4,16 +4,16 @@ milestone: v1.3
 current_phase: 03
 current_phase_name: shadcn и анимация действий
 status: executing
-stopped_at: "Completed 03-01-PLAN.md (трейсер кита: апрув → CLI → мост → StepControls); следующая 03-02"
-last_updated: "2026-11-19T12:23:44.614Z"
+stopped_at: Completed 03-02-PLAN.md (миграция примитивов на кит, скрин-ревью approved); следующая 03-03
+last_updated: "2026-11-19T13:31:04.428Z"
 last_activity: 2026-11-19
 last_activity_desc: Phase 03 execution started
-state_head: 4ab75bee2f5f56c2614409649932ec98f1c78c10
+state_head: c00ce1621df67cba6e6625822550c16ce16e2434
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 36
-  completed_plans: 32
+  completed_plans: 33
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-16)
 ## Current Position
 
 Phase: 03 (shadcn и анимация действий) — EXECUTING
-Plan: 2 of 5
+Plan: 3 of 5
 Status: Ready to execute
 Last activity: 2026-11-19 — Phase 03 execution started
 
@@ -81,6 +81,7 @@ Progress: [███████░░░] 71%
 | Phase 02 P11 | 32 min | 3 tasks | 74 files |
 | Phase 02 P12 | 18 min | 2 tasks | 7 files |
 | Phase 03 P01 | 47 min | 3 tasks | 15 files |
+| Phase 03 P02 | 18 min | 3 tasks | 13 files |
 
 ## Accumulated Context
 
@@ -148,6 +149,7 @@ Recent decisions affecting current work:
 - [Phase 2.1 → закрыта, 2026-11-17]: фикс рамки-нейрона апрувлен владельцем (D-36 — аменд фикса 4 D-35, журнализирован в DECISIONS.md); UAT 3/3 complete (тесты 1–2 — без замечаний ревью + автоматические контракты; тест 3 — замечание → исправление → апрув); ROADMAP/STATE/state.json переведены на фазу 3 «Сценарии, клиентский роутинг и лекционный режим» (ревизия D-35: 3 сценария, History API вместо #scenario=, режимы «Примеров»; состав операций/лоссов/lr/стартовых весов — утверждаются на планировании с апрувом владельца)
 - [2026-11-17, владелец — roadmap-ревизия, D-37]: фазы 3 и 4 поменяны местами (аменд порядка D-35; состав и критерии фаз не меняются): фаза 3 = «shadcn и анимация действий» (Depends on 2.1), фаза 4 = «Сценарии, клиентский роутинг и лекционный режим» (Depends on 3). Мотив: UI-платформа до сценарной библиотеки — 3 сценария, переключатель, режимы «Примеров» и роутинг строятся сразу на финальной компонентной базе (shadcn), без переделки свежепостроенных экранов при поздней миграции. Кандидаты точек анимаций на экранах сценариев (переключатель, режимы «Примеров») → переоценка на планировании фазы 4. Синхронизированы: ROADMAP/STATE/state.json, REQUIREMENTS обоих уровней (traceability: DOCS-03..05/UX-03 → Phase 4; DOCS-06/UX-04 → Parking D-35), PROJECT (Key Decisions + контекст), DESIGN («анимации — фаза 3»), DECISIONS.md (D-37)
 - [Phase 03]: [03-01] Пакетный апрув исполнен: approve-exact-list — cva/clsx/tailwind-merge/tw-animate-css + radix tooltip/collapsible точными версиями, Q1-политика «а» (пакет cn не ставится). Поколение реестра CLI 4.23.0 импортирует пакет cn и монопакет radix-ui — оба сняты, cn локальный в kit/utils, Slot/asChild вычищен (D-44). pnpm dlx блокирован корп-зеркалом (electron-to-chromium карантин) — CLI через npx с публичным реестром, генерация каноническая. — AGENTS.md №2 sanctioned-чекпойнт; Q1-риск поколения реестра (RESEARCH §1.5) реализовался и отработан по апрув-политике владельца
+- [Phase 03]: [03-02] Агрессивная замена D-38 исполнена: все пересобираемые примитивы на ките (Card+Header/Title=h2/Action, Kbd, Button toggle/icon-sm/quiet), мёртвый CSS удалён (.btn/.card/.kbd-семейства). Скрин-ревью владельцем — approved по D-49 (стилистика сохранена, не pixel-perfect). CardTitle=h2 — семантика заголовков сохранена; .link-close остался компакт-модификатором. — D-38+D-49 закрыты; e2e 17 ×2 бит-идентичен без правок селекторов
 
 ### Pending Todos
 
@@ -177,6 +179,6 @@ None. Фаза 2.1 закрыта (UAT 3/3, D-36); следующий шаг —
 
 ## Session Continuity
 
-Last session: 2026-11-19T12:23:32.783Z
-Stopped at: Completed 03-01-PLAN.md (трейсер кита: апрув → CLI → мост → StepControls); следующая 03-02
-Resume file: .planning/phases/03-shadcn-i-animatsiya-deystviy-revised-2026-11-16-poryadok-d-3/03-02-PLAN.md
+Last session: 2026-11-19T13:31:04.042Z
+Stopped at: Completed 03-02-PLAN.md (миграция примитивов на кит, скрин-ревью approved); следующая 03-03
+Resume file: .planning/phases/03-shadcn-i-animatsiya-deystviy-revised-2026-11-16-poryadok-d-3/03-03-PLAN.md
