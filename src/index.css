@@ -895,7 +895,7 @@ circle.diag-hit:focus-visible {
   .step-halo,
   .value-changed,
   .graph-zoom-layer,
-  .samples-table td,
+  .samples-row-halo,
   .sample-arrive,
   .sample-verdict-ok,
   .sample-verdict-miss,
@@ -1103,24 +1103,38 @@ circle.diag-hit:focus-visible {
 }
 /* зум-кнопки — kit Button size icon-sm (min-width 34, padding 2×8 — D-38
    locked-исключение); .graph-zoom .btn-оверрайд удалён с последним потребителем */
-.samples-table-wrap { /* таблица-датасет «Примеры» (01.2-07): колонки = переменные */
+.samples-table-wrap { /* таблица-датасет «Примеры» (01.2-07): колонки = переменные;
+   фаза 3 (ревью владельца 03-05): подсветка текущей строки переезжает
+   гало-оверлеем .samples-row-halo — как гало ленты; позиция = offsetTop
+   строки (функция структуры) */
+  position: relative;
   overflow-x: auto;
   min-height: 0;
+}
+.samples-row-halo {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  border-left: 3px solid var(--color-primary);
+  border-radius: 2px 0 0 2px;
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  pointer-events: none;
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1), height 250ms cubic-bezier(0, 0, 0.2, 1);
+  will-change: transform;
 }
 .samples-table {
   width: 100%;
   border-collapse: collapse;
   font-variant-numeric: tabular-nums;
+  position: relative; /* текст строк — над гало-подсветкой (paint order) */
+  z-index: 1;
 }
 .samples-table th,
 .samples-table td {
   padding: 6px 10px;
   text-align: right;
   border-bottom: 1px solid var(--color-surface-container);
-  /* «Примеры» — плавный переезд подсветки текущего примера (дополнение
-     владельца, ревью 03-05 Task 3; как travel-гало ленты): фон ячеек
-     и маркер строки переходят 200 мс ease-out */
-  transition: background-color 200ms ease-out, border-color 200ms ease-out;
 }
 .samples-table th:first-child,
 .samples-table td:first-child,
@@ -1132,15 +1146,11 @@ circle.diag-hit:focus-visible {
   border-bottom: 1px solid var(--color-outline-variant);
 }
 .sample-row-current td {
-  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  /* визуальную подсветку несёт .samples-row-halo (переезд); класс остаётся
+     контрактом (e2e) и смысловым маркером текущей строки */
 }
 .samples-table td:first-child {
-  /* постоянный 2px маркер (прозрачный) — цвет приезжает переходом,
-     без сдвига layout при смене текущей строки */
-  border-left: 2px solid transparent;
-}
-.sample-row-current td:first-child {
-  border-left-color: var(--color-primary);
+  text-align: left;
 }
 /* ŷ/вердикты «Примеров» приезжают fade+rise — как значения пилюль ленты
    (step-value-rise, точка 1); mount-span играет анимацию один раз */
