@@ -4,16 +4,16 @@ milestone: v1.3
 current_phase: 03
 current_phase_name: shadcn и анимация действий
 status: executing
-stopped_at: Completed 03-03-PLAN.md (пилоты D-40, вердикт delay-200-remove-floating); следующая 03-04
-last_updated: "2026-11-19T14:05:16.762Z"
+stopped_at: Completed 03-04-PLAN.md (D-50=motion, коллапс точки 2); следующая 03-05
+last_updated: "2026-11-19T17:11:10.132Z"
 last_activity: 2026-11-19
 last_activity_desc: Phase 03 execution started
-state_head: 7eb1b166a6afc8ee430788ddbe90404c1108eea4
+state_head: a17034995a058ef6f7341530001ed339196ae5cd
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 36
-  completed_plans: 34
+  completed_plans: 35
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-16)
 ## Current Position
 
 Phase: 03 (shadcn и анимация действий) — EXECUTING
-Plan: 4 of 5
+Plan: 5 of 5
 Status: Ready to execute
 Last activity: 2026-11-19 — Phase 03 execution started
 
@@ -83,6 +83,7 @@ Progress: [███████░░░] 71%
 | Phase 03 P01 | 47 min | 3 tasks | 15 files |
 | Phase 03 P02 | 18 min | 3 tasks | 13 files |
 | Phase 03 P03 | 26 min | 3 tasks | 8 files |
+| Phase 03 P04 | 22 min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -152,6 +153,7 @@ Recent decisions affecting current work:
 - [Phase 03]: [03-01] Пакетный апрув исполнен: approve-exact-list — cva/clsx/tailwind-merge/tw-animate-css + radix tooltip/collapsible точными версиями, Q1-политика «а» (пакет cn не ставится). Поколение реестра CLI 4.23.0 импортирует пакет cn и монопакет radix-ui — оба сняты, cn локальный в kit/utils, Slot/asChild вычищен (D-44). pnpm dlx блокирован корп-зеркалом (electron-to-chromium карантин) — CLI через npx с публичным реестром, генерация каноническая. — AGENTS.md №2 sanctioned-чекпойнт; Q1-риск поколения реестра (RESEARCH §1.5) реализовался и отработан по апрув-политике владельца
 - [Phase 03]: [03-02] Агрессивная замена D-38 исполнена: все пересобираемые примитивы на ките (Card+Header/Title=h2/Action, Kbd, Button toggle/icon-sm/quiet), мёртвый CSS удалён (.btn/.card/.kbd-семейства). Скрин-ревью владельцем — approved по D-49 (стилистика сохранена, не pixel-perfect). CardTitle=h2 — семантика заголовков сохранена; .link-close остался компакт-модификатором. — D-38+D-49 закрыты; e2e 17 ×2 бит-идентичен без правок селекторов
 - [Phase 03]: [03-03] Пилоты D-40 закрыты: radix Tooltip покрыл контракт NumberHint (дождь/края/touch машинно, e2e 18), Collapsible воспроизвёл <details> c нативным open-зеркалом (атрибут+DOM-свойство, триггер summary через asChild). Вердикт владельца delay-200-remove-floating исполнен: @floating-ui/react удалён (бандл не изменился — tree-shaken; floating-ui-dom транзитивно у radix-popper). Pitfall 4 закрыт машинно (animation-name===none на kit enter/exit). — e2e :282/:295 работают без правок — риск-флаг PATTERNS снят конструкцией
+- [Phase 03]: [03-04] D-50: движок анимаций = motion 14.14.0 (выбор владельца, отдельный пакетный апрув; css-only рекомендация отклонена, GSAP — лицензионно, Spline — D-45; частичная супрессия D-23). Точка 2 D-47: коллапс рамки-нейрона — AnimatePresence, интерполяция translate к центру блока (dx/dy из детерминированной геометрии, origin-агностично, без DOM-измерений) + opacity, 250 мс ease-in-out, interrupt-restart by design; MotionConfig reducedMotion=user на корне; print-гейт расширен; e2e 19 (per-point ассерты, Pitfall 5). gz +48.33 (172.02). — JS-анимации невидимы CSS-гейту — поверхность детерминизма закрыта per-point ассертами конечных состояний + конечностью анимаций
 
 ### Pending Todos
 
@@ -181,6 +183,6 @@ None. Фаза 2.1 закрыта (UAT 3/3, D-36); следующий шаг —
 
 ## Session Continuity
 
-Last session: 2026-11-19T14:05:16.369Z
-Stopped at: Completed 03-03-PLAN.md (пилоты D-40, вердикт delay-200-remove-floating); следующая 03-04
-Resume file: .planning/phases/03-shadcn-i-animatsiya-deystviy-revised-2026-11-16-poryadok-d-3/03-04-PLAN.md
+Last session: 2026-11-19T17:11:09.742Z
+Stopped at: Completed 03-04-PLAN.md (D-50=motion, коллапс точки 2); следующая 03-05
+Resume file: .planning/phases/03-shadcn-i-animatsiya-deystviy-revised-2026-11-16-poryadok-d-3/03-05-PLAN.md
