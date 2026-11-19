@@ -556,7 +556,7 @@ const role = useRole(context, { role: 'tooltip' })
 | A5 | актуальный CLI генерирует компоненты либо new-york (lib/utils cn), либо base-nova (пакет cn) — состав импортов выясняется первым `shadcn add` | 1.5 | план закладывает вычитку генерации до массового add (Q1) |
 | A6 | «fade+rise значений ≤200 мс» уже реализован классами значений | 4.3 | сверить планом; при отсутствии — добавить в точку 1 |
 
-## Open Questions
+## Open Questions (RESOLVED → checkpoints 03-01/03-03/03-04)
 
 1. **Поколение shadcn-реестра и пакет `cn`** (A5, Домен 1.5)
    - What we know: классический new-york = cva+clsx+tailwind-merge через локальный `cn`; новейший base-nova = пакеты `shadcn`+`cn`; D-42 зафиксировал первый состав.
