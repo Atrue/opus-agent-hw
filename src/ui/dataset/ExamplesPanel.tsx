@@ -75,7 +75,13 @@ export function ExamplesPanel() {
                   <td>{sample.x[0]}</td>
                   <td>{sample.x[1]}</td>
                   <td>{sample.y}</td>
-                  <td>{rec ? formatKey(rec.yhat) : '·'}</td>
+                  <td>
+                    {rec ? (
+                      <span className="sample-arrive">{formatKey(rec.yhat)}</span>
+                    ) : (
+                      '·'
+                    )}
+                  </td>
                   <td>
                     {rec ? (
                       <span

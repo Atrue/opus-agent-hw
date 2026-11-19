@@ -882,7 +882,11 @@ circle.diag-hit:focus-visible {
   [data-slot='collapsible-content'],
   .step-halo,
   .value-changed,
-  .graph-zoom-layer {
+  .graph-zoom-layer,
+  .samples-table td,
+  .sample-arrive,
+  .sample-verdict-ok,
+  .sample-verdict-miss {
     animation: none;
     transition: none;
   }
@@ -1100,6 +1104,10 @@ circle.diag-hit:focus-visible {
   padding: 6px 10px;
   text-align: right;
   border-bottom: 1px solid var(--color-surface-container);
+  /* «Примеры» — плавный переезд подсветки текущего примера (дополнение
+     владельца, ревью 03-05 Task 3; как travel-гало ленты): фон ячеек
+     и маркер строки переходят 200 мс ease-out */
+  transition: background-color 200ms ease-out, border-color 200ms ease-out;
 }
 .samples-table th:first-child,
 .samples-table td:first-child,
@@ -1113,6 +1121,18 @@ circle.diag-hit:focus-visible {
 .sample-row-current td {
   background: color-mix(in srgb, var(--color-primary) 10%, transparent);
 }
+.samples-table td:first-child {
+  /* постоянный 2px маркер (прозрачный) — цвет приезжает переходом,
+     без сдвига layout при смене текущей строки */
+  border-left: 2px solid transparent;
+}
 .sample-row-current td:first-child {
-  border-left: 2px solid var(--color-primary);
+  border-left-color: var(--color-primary);
+}
+/* ŷ/вердикты «Примеров» приезжают fade+rise — как значения пилюль ленты
+   (step-value-rise, точка 1); mount-span играет анимацию один раз */
+.sample-arrive,
+.sample-verdict-ok,
+.sample-verdict-miss {
+  animation: step-value-rise 200ms ease-out;
 }
