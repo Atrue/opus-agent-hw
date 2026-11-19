@@ -695,4 +695,17 @@ test('20) точки 1/3: travel-гало ленты совпадает с ак�
     .first()
     .evaluate((el) => getComputedStyle(el).animationName)
   expect(flowAnimation, 'reduced-motion: каскад волны погашен').toBe('none')
+
+  // переезд обводки активного шага (ревью владельца 03-05): якорное кольцо
+  // .g-step-halo стоит на якорном узле группы (позиция мгновенна под reduce —
+  // детерминизм; плавность — transition)
+  const ring = page.locator('.g-step-halo')
+  await expect(ring).toBeAttached()
+  const anchor = page.locator('g.g-op.active, g.g-node.active').first()
+  const ringBox = await ring.evaluate((el) => el.getBoundingClientRect())
+  const anchorBox = await anchor.evaluate((el) => el.getBoundingClientRect())
+  expect(
+    Math.abs((ringBox.x + ringBox.width / 2) - (anchorBox.x + anchorBox.width / 2)),
+    'кольцо обводки центрировано на якоре группы',
+  ).toBeLessThanOrEqual(2)
 })

@@ -180,6 +180,14 @@ export function ComputationGraph({ record }: { record: StepRecord | null }) {
   const { view } = buildGraph()
   const stepIdx = stepIndexOf(record)
   const activeGroup = stepIdx === null ? null : STEP_GROUPS[stepIdx]!
+  // Переезд обводки активного шага (ревью владельца 03-05): якорь группы —
+  // оп-узел, иначе первый узел; кольцо .g-step-halo едет к нему при смене
+  // шага (детерминированная геометрия, без DOM-измерений)
+  const activeNodes =
+    activeGroup === null
+      ? []
+      : GRAPH_NODES.filter((n) => activeGroup.nodes.has(n.id))
+  const activeAnchor = activeNodes.find((n) => n.kind === 'op') ?? activeNodes[0]
   const sel = selection === null
     ? { nodes: new Set<string>(), edges: new Set<string>(), plates: new Set<string>(), biases: new Set<string>() }
     : geometryOf(selection.segment)
@@ -464,6 +472,30 @@ export function ComputationGraph({ record }: { record: StepRecord | null }) {
           )
         })}
         </AnimatePresence>
+        {/* Переезд обводки активного шага (ревью владельца 03-05): якорное
+            кольцо группы travels к следующему узлу — как гало ленты; единый
+            элемент с CSS-transition на transform (persists между шагами);
+            узлы/рёбра группы подсвечиваются мгновенно, как до фазы 3 */}
+        {activeAnchor !== undefined && (
+          <g
+            className="g-step-halo"
+            data-testid="g-step-halo"
+            aria-hidden="true"
+            style={{ transform: `translate(${String(activeAnchor.x)}px, ${String(activeAnchor.y)}px)` }}
+          >
+            {activeAnchor.kind === 'op' ? (
+              <circle r={(OP_LABEL_RADIUS[activeAnchor.label] ?? 14) + 4} />
+            ) : (
+              <rect
+                x={-NODE_W / 2 - 3}
+                y={-NODE_H / 2 - 3}
+                width={NODE_W + 6}
+                height={NODE_H + 6}
+                rx={10}
+              />
+            )}
+          </g>
+        )}
         {/* 2.1-02 (фикс 2): верхний слой тултипов рёбер — ПОСЛЕ узлов
             (SVG paint order), не перекрывается узлами/звеньями; видимость —
             hoveredEdge (hover/focus hit-ребра) */}
