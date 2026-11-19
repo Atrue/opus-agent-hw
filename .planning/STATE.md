@@ -1,20 +1,19 @@
 ---
 gsd_state_version: "1.0"
 milestone: v1.3
-current_phase: "3"
+current_phase: 3
 current_phase_name: shadcn и анимация действий
 status: planning
-stopped_at: Фаза 2.1 закрыта (исполнение + верификация + UAT 3/3, D-36); фазы 3 и 4 поменяны местами по указанию владельца (D-37 — аменд порядка D-35): фаза 3 «shadcn и анимация действий» готова к планированию (CONTEXT/UI-SPEC/планы — ревью владельца)
-last_updated: "2026-11-17T11:10:00.000Z"
+stopped_at: "Phase 3 context gathered (D-38..D-48: агрессивная замена shadcn, кит src/ui/kit/, Material Symbols only, ресэрч GSAP vs motion vs CSS-only)"
+last_updated: "2026-11-19T07:42:36.053Z"
 last_activity: 2026-11-17
 last_activity_desc: Phases 3 and 4 swapped (D-37); ready to plan phase 3 (shadcn)
-state_head: 669b6f7
+state_head: c45d7cd120828fbc86f9f78148499956bd44adfe
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 31
   completed_plans: 31
-  percent: 71
 ---
 
 # Project State
@@ -176,6 +175,6 @@ None. Фаза 2.1 закрыта (UAT 3/3, D-36); следующий шаг —
 
 ## Session Continuity
 
-Last session: 2026-11-17T11:10:00.000Z
-Stopped at: Фазы 3↔4 поменяны местами (D-37 — аменд порядка D-35); фаза 3 «shadcn и анимация действий» — ready to plan
-Resume file: None
+Last session: 2026-11-19T07:42:35.524Z
+Stopped at: Phase 3 context gathered (D-38..D-48: агрессивная замена shadcn, кит src/ui/kit/, Material Symbols only, ресэрч GSAP vs motion vs CSS-only)
+Resume file: .planning/phases/03-shadcn-i-animatsiya-deystviy-revised-2026-11-16-poryadok-d-3/03-CONTEXT.md
