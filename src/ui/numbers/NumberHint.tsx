@@ -1,17 +1,6 @@
-import { cloneElement, useState, type ReactElement } from 'react'
-import { createPortal } from 'react-dom'
-import {
-  flip,
-  offset,
-  shift,
-  useDismiss,
-  useFloating,
-  useFocus,
-  useHover,
-  useInteractions,
-  useRole,
-} from '@floating-ui/react'
+import { type ReactElement } from 'react'
 import { formatKey } from '../../format'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../kit'
 import type { HintData } from './hint'
 import { SubscriptText } from '../typography/SubscriptText'
 
@@ -20,75 +9,54 @@ import { SubscriptText } from '../typography/SubscriptText'
  * число/узел/ребро → значение + формула с подстановкой + градиент ∂L/∂sym при
  * наличии (контент — buildHintData из ./numberHint). Клик/Enter по-прежнему
  * открывает полный NumberDrilldown (tier 2 — супермножество); мобильный тап
- * тултип не показывает (useHover игнорирует touch-указатели — тап ведёт сразу
- * в drill, LOCKED-решение R5 §2c к3). ЕДИНАЯ обёртка над @floating-ui/react —
- * изоляция библиотеки для будущей замены (Base UI в Phase 2+): всё Floating UI
- * живёт только в этом файле. Элементы подключаются через elements-опцию (якоря
- * — в т.ч. SVG-элементы, ref-callback'и вызываются в commit, не в рендере).
+ * тултип не показывает (тап ведёт сразу в drill, LOCKED-решение R5 §2c к3).
+ * ЕДИНАЯ обёртка над тултип-механикой — изоляция библиотеки для будущей
+ * замены: весь Radix Tooltip живёт только в этом файле и kit/tooltip
+ * (пилот D-40, фаза 3: radix сменил @floating-ui/react; откат дёшев — вернуть
+ * прежнее тело на floating, докомментарий и контракт в 03-03-SUMMARY).
+ *
+ * Контракт прежний (PATTERNS §NumberHint): портал в document.body, z-50
+ * поверх SVG-графа (D-35 фикс 2), sideOffset 6, flip/shift у краёв
+ * (avoidCollisions у radix), hover (delayDuration 200 — пилотное значение,
+ * решение владельца 03-03 Task 2) + focus-visible, Esc-dismiss,
+ * aria-describedby на якоре (ставит radix), контент идентичен.
+ * Разница с floating принята осознанно (OQ 5): restMs-семантика (открытие
+ * после ОСТАНОВКИ указателя) не воспроизводится — компенсация delayDuration.
  */
 
 const GRAD_PREFIX = '∂L/∂'
 
 export function NumberHint({ hint, children }: { hint: HintData | null; children: ReactElement }) {
-  const [open, setOpen] = useState(false)
-  const [anchor, setAnchor] = useState<Element | null>(null)
-  const [floatingEl, setFloatingEl] = useState<HTMLDivElement | null>(null)
-  const { floatingStyles, context } = useFloating({
-    open: open && hint !== null,
-    onOpenChange: setOpen,
-    placement: 'top',
-    middleware: [offset(6), flip(), shift({ padding: 8 })],
-    elements: { reference: anchor, floating: floatingEl },
-  })
-  const hover = useHover(context, { restMs: 60, delay: { open: 120 } })
-  const focus = useFocus(context)
-  const dismiss = useDismiss(context, { escapeKey: true })
-  const role = useRole(context, { role: 'tooltip' })
-  const { getReferenceProps, getFloatingProps } = useInteractions([hover, focus, dismiss, role])
-
-  // якорь = сам элемент (value-btn / SVG hit-элемент / ячейка): клонируем с
-  // hover/focus-обработчиками и aria-describedby (его ставит useRole('tooltip')
-  // на время открытого тултипа); собственные onClick/клавиатура якоря сохраняются
-  const anchorProps = getReferenceProps({
-    ...(children.props as Record<string, unknown>),
-    ref: setAnchor,
-  })
-  const cloned = cloneElement(children, anchorProps)
-
   if (hint === null) return children
 
   return (
-    <>
-      {cloned}
-      {open &&
-        createPortal(
-          <div
-            ref={setFloatingEl}
-            style={floatingStyles}
-            data-testid="number-hint"
-            className="num-hint"
-            {...getFloatingProps()}
-          >
-            <p className="num text-on-surface">
-              <SubscriptText text={hint.sym} /> = {formatKey(hint.value)}
-            </p>
-            {hint.formula !== null && (
-              <p data-testid="hint-formula" className="num text-on-surface">
-                <SubscriptText text={hint.formula} />
-              </p>
-            )}
-            {hint.gradient !== null && (
-              <p
-                className="num"
-                style={{ color: hint.gradient < 0 ? 'var(--color-neg-text)' : 'var(--color-pos-text)' }}
-              >
-                <SubscriptText text={`${GRAD_PREFIX}${hint.sym}`} /> = {formatKey(hint.gradient)}
-              </p>
-            )}
-            {hint.note !== null && <p className="ui-text text-on-surface-variant">{hint.note}</p>}
-          </div>,
-          document.body,
+    <TooltipProvider delayDuration={200} disableHoverableContent>
+      <Tooltip>
+        <TooltipTrigger asChild>{children}</TooltipTrigger>
+        <TooltipContent
+          data-testid="number-hint"
+          className="num-hint z-50"
+          sideOffset={6}
+        >
+        <p className="num text-on-surface">
+          <SubscriptText text={hint.sym} /> = {formatKey(hint.value)}
+        </p>
+        {hint.formula !== null && (
+          <p data-testid="hint-formula" className="num text-on-surface">
+            <SubscriptText text={hint.formula} />
+          </p>
         )}
-    </>
+        {hint.gradient !== null && (
+          <p
+            className="num"
+            style={{ color: hint.gradient < 0 ? 'var(--color-neg-text)' : 'var(--color-pos-text)' }}
+          >
+            <SubscriptText text={`${GRAD_PREFIX}${hint.sym}`} /> = {formatKey(hint.gradient)}
+          </p>
+        )}
+        {hint.note !== null && <p className="ui-text text-on-surface-variant">{hint.note}</p>}
+      </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   )
 }

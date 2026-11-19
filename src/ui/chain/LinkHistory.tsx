@@ -1,5 +1,7 @@
+import { useEffect, useRef, useState } from 'react'
 import { useRunSlice } from '../../run/useRunSlice'
 import { capLinkHistory, linkHistoryOf, type LinkHistoryPoint, type LinkSeries } from '../../run/history'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../kit'
 import { liveValues } from './liveValues'
 import { formatKey } from '../../format'
 import { SubscriptText } from '../typography/SubscriptText'
@@ -7,14 +9,21 @@ import type { SegmentId } from '../../run/types'
 
 /**
  * История звена (01.2-02, пункт 4 ТЗ): раскрывающаяся секция в панели звена
- * (details-паттерн, свёрнута по умолчанию; testid link-history) — значения
- * по СЭМПЛАМ из per-sample истории сессии (linkHistoryOf). Скалярный ряд —
- * спарклайн SVG (hand-rolled по образцу LossChart, без новых зависимостей;
- * тики — границы эпох, вертикали — границы прогонов) + последние значения
- * текстом; многомерный символ — мини-таблица (строки = компоненты, столбцы
- * = границы сэмплов, столбцы «старт» — стартовые константы прогона).
+ * (свёрнута по умолчанию; testid link-history) — значения по СЭМПЛАМ из
+ * per-sample истории сессии (linkHistoryOf). Скалярный ряд — спарклайн SVG
+ * (hand-rolled по образцу LossChart, без новых зависимостей; тики — границы
+ * эпох, вертикали — границы прогонов) + последние значения текстом;
+ * многомерный символ — мини-таблица (строки = компоненты, столбцы = границы
+ * сэмплов, столбцы «старт» — стартовые константы прогона).
  * live-значение (живые тензоры текущего прогона) — отдельной строкой.
  * Потолок отображения — последние ~40 точек, скрытое — «+N раньше».
+ *
+ * Пилот Collapsible (фаза 3, план 03-03): нативный DOM-контракт <details>
+ * сохраняется конструкцией — корень несёт булев атрибут open И DOM-свойство
+ * open, зеркалящие состояние (e2e :282 not.toHaveAttribute('open','') и
+ * :295 el.open работают без правок); триггер — прежний summary с тем же
+ * текстом (e2e-локатор 'summary'). Откат дёшев: вернуть нативный details
+ * (OQ 5д).
  */
 
 const SPARK_W = 220
@@ -145,14 +154,39 @@ export function LinkHistory({ segment, symbol }: { segment: SegmentId; symbol: s
   const live = liveValues(symbol)
   const total = series[0]?.points.length ?? 0
   const { hidden } = capLinkHistory(series[0]?.points ?? [])
+  const [open, setOpen] = useState(false)
+  const rootRef = useRef<HTMLDivElement | null>(null)
+
+  // Нативный open-контракт <details> (e2e :282/:295 без правок): атрибут +
+  // DOM-свойство на корне Collapsible зеркалят состояние
+  useEffect(() => {
+    const el = rootRef.current
+    if (el === null) return
+    const host = el as HTMLDivElement & { open?: boolean }
+    if (open) {
+      el.setAttribute('open', '')
+      host.open = true
+    } else {
+      el.removeAttribute('open')
+      host.open = false
+    }
+  }, [open])
 
   return (
-    <details data-testid="link-history" className="link-history">
-      <summary className="ui-label link-history-summary">
-        История по сэмплам: <SubscriptText text={symbol} />
-        {series.length > 1 ? ` — ${String(series.length)} рядов` : ''}
-      </summary>
-      <div className="link-history-body">
+    <Collapsible
+      ref={rootRef}
+      data-testid="link-history"
+      className="link-history"
+      open={open}
+      onOpenChange={setOpen}
+    >
+      <CollapsibleTrigger asChild>
+        <summary className="ui-label link-history-summary">
+          История по сэмплам: <SubscriptText text={symbol} />
+          {series.length > 1 ? ` — ${String(series.length)} рядов` : ''}
+        </summary>
+      </CollapsibleTrigger>
+      <CollapsibleContent className="link-history-body">
         {total === 0 ? (
           <p className="ui-label text-on-surface-variant">История появится после первого сэмпла</p>
         ) : (
@@ -175,7 +209,7 @@ export function LinkHistory({ segment, symbol }: { segment: SegmentId; symbol: s
             {live.length > 3 ? ` +${String(live.length - 3)}` : ''}
           </p>
         ) : null}
-      </div>
-    </details>
+      </CollapsibleContent>
+    </Collapsible>
   )
 }

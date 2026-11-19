@@ -37,6 +37,11 @@ import { ETALON_NEURON_SAMPLE_1, ETALON_SAMPLE_1 } from '../src/run/etalon-const
  *     FF → 4 вердикта ✓/✗; reset → карточка сброшена, история жива;
  * (16) result-zone: все входы AND-сэмпла + метка y, ŷ/L после 4 операций,
  *     LR = η = 0.5; LOSS/LR ушли из футера (пункт 8 UAT).
+ * (18) пилот D-40/03-03: radix-тултип NumberHint и Collapsible LinkHistory —
+ *     enter/exit kit-компонентов под reduce (animation-name === none, Pitfall
+ *     4), «дождь» (3 узла подряд → 0 открытых number-hint), «края» (тултип
+ *     целиком в viewport у правого края), touch-тап → drill без тултипа
+ *     (LOCKED R5 §2c к3), open-зеркало Collapsible (атрибут + DOM-свойство).
  *
  * Скриншот-self-check (baseline 18): перед записью директория очищается;
  * сохраняются скриншоты каждой операции сэмпла 1 (8) и экрана завершения
@@ -512,4 +517,102 @@ test('17) рамка-нейрон: внутри — веса и «·»/«+», с
   await expect(frame).not.toHaveAttribute('data-collapsed')
   await expect(page.locator('g[data-node="op:matvec"]'), 'члены снова видны').toBeVisible()
   await expect(page.getByTestId('frame-block'), 'коллапс-блок ушёл').toHaveCount(0)
+})
+
+test('18) пилот D-40: radix Tooltip/Collapsible — гейты enter/exit, дождь, края, touch, open-зеркало', async ({
+  page,
+  browser,
+}) => {
+  await page.goto('/')
+  await page.getByTestId('btn-next').click()
+
+  // (а) Pitfall 4: enter/exit kit-тултипа под reduce — animation-name === none
+  // (паттерн теста 1 :94-98, расширен на kit-компонент)
+  const firstNumber = page.getByTestId('step-panel').locator('.value-btn').first()
+  await firstNumber.hover()
+  const hint = page.getByTestId('number-hint')
+  await expect(hint).toBeVisible()
+  expect(
+    await hint.evaluate((el) => getComputedStyle(el).animationName),
+    'reduced-motion: enter kit-тултипа погашен',
+  ).toBe('none')
+  await page.keyboard.press('Escape')
+  await expect(hint).toBeHidden()
+
+  // (б) «дождь» (критерий пилота, RESEARCH §3.3): курсор по узлам графа
+  // подряд не оставляет открытых тултипов (restMs-компенсация delayDuration)
+  const nodeHits = page.locator('svg .g-node .diag-hit, svg .g-op .diag-hit')
+  const hitCount = await nodeHits.count()
+  expect(hitCount).toBeGreaterThanOrEqual(3)
+  await nodeHits.nth(0).hover()
+  await expect(page.getByTestId('number-hint')).toBeVisible()
+  for (let i = 1; i < 3; i++) await nodeHits.nth(i).hover()
+  await page.getByTestId('step-indicator').hover()
+  await expect(page.getByTestId('number-hint'), 'дождь: открытых тултипов нет').toHaveCount(0)
+
+  // (в) «края»: после bce станции несут числа (тест 13) — доводим прогон до
+  // шага 5 и берём самый правый якорь с живым значением: тултип целиком
+  // внутри viewport (flip/shift = avoidCollisions у radix)
+  while (!(await page.getByTestId('step-indicator').textContent()).includes('шаг 5')) {
+    await page.getByTestId('btn-next').click()
+  }
+  const rightmost = await nodeHits.evaluateAll((els) => {
+    let best = -1
+    let bestX = -1
+    els.forEach((el, i) => {
+      const g = el.closest('g')
+      const val = g?.querySelector('.g-node-value')
+      if (val !== null && val !== undefined && val.textContent !== 'н/д') {
+        const x = el.getBoundingClientRect().right
+        if (x > bestX) {
+          bestX = x
+          best = i
+        }
+      }
+    })
+    return best
+  })
+  expect(rightmost, 'есть живой узел у правого края').toBeGreaterThanOrEqual(0)
+  await nodeHits.nth(rightmost).hover()
+  await expect(page.getByTestId('number-hint')).toBeVisible()
+  const box = await page.getByTestId('number-hint').boundingBox()
+  expect(box, 'boundingBox тултипа измерим').toBeTruthy()
+  const vp = page.viewportSize()!
+  expect(box!.x, 'тултип не обрезан слева/справа').toBeGreaterThanOrEqual(0)
+  expect(box!.x + box!.width, 'тултип не обрезан справа').toBeLessThanOrEqual(vp.width)
+  expect(box!.y, 'тултип не обрезан сверху').toBeGreaterThanOrEqual(0)
+  expect(box!.y + box!.height, 'тултип не обрезан снизу').toBeLessThanOrEqual(vp.height)
+  await page.getByTestId('step-indicator').hover()
+
+  // (г) «touch» (LOCKED R5 §2c к3): тап по числу открывает drill, тултипа нет
+  const touchCtx = await browser.newContext({
+    baseURL: 'http://localhost:4173',
+    viewport: { width: 1280, height: 800 },
+    deviceScaleFactor: 2,
+    hasTouch: true,
+  })
+  const touchPage = await touchCtx.newPage()
+  await touchPage.emulateMedia({ reducedMotion: 'reduce' })
+  await touchPage.goto('/')
+  await touchPage.getByTestId('btn-next').click()
+  await touchPage.getByTestId('step-panel').locator('.value-btn').first().tap()
+  await expect(touchPage.getByTestId('drill-panel'), 'тап ведёт в drill (tier 2)').toBeVisible()
+  await expect(touchPage.getByTestId('number-hint'), 'тултип на touch не показывается').toHaveCount(0)
+  await touchCtx.close()
+
+  // (д) Collapsible: open-зеркало (нативный контракт <details>) + гейт
+  // enter/exit под reduce; интеракция — через прежний summary-триггер
+  await page.getByTestId('formula-sym-eta').click()
+  const history = page.getByTestId('link-history')
+  await history.locator('summary').click()
+  await expect(history).toHaveAttribute('open', '')
+  expect(
+    await history.evaluate((el) => (el as HTMLElement & { open?: boolean }).open === true),
+    'DOM-свойство open зеркалит состояние (e2e :295-контракт)',
+  ).toBe(true)
+  const collapsibleBody = history.locator('[data-slot="collapsible-content"]')
+  expect(
+    await collapsibleBody.evaluate((el) => getComputedStyle(el).animationName),
+    'reduced-motion: collapsible-down/up погашены',
+  ).toBe('none')
 })
