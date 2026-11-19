@@ -957,6 +957,10 @@ circle.diag-hit:focus-visible {
 .graph-canvas {
   display: block;
   font-variant-numeric: tabular-nums;
+  /* канал зума (inline transform scale — уровень 0.5–2.0) плавный вместе с
+     габаритами обёртки (.graph-zoom-layer): единый 250 мс переход, ревью
+     03-05 Task 3; reduced-motion/print гасят глобальные гейты */
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
 }
 .g-node-box {
   fill: var(--color-surface-container-lowest);

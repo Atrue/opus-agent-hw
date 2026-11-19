@@ -36,8 +36,9 @@ const buttonVariants = cva(
       size: {
         /* базовый контрол: min-height 40, padding 8×12 (в базовых классах px-3 py-2) */
         default: 'min-h-10 px-3 py-2',
-        /* компакт зума графа: min-width 34, padding 2×8 (locked-исключение D-38) */
-        'icon-sm': 'min-w-[34px] px-2 py-[2px]',
+        /* компакт зума графа: min-width 34 / min-height 40, padding 2×8
+           (locked-исключение D-38: высота наследовала .btn-min-height) */
+        'icon-sm': 'min-h-10 min-w-[34px] px-2 py-[2px]',
       },
     },
     defaultVariants: {
