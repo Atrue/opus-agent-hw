@@ -3,17 +3,17 @@ gsd_state_version: "1.0"
 milestone: v1.3
 current_phase: 03
 current_phase_name: shadcn и анимация действий
-status: executing
-stopped_at: Completed 03-04-PLAN.md (D-50=motion, коллапс точки 2); следующая 03-05
-last_updated: "2026-11-19T17:11:10.132Z"
+status: verifying
+stopped_at: "Phase 3 завершена: 5/5 планов (03-05 approved после 4 итераций ревью); следующий шаг /gsd-verify-work 03"
+last_updated: "2026-11-19T17:49:45.037Z"
 last_activity: 2026-11-19
 last_activity_desc: Phase 03 execution started
-state_head: a17034995a058ef6f7341530001ed339196ae5cd
+state_head: 50c6df79646f048d6079c4f9030e3d38514189e1
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 36
-  completed_plans: 35
+  completed_plans: 36
 ---
 
 # Project State
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-11-16)
 
 Phase: 03 (shadcn и анимация действий) — EXECUTING
 Plan: 5 of 5
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-11-19 — Phase 03 execution started
 
 Progress: [███████░░░] 71%
@@ -84,6 +84,7 @@ Progress: [███████░░░] 71%
 | Phase 03 P02 | 18 min | 3 tasks | 13 files |
 | Phase 03 P03 | 26 min | 3 tasks | 8 files |
 | Phase 03 P04 | 22 min | 2 tasks | 7 files |
+| Phase 03 P05 | 55 min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -154,6 +155,7 @@ Recent decisions affecting current work:
 - [Phase 03]: [03-02] Агрессивная замена D-38 исполнена: все пересобираемые примитивы на ките (Card+Header/Title=h2/Action, Kbd, Button toggle/icon-sm/quiet), мёртвый CSS удалён (.btn/.card/.kbd-семейства). Скрин-ревью владельцем — approved по D-49 (стилистика сохранена, не pixel-perfect). CardTitle=h2 — семантика заголовков сохранена; .link-close остался компакт-модификатором. — D-38+D-49 закрыты; e2e 17 ×2 бит-идентичен без правок селекторов
 - [Phase 03]: [03-03] Пилоты D-40 закрыты: radix Tooltip покрыл контракт NumberHint (дождь/края/touch машинно, e2e 18), Collapsible воспроизвёл <details> c нативным open-зеркалом (атрибут+DOM-свойство, триггер summary через asChild). Вердикт владельца delay-200-remove-floating исполнен: @floating-ui/react удалён (бандл не изменился — tree-shaken; floating-ui-dom транзитивно у radix-popper). Pitfall 4 закрыт машинно (animation-name===none на kit enter/exit). — e2e :282/:295 работают без правок — риск-флаг PATTERNS снят конструкцией
 - [Phase 03]: [03-04] D-50: движок анимаций = motion 14.14.0 (выбор владельца, отдельный пакетный апрув; css-only рекомендация отклонена, GSAP — лицензионно, Spline — D-45; частичная супрессия D-23). Точка 2 D-47: коллапс рамки-нейрона — AnimatePresence, интерполяция translate к центру блока (dx/dy из детерминированной геометрии, origin-агностично, без DOM-измерений) + opacity, 250 мс ease-in-out, interrupt-restart by design; MotionConfig reducedMotion=user на корне; print-гейт расширен; e2e 19 (per-point ассерты, Pitfall 5). gz +48.33 (172.02). — JS-анимации невидимы CSS-гейту — поверхность детерминизма закрыта per-point ассертами конечных состояний + конечностью анимаций
+- [Phase 03]: [03-05] Моушн-язык фазы собран: travel-гало (лента/строка «Примеров»/якорное кольцо шага — единый паттерн «цель из структуры + CSS 250 мс»), волна backprop с delay-каскадом (--flow-i × 60 мс), fade+rise значений; print/reduced-motion гейты финализированы, DESIGN §8 + D-50. Ревью владельца — 4 живые итерации: зум (transition на svg-канвасе, кнопки 34×40), «Примеры» (гало строки), обводка (якорное кольцо переезжает, узловые stroke — как было); итог approved. Гало-переезд = универсальный паттерн подсветки-приезда. — Каждая итерация закрыта живой браузерной верификацией интерполяции + полными гейтами (20 e2e ×2 бит-идентичен)
 
 ### Pending Todos
 
@@ -183,6 +185,6 @@ None. Фаза 2.1 закрыта (UAT 3/3, D-36); следующий шаг —
 
 ## Session Continuity
 
-Last session: 2026-11-19T17:11:09.742Z
-Stopped at: Completed 03-04-PLAN.md (D-50=motion, коллапс точки 2); следующая 03-05
-Resume file: .planning/phases/03-shadcn-i-animatsiya-deystviy-revised-2026-11-16-poryadok-d-3/03-05-PLAN.md
+Last session: 2026-11-19T17:49:44.649Z
+Stopped at: Phase 3 завершена: 5/5 планов (03-05 approved после 4 итераций ревью); следующий шаг /gsd-verify-work 03
+Resume file: .planning/phases/03-shadcn-i-animatsiya-deystviy-revised-2026-11-16-poryadok-d-3/03-05-SUMMARY.md
