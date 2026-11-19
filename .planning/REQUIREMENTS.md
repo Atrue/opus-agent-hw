@@ -105,6 +105,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | UX-04 | Parking (D-35) | Pending (возврат — только явный запрос владельца) |
 | UX-05 | Phase 1.1 | Complete |
 | UX-06 | Phase 01.2 | Complete (переписан D-26: история звена вместо таблицы весов) |
+| NFR-01 | Cross-phase | Complete для текущих сценариев (гейт каждой фазы: анимации не гейтят числа; MNIST — parking D-35) |
+| NFR-02 | Phase 2 | Complete (02-09: gradcheck + эталон-константы + бит-инварианты; фаза 03 — diff по src/tensor = 0) |
+| NFR-03 | Phase 2 | Complete (статик-хостинг, серверных вычислений нет; NFR-03-девиз фазы 03 — CLI через npx, пакетов вне апрува нет) |
 
 **Coverage:**
 - v1 requirements: 11 total

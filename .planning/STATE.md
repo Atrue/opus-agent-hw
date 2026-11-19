@@ -1,43 +1,44 @@
 ---
 gsd_state_version: "1.0"
 milestone: v1.3
-current_phase: 03
-current_phase_name: shadcn и анимация действий
-status: verifying
-stopped_at: "Phase 3 завершена: 5/5 планов (03-05 approved после 4 итераций ревью); следующий шаг /gsd-verify-work 03"
-last_updated: "2026-11-19T17:49:45.037Z"
+current_phase: 4
+current_phase_name: Сценарии, клиентский роутинг и лекционный режим (REVISED 2026-11-16; порядок — D-37, 2026-11-17)
+status: planning
+stopped_at: Phase 03 complete, ready to plan Phase 4
+last_updated: "2026-11-19T18:23:35.497Z"
 last_activity: 2026-11-19
-last_activity_desc: Phase 03 execution started
-state_head: 50c6df79646f048d6079c4f9030e3d38514189e1
+last_activity_desc: Phase 03 complete, transitioned to Phase 4
+state_head: 8fbc4c4d00a2dd88733bf038c94042e1cb6ab8fe
 progress:
   total_phases: 7
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 36
   completed_plans: 36
+  percent: 86
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-11-16)
+See: .planning/PROJECT.md (updated 2026-11-19)
 
 **Core value:** Пользователь сам пошагово исполняет forward/backward-pass готового сценария и видит каждый градиент числом — в браузере, без регистрации, по одной ссылке (первый шаг < 1 мин).
-**Current focus:** Phase 03 — shadcn и анимация действий
+**Current focus:** Phase 04 — Сценарии, клиентский роутинг и лекционный режим (на готовой UI-платформе фазы 03)
 
 ## Current Position
 
-Phase: 03 (shadcn и анимация действий) — EXECUTING
-Plan: 5 of 5
-Status: Phase complete — ready for verification
-Last activity: 2026-11-19 — Phase 03 execution started
+Phase: 4 — Сценарии, клиентский роутинг и лекционный режим (REVISED 2026-11-16; порядок — D-37, 2026-11-17)
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-11-19 — Phase 03 complete, transitioned to Phase 4
 
-Progress: [███████░░░] 71%
+Progress: [█████████░] 86%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 28
+- Total plans completed: 36
 - Average duration: -
 - Total execution time: -
 
@@ -50,6 +51,7 @@ Progress: [███████░░░] 71%
 | 01 | 4 | - | - |
 | 02 | 12 | - | - |
 | 2.1 | 3 | - | - |
+| 03 | 5 | - | - |
 
 **Recent Trend:**
 - Last 5 plans: -
@@ -157,13 +159,15 @@ Recent decisions affecting current work:
 - [Phase 03]: [03-04] D-50: движок анимаций = motion 14.14.0 (выбор владельца, отдельный пакетный апрув; css-only рекомендация отклонена, GSAP — лицензионно, Spline — D-45; частичная супрессия D-23). Точка 2 D-47: коллапс рамки-нейрона — AnimatePresence, интерполяция translate к центру блока (dx/dy из детерминированной геометрии, origin-агностично, без DOM-измерений) + opacity, 250 мс ease-in-out, interrupt-restart by design; MotionConfig reducedMotion=user на корне; print-гейт расширен; e2e 19 (per-point ассерты, Pitfall 5). gz +48.33 (172.02). — JS-анимации невидимы CSS-гейту — поверхность детерминизма закрыта per-point ассертами конечных состояний + конечностью анимаций
 - [Phase 03]: [03-05] Моушн-язык фазы собран: travel-гало (лента/строка «Примеров»/якорное кольцо шага — единый паттерн «цель из структуры + CSS 250 мс»), волна backprop с delay-каскадом (--flow-i × 60 мс), fade+rise значений; print/reduced-motion гейты финализированы, DESIGN §8 + D-50. Ревью владельца — 4 живые итерации: зум (transition на svg-канвасе, кнопки 34×40), «Примеры» (гало строки), обводка (якорное кольцо переезжает, узловые stroke — как было); итог approved. Гало-переезд = универсальный паттерн подсветки-приезда. — Каждая итерация закрыта живой браузерной верификацией интерполяции + полными гейтами (20 e2e ×2 бит-идентичен)
 
+- [Phase 03 → закрыта, 2026-11-19]: полный verify-цикл — UAT 22/22 (16 automated-coverage + 6 owner-confirmed: cold-start, авто-покрытие 03-01/03/04, стилистика D-49, градус D-48), SECURITY.md создан (threats_open 0, ASVS L1, 15 угроз закрыты), UI-REVIEW 21/24 (3 приоритетных фикса — tooltip-токены, print .graph-canvas, мёртвый .samples-*), code review 0 critical / 2 warning / 3 info (disposition 5/5 open — advisory), regression gate 144/144, VERIFICATION passed (8/8 must-haves, fingerprint 42 файла, 1 owner-override запрета 03-04 снят самим владельцем); transition — ROADMAP/STATE → фаза 4, NFR-01..03 добавлены в Traceability
+
 ### Pending Todos
 
 - `.planning/todos/pending/deferred-h2-h3-validation.md` — отложенный этап H2/H3 (сбор данных + вердикт). **Активация: только явный запрос владельца, после завершения разработки; в планы фаз не включать** (D-24).
 
 ### Blockers/Concerns
 
-None. Фаза 2.1 закрыта (UAT 3/3, D-36); следующий шаг — планирование фазы 3 (CONTEXT/UI-SPEC + планы, ревью владельца).
+None. Фаза 03 закрыта (2026-11-19: UAT 22/22, VERIFICATION passed 8/8, SECURITY threats_open 0, регрессий нет); advisory-находки 03-REVIEW (WR-01 halo-переизмерение при лекционном режиме, WR-02 landmark-семантика, IN-01..03) — кандидаты в фазу 4/backlog, не блокируют. Следующий шаг — обсуждение/планирование фазы 4.
 
 ### Roadmap Evolution
 
@@ -185,6 +189,6 @@ None. Фаза 2.1 закрыта (UAT 3/3, D-36); следующий шаг —
 
 ## Session Continuity
 
-Last session: 2026-11-19T17:49:44.649Z
-Stopped at: Phase 3 завершена: 5/5 планов (03-05 approved после 4 итераций ревью); следующий шаг /gsd-verify-work 03
-Resume file: .planning/phases/03-shadcn-i-animatsiya-deystviy-revised-2026-11-16-poryadok-d-3/03-05-SUMMARY.md
+Last session: 2026-11-19T18:25:00.000Z
+Stopped at: Phase 03 complete, ready to plan Phase 4
+Resume file: None
