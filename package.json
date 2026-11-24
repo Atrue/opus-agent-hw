@@ -1,0 +1,13 @@
+{
+  "name": "bugtrace",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "seed:users": "node --env-file=.env scripts/seed-users.mjs",
+    "test:rls": "node --env-file=.env scripts/rls-negative-tests.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.119.2"
+  }
+}
