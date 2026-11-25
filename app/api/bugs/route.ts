@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import { fail, json } from "@/lib/api";
-import { clientFromRequest, getAuth, roleFromRequest } from "@/lib/supabase";
+import { clientFromRequest, getAuth, roleFromRequest, subFromRequest } from "@/lib/supabase";
 import { normalizeTags, sanitizeQuery, serializeBug, validateTitle } from "@/lib/bugs";
 
 const PAGE_DEFAULT = 1;
@@ -25,6 +25,12 @@ export async function GET(req: NextRequest) {
 
   const tag = sp.get("tag")?.trim().toLowerCase();
   if (tag) query = query.contains("tags", [tag]);
+
+  const mine = sp.get("mine");
+  if (mine === "1" || mine === "true") {
+    const sub = subFromRequest(req);
+    if (sub) query = query.eq("reporter_id", sub);
+  }
 
   const q = sanitizeQuery(sp.get("q"));
   if (q) {

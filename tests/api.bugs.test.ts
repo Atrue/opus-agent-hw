@@ -213,6 +213,25 @@ describe("CRUD: чтение", () => {
     );
     expect((await page.json()).items).toHaveLength(1);
   });
+
+  it("?mine=1 — только свои баги, даже для staff (RLS бы вернул все)", async () => {
+    const withoutMine = await bugsRoute.GET(makeReq("/api/bugs", { token: users.m.token }));
+    expect((await withoutMine.json()).items.length).toBeGreaterThan(0);
+
+    const mine = await bugsRoute.GET(
+      makeReq("/api/bugs", { token: users.m.token, searchParams: { mine: "1" } }),
+    );
+    expect(mine.status).toBe(200);
+    const items = (await mine.json()).items;
+    expect(items).toHaveLength(0);
+
+    const mineA = await bugsRoute.GET(
+      makeReq("/api/bugs", { token: users.a.token, searchParams: { mine: "1" } }),
+    );
+    const mineAItems = (await mineA.json()).items;
+    expect(mineAItems.length).toBeGreaterThan(0);
+    for (const item of mineAItems) expect(item.reporter_id).toBe(users.a.id);
+  });
 });
 
 describe("CRUD: обновление и удаление (права)", () => {

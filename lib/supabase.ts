@@ -29,6 +29,12 @@ export function roleFromRequest(req: NextRequest): Role {
   return role === "moderator" || role === "admin" ? role : "user";
 }
 
+// user id из JWT (claim sub) — без обращения к Supabase Auth.
+export function subFromRequest(req: NextRequest): string | null {
+  const payload = decodeJwtPayload(bearerToken(req));
+  return typeof payload?.sub === "string" ? payload.sub : null;
+}
+
 export async function getAuth(req: NextRequest): Promise<
   { client: SupabaseClient; userId: string; role: Role } | null
 > {

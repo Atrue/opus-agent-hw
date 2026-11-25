@@ -1,10 +1,11 @@
 import { NextRequest } from "next/server";
 
 export type ReqOpts = {
-  method?: "GET" | "POST" | "PATCH" | "DELETE";
+  method?: "GET" | "POST" | "PATCH" | "DELETE" | "OPTIONS";
   token?: string;
   body?: unknown;
   searchParams?: Record<string, string>;
+  headers?: Record<string, string>;
 };
 
 // Собирает NextRequest так, как это сделал бы Next.js при реальном запросе.
@@ -13,7 +14,7 @@ export function makeReq(path: string, opts: ReqOpts = {}): NextRequest {
   for (const [k, v] of Object.entries(opts.searchParams ?? {})) {
     url.searchParams.set(k, v);
   }
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = { ...opts.headers };
   if (opts.token) headers.authorization = `Bearer ${opts.token}`;
   const hasBody = opts.body !== undefined;
   if (hasBody) headers["content-type"] = "application/json";
