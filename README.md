@@ -11,9 +11,18 @@ Next.js (App Router, TS) · Supabase (Postgres + Auth + Storage, RLS) · OpenRou
 
 ```sh
 pnpm install            # зависимости (pnpm, не npm — package-lock.json не используем)
+pnpm run dev            # http://localhost:3000
+pnpm run test           # все vitest-тесты (API + CORS + AI-пайплайн)
 pnpm run seed:users     # создать тестовых пользователей (user-a/b, moderator, admin @example.com)
 pnpm run test:rls       # негативные тесты RLS (15 проверок, реальные JWT)
+node --env-file=.env scripts/ai-smoke.mjs   # живой прогон AI-пайплайна (dev-сервер должен работать)
 ```
+
+## AI (OpenRouter)
+
+Стадии: описание по скриншоту (vision) → теги (JSON) → похожие баги (pg_trgm в БД, без LLM).
+Автозапуск: после создания бага и после загрузки скриншота; ручной запуск — автор или staff,
+лимит 5 запусков на баг в час. Модели: primary free + платный fallback (см. `.env.example`).
 
 ## Окружение
 

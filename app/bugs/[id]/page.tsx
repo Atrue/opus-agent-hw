@@ -16,6 +16,9 @@ export default function BugDetailPage() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [tagsInput, setTagsInput] = useState("");
+  const [shotUrl, setShotUrl] = useState<string | null>(null);
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiInfo, setAiInfo] = useState<string | null>(null);
 
   const isStaff = role === "moderator" || role === "admin";
 
@@ -25,6 +28,15 @@ export default function BugDetailPage() {
       const data = await apiFetch<Bug>(`/api/bugs/${id}`);
       setBug(data);
       setTagsInput((data.tags ?? []).join(", "));
+      setShotUrl(null);
+      if (data.screenshot_path) {
+        try {
+          const shot = await apiFetch<{ url: string }>(`/api/bugs/${id}/screenshot`);
+          setShotUrl(shot.url);
+        } catch {
+          setShotUrl(null);
+        }
+      }
     } catch (e) {
       setError(e instanceof ApiError ? e.message : String(e));
     }
@@ -96,6 +108,29 @@ export default function BugDetailPage() {
     }
   };
 
+  const runAi = async () => {
+    if (!bug) return;
+    setAiBusy(true);
+    setActionError(null);
+    setAiInfo(null);
+    try {
+      const { stages } = await apiFetch<{ stages: { stage: string; status: string; detail?: string }[] }>(
+        `/api/bugs/${bug.id}/ai`,
+        { method: "POST" },
+      );
+      setAiInfo(
+        stages.map((s) => `${s.stage}: ${s.status === "done" ? "готово" : s.status === "skipped" ? "пропущено" : `ошибка (${s.detail ?? "?"})`}`).join(" · "),
+      );
+      await load();
+    } catch (e) {
+      setActionError(e instanceof ApiError ? e.message : String(e));
+    } finally {
+      setAiBusy(false);
+    }
+  };
+
+  const canRunAi = isStaff || bug?.reporter_id === session.user.id;
+
   return (
     <div className="card">
       <div className="row">
@@ -122,6 +157,14 @@ export default function BugDetailPage() {
 
       {bug.description && <p className="pre">{bug.description}</p>}
 
+      {shotUrl && (
+        <img
+          src={shotUrl}
+          alt="Скриншот бага"
+          style={{ maxWidth: "100%", borderRadius: "var(--radius)", marginTop: 12, border: "1px solid var(--border)" }}
+        />
+      )}
+
       {bug.similar_bug_ids !== null && (
         <div style={{ marginTop: 12 }}>
           <h2>Похожие баги (AI)</h2>
@@ -142,6 +185,7 @@ export default function BugDetailPage() {
       )}
 
       {actionError && <div className="error" style={{ marginTop: 12 }}>{actionError}</div>}
+      {aiInfo && <div className="info" style={{ marginTop: 12 }}>AI: {aiInfo}</div>}
 
       <div className="actions">
         <Link className="btn" href="/bugs">
@@ -150,6 +194,11 @@ export default function BugDetailPage() {
         {isStaff && bug.status === "open" && (
           <button className="btn btn-primary" onClick={resolve} disabled={busy}>
             Пометить решённым
+          </button>
+        )}
+        {canRunAi && (
+          <button className="btn" onClick={runAi} disabled={aiBusy}>
+            {aiBusy ? "AI работает…" : "Запустить AI"}
           </button>
         )}
         {role === "admin" && (

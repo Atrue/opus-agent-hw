@@ -120,14 +120,15 @@ CREATE POLICY bugs_delete ON public.bugs FOR DELETE TO authenticated
 Две политики, зеркалят видимость бага (первая часть пути = bug_id):
 
 ```sql
--- загрузка: только автор бага
+-- загрузка: автор бага или staff
 CREATE POLICY "screenshots_insert" ON storage.objects FOR INSERT TO authenticated
     WITH CHECK (
         bucket_id = 'bug-screenshots'
         AND EXISTS (
             SELECT 1 FROM public.bugs b
             WHERE b.id = ((storage.foldername(name))[1])::uuid
-              AND b.reporter_id = auth.uid()
+              AND (b.reporter_id = auth.uid()
+                   OR (auth.jwt() -> 'app_metadata' ->> 'role') IN ('moderator','admin'))
         )
     );
 
@@ -152,10 +153,11 @@ CREATE POLICY "screenshots_select" ON storage.objects FOR SELECT TO authenticate
 Операции в БД не хранятся. Один серверный роут:
 
 ```
-POST /api/bugs/{id}/ai        # staff; перезапуск вручную
+POST /api/bugs/{id}/ai        # автор бага или staff; лимит 5 запусков на баг в час
 ```
 
-Пайплайн по порядку, пишет результат прямо в колонки бага:
+Пайплайн по порядку, пишет результат прямо в колонки бага (через RPC `apply_ai_results` —
+SECURITY DEFINER, т.к. автор по RLS не может UPDATE):
 
 1. **Описание по скрину** — если `screenshot_path` есть, а `description` пуст → OpenRouter
    vision → `bugs.description`.
@@ -164,10 +166,15 @@ POST /api/bugs/{id}/ai        # staff; перезапуск вручную
    top-5 id → `bugs.similar_bug_ids` (без score).
 
 Сбой шага не мешает следующим; при полном сбое баг просто остаётся без AI-полей.
-После создания бага `POST /api/bugs` запускает этот же пайплайн автоматически (fire-and-forget).
+Пайплайн запускается: автоматически после создания бага и автоматически после загрузки
+скриншота (fire-and-forget, `after()`), а также вручную кнопкой (автор или staff).
 
-**Лимиты** — в коде API, без таблицы: не более 5 запусков на баг и N запросов в минуту
-на сервер (счётчик в памяти процесса). Отказ → `429`.
+**Лимиты** — в коде API, без таблицы: не более 5 запусков пайплайна на баг в час
+(счётчик в памяти процесса). Отказ → `429`.
+
+**Модели OpenRouter** (настраиваются env): primary `inclusionai/ling-3.2-flash:free`
+(vision + structured output, $0), fallback `google/gemma-3-4b-it` ($0.04/$0.05 за 1M) —
+при сбое/429 primary ходим в fallback.
 
 ## 7. Поверхность API
 
@@ -180,7 +187,7 @@ POST /api/bugs/{id}/ai        # staff; перезапуск вручную
 | `DELETE /api/bugs/{id}` | admin | удалить |
 | `POST /api/bugs/{id}/screenshot` | автор | загрузка скрина |
 | `GET /api/bugs/{id}/screenshot` | по видимости | signed URL |
-| `POST /api/bugs/{id}/ai` | staff | перезапуск AI-пайплайна |
+| `POST /api/bugs/{id}/ai` | автор ИЛИ staff | запуск/перезапуск AI-пайплайна (лимит 5/час на баг) |
 
 Видимость решает RLS (API получает уже отфильтрованные строки; невидимый id → 404).
 Ссылки на похожие скрывает API (колонку массива нельзя спрятать политикой по строке) —

@@ -1,7 +1,9 @@
-import type { NextRequest } from "next/server";
+import { after, type NextRequest } from "next/server";
 import { fail, json } from "@/lib/api";
 import { clientFromRequest, getAuth, roleFromRequest, subFromRequest } from "@/lib/supabase";
 import { normalizeTags, sanitizeQuery, serializeBug, validateTitle } from "@/lib/bugs";
+import { canRun, record } from "@/lib/ai/limits";
+import { runAiPipeline } from "@/lib/ai/pipeline";
 
 const PAGE_DEFAULT = 1;
 const LIMIT_DEFAULT = 10;
@@ -69,6 +71,24 @@ export async function POST(req: NextRequest) {
     .select()
     .single();
   if (error) return fail(500, error.message);
+
+  // AI-пайплайн (описание → теги → похожие) — автоматически после создания,
+  // после отправки ответа, с лимитами; сбой не влияет на результат создания.
+  const bugId = (data as { id: string }).id;
+  const client = auth.client;
+  try {
+    after(async () => {
+      if (!canRun(bugId)) return;
+      record(bugId);
+      try {
+        await runAiPipeline(bugId, client);
+      } catch {
+        // стадии логируются внутри пайплайна; авто-запуск не ломает UX
+      }
+    });
+  } catch {
+    // вне request-контекста (unit-тесты роутов): авто-запуск не планируется
+  }
 
   return json(serializeBug(data, auth.role), 201);
 }

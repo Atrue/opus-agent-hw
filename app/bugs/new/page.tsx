@@ -11,8 +11,28 @@ export default function NewBugPage() {
   const { loading, session } = useSession();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  const pickFile = (picked: File | null) => {
+    setFileError(null);
+    if (!picked) {
+      setFile(null);
+      return;
+    }
+    const okTypes = ["image/png", "image/jpeg", "image/webp"];
+    if (!okTypes.includes(picked.type)) {
+      setFileError("Скриншот должен быть PNG, JPEG или WebP");
+      return;
+    }
+    if (picked.size > 5 * 1024 * 1024) {
+      setFileError("Файл больше 5 МБ");
+      return;
+    }
+    setFile(picked);
+  };
 
   if (loading) return <p className="muted">Загрузка…</p>;
   if (!session) {
@@ -32,6 +52,19 @@ export default function NewBugPage() {
         method: "POST",
         json: { title, description },
       });
+      if (file) {
+        const form = new FormData();
+        form.set("file", file);
+        try {
+          await apiFetch(`/api/bugs/${bug.id}/screenshot`, { method: "POST", body: form });
+        } catch (uploadErr) {
+          setError(
+            `Баг создан, но скриншот не загрузился: ${uploadErr instanceof Error ? uploadErr.message : uploadErr}`,
+          );
+          setBusy(false);
+          return;
+        }
+      }
       router.replace(`/bugs/${bug.id}`);
     } catch (err) {
       if (err instanceof ApiError) {
@@ -68,6 +101,15 @@ export default function NewBugPage() {
 Ожидал: …
 Получил: …"
         />
+        <label htmlFor="screenshot">Скриншот (PNG/JPEG/WebP, до 5 МБ, необязательно)</label>
+        <input
+          id="screenshot"
+          className="input"
+          type="file"
+          accept="image/png,image/jpeg,image/webp"
+          onChange={(e) => pickFile(e.target.files?.[0] ?? null)}
+        />
+        {fileError && <div className="error">{fileError}</div>}
         <button className="btn btn-primary" type="submit" disabled={busy}>
           {busy ? "Отправка…" : "Отправить баг"}
         </button>{" "}

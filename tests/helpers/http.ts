@@ -17,11 +17,17 @@ export function makeReq(path: string, opts: ReqOpts = {}): NextRequest {
   const headers: Record<string, string> = { ...opts.headers };
   if (opts.token) headers.authorization = `Bearer ${opts.token}`;
   const hasBody = opts.body !== undefined;
-  if (hasBody) headers["content-type"] = "application/json";
+  // Для FormData content-type ставит undici сам (multipart+boundary); для остального — JSON.
+  if (hasBody && !(opts.body instanceof FormData)) headers["content-type"] = "application/json";
+  const body = opts.body === undefined
+    ? undefined
+    : opts.body instanceof FormData
+      ? opts.body
+      : JSON.stringify(opts.body);
   return new NextRequest(url, {
     method: opts.method ?? "GET",
     headers,
-    body: hasBody ? JSON.stringify(opts.body) : undefined,
+    body,
   });
 }
 

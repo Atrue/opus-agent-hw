@@ -11,9 +11,10 @@ export class ApiError extends Error {
   }
 }
 
-type JsonInit = Omit<RequestInit, "body"> & { json?: unknown };
+type JsonInit = Omit<RequestInit, "body"> & { json?: unknown; body?: BodyInit };
 
 // Вызов нашего API с JWT из сессии. Ошибки API ({error: string}) → ApiError.
+// json: тело + content-type: application/json; body: сырые данные (например FormData).
 export async function apiFetch<T>(path: string, init: JsonInit = {}): Promise<T> {
   const { data } = await getSupabase().auth.getSession();
   const headers = new Headers(init.headers);
@@ -25,7 +26,7 @@ export async function apiFetch<T>(path: string, init: JsonInit = {}): Promise<T>
   const res = await fetch(path, {
     ...init,
     headers,
-    body: init.json !== undefined ? JSON.stringify(init.json) : undefined,
+    body: init.json !== undefined ? JSON.stringify(init.json) : init.body,
     cache: "no-store",
   });
 
