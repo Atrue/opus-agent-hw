@@ -232,6 +232,34 @@ describe("CRUD: чтение", () => {
     expect(mineAItems.length).toBeGreaterThan(0);
     for (const item of mineAItems) expect(item.reporter_id).toBe(users.a.id);
   });
+
+  it("похожесть двусторонняя: одна запись в БД, видна в обе стороны (staff)", async () => {
+    const b1 = await createBug(users.a, "[api] двусторонность источник");
+    const b2 = await createBug(users.a, "[api] двусторонность цель");
+
+    // AI-пайплайн пишет ссылку только на исходном баге — эмулируем его RPC-ом
+    const { error } = await users.admin.client.rpc("apply_ai_results", {
+      p_bug: b1.id,
+      p_similar: [b2.id],
+    });
+    expect(error).toBeNull();
+
+    const d1 = await bugRoute.GET(makeReq(`/api/bugs/${b1.id}`, { token: users.m.token }), ctx(b1.id));
+    const d2 = await bugRoute.GET(makeReq(`/api/bugs/${b2.id}`, { token: users.m.token }), ctx(b2.id));
+    const s1 = ((await d1.json()) as { similar_bug_ids: string[] }).similar_bug_ids;
+    const s2 = ((await d2.json()) as { similar_bug_ids: string[] }).similar_bug_ids;
+
+    expect(s1).toContain(b2.id);     // прямая связь
+    expect(s2).toContain(b1.id);     // обратная — вычислена при чтении
+
+    // в БД запись одна: у цели similar_bug_ids пуст
+    const { data } = await users.admin.client
+      .from("bugs")
+      .select("similar_bug_ids")
+      .eq("id", b2.id)
+      .single();
+    expect((data as { similar_bug_ids: string[] }).similar_bug_ids).toEqual([]);
+  });
 });
 
 describe("CRUD: обновление и удаление (права)", () => {

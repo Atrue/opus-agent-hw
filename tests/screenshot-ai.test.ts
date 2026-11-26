@@ -1,14 +1,12 @@
-// Интеграционные тесты скриншотов (storage + RPC set_screenshot) и прав на AI-роут.
-// Реальные вызовы OpenRouter не выполняются: пайплайн покрыт юнит-тестами (ai-pipeline.test.ts),
-// здесь проверяем только авторизацию/лимиты до вызова модели.
+// Интеграционные тесты скриншотов (storage + RPC set_screenshot).
+// AI-пайплайн запускается только автоматически (после создания/загрузки скрина);
+// его логика покрыта юнит-тестами (ai-pipeline.test.ts) — без реальных вызовов OpenRouter.
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import * as bugsRoute from "../app/api/bugs/route";
 import * as bugRoute from "../app/api/bugs/[id]/route";
 import * as shotRoute from "../app/api/bugs/[id]/screenshot/route";
-import * as aiRoute from "../app/api/bugs/[id]/ai/route";
 import { makeReq, ctx } from "./helpers/http";
-import * as limits from "@/lib/ai/limits";
 
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -134,44 +132,5 @@ describe("скриншоты", () => {
     const big = new File([new Uint8Array(5 * 1024 * 1024 + 1)], "big.png", { type: "image/png" });
     const oversize = await uploadShot(users.a, bug.id, big);
     expect(oversize.status).toBe(400);
-  });
-});
-
-describe("AI-роут: права и лимиты (без вызова модели)", () => {
-  it("аноним → 401; чужой открытый → 404; чужой решённый → 403", async () => {
-    const anon = await aiRoute.POST(makeReq("/api/bugs/00000000-0000-0000-0000-000000000000/ai", { method: "POST" }), ctx("00000000-0000-0000-0000-000000000000"));
-    expect(anon.status).toBe(401);
-
-    const hidden = await createBug(users.a, "[shot] ai скрытый");
-    const bHidden = await aiRoute.POST(
-      makeReq(`/api/bugs/${hidden.id}/ai`, { method: "POST", token: users.b.token }),
-      ctx(hidden.id),
-    );
-    expect(bHidden.status).toBe(404);
-
-    const resolved = await createBug(users.a, "[shot] ai решённый");
-    const mResolve = await bugRoute.PATCH(
-      makeReq(`/api/bugs/${resolved.id}`, { method: "PATCH", token: users.m.token, body: { status: "resolved" } }),
-      ctx(resolved.id),
-    );
-    expect(mResolve.status).toBe(200);
-    const bResolved = await aiRoute.POST(
-      makeReq(`/api/bugs/${resolved.id}/ai`, { method: "POST", token: users.b.token }),
-      ctx(resolved.id),
-    );
-    expect(bResolved.status).toBe(403);
-  });
-
-  it("лимит 5 запусков на баг → 429 без вызова модели", async () => {
-    const bug = await createBug(users.a, "[shot] ai лимит");
-    limits.reset(bug.id);
-    for (let i = 0; i < 5; i++) limits.record(bug.id);
-
-    const res = await aiRoute.POST(
-      makeReq(`/api/bugs/${bug.id}/ai`, { method: "POST", token: users.a.token }),
-      ctx(bug.id),
-    );
-    expect(res.status).toBe(429);
-    limits.reset(bug.id);
   });
 });

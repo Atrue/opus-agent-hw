@@ -17,8 +17,6 @@ export default function BugDetailPage() {
   const [busy, setBusy] = useState(false);
   const [tagsInput, setTagsInput] = useState("");
   const [shotUrl, setShotUrl] = useState<string | null>(null);
-  const [aiBusy, setAiBusy] = useState(false);
-  const [aiInfo, setAiInfo] = useState<string | null>(null);
 
   const isStaff = role === "moderator" || role === "admin";
 
@@ -108,29 +106,6 @@ export default function BugDetailPage() {
     }
   };
 
-  const runAi = async () => {
-    if (!bug) return;
-    setAiBusy(true);
-    setActionError(null);
-    setAiInfo(null);
-    try {
-      const { stages } = await apiFetch<{ stages: { stage: string; status: string; detail?: string }[] }>(
-        `/api/bugs/${bug.id}/ai`,
-        { method: "POST" },
-      );
-      setAiInfo(
-        stages.map((s) => `${s.stage}: ${s.status === "done" ? "готово" : s.status === "skipped" ? "пропущено" : `ошибка (${s.detail ?? "?"})`}`).join(" · "),
-      );
-      await load();
-    } catch (e) {
-      setActionError(e instanceof ApiError ? e.message : String(e));
-    } finally {
-      setAiBusy(false);
-    }
-  };
-
-  const canRunAi = isStaff || bug?.reporter_id === session.user.id;
-
   return (
     <div className="card">
       <div className="row">
@@ -185,20 +160,17 @@ export default function BugDetailPage() {
       )}
 
       {actionError && <div className="error" style={{ marginTop: 12 }}>{actionError}</div>}
-      {aiInfo && <div className="info" style={{ marginTop: 12 }}>AI: {aiInfo}</div>}
 
       <div className="actions">
         <Link className="btn" href="/bugs">
           ← К списку
         </Link>
+        <button className="btn" onClick={() => void load()} title="AI-результаты появляются асинхронно">
+          ⟳ Обновить
+        </button>
         {isStaff && bug.status === "open" && (
           <button className="btn btn-primary" onClick={resolve} disabled={busy}>
             Пометить решённым
-          </button>
-        )}
-        {canRunAi && (
-          <button className="btn" onClick={runAi} disabled={aiBusy}>
-            {aiBusy ? "AI работает…" : "Запустить AI"}
           </button>
         )}
         {role === "admin" && (

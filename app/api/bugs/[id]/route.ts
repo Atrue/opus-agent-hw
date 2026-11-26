@@ -13,11 +13,24 @@ async function fetchBug(client: ReturnType<typeof clientFromRequest>, id: string
 }
 
 // GET /api/bugs/{id} — баг по видимости (RLS); невидимый или кривой id → 404.
+// Связи похожести двусторонние при чтении: прямые (bug → other) из колонки
+// плюс обратные (other → bug) одним contains-запросом. В БД — одна запись на связь.
 export async function GET(req: NextRequest, { params }: Ctx) {
   const { id } = await params;
-  const bug = await fetchBug(clientFromRequest(req), id);
+  const role = roleFromRequest(req);
+  const client = clientFromRequest(req);
+  const bug = await fetchBug(client, id);
   if (!bug) return fail(404, "Баг не найден");
-  return json(serializeBug(bug, roleFromRequest(req)));
+
+  if (role === "user") return json(serializeBug(bug, role));
+
+  const { data: reverse } = await client
+    .from("bugs")
+    .select("id")
+    .contains("similar_bug_ids", [id]);
+  const merged = [...new Set([...(bug.similar_bug_ids ?? []), ...((reverse ?? []).map((r) => r.id))])]
+    .filter((x) => x !== id);
+  return json(serializeBug({ ...bug, similar_bug_ids: merged }, role));
 }
 
 // PATCH /api/bugs/{id} — правка контента и статуса. Только staff.
