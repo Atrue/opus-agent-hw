@@ -6,14 +6,16 @@ import { createClient } from "@supabase/supabase-js";
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 if (!url || !key) {
-  console.error("Нет NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY в .env");
+  console.error(
+    "Нет NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY в .env",
+  );
   process.exit(1);
 }
 
 const supabase = createClient(url, key, { auth: { persistSession: false } });
 
 const USERS = [
-  { email: "user-a@example.com", role: "user" },
+  { email: "user-a@example.gjcom", role: "user" },
   { email: "user-b@example.com", role: "user" },
   { email: "moderator@example.com", role: "moderator" },
   { email: "admin@example.com", role: "admin" },
@@ -28,6 +30,8 @@ for (const u of USERS) {
     console.error(`signUp ${u.email}: FAIL — ${error.message}`);
     process.exitCode = 1;
   } else {
-    console.log(`signUp ${u.email}: OK (${error ? "уже существует" : "создан"})`);
+    console.log(
+      `signUp ${u.email}: OK (${error ? "уже существует" : "создан"})`,
+    );
   }
 }

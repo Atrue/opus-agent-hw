@@ -32,7 +32,8 @@
 ```mermaid
 erDiagram
     auth_users ||--o{ bugs : "reporter_id"
-    bugs |o--o{ bugs : "similar_bug_ids (массив uuid)"
+    bugs ||--o{ bug_links : "bug_id (источник)"
+    bugs ||--o{ bug_links : "similar_bug_id (похожий)"
 
     bugs {
         uuid id PK
@@ -42,9 +43,13 @@ erDiagram
         text screenshot_path "nullable"
         bug_status status "open | resolved"
         text_array tags "список строк, default '{}'"
-        uuid_array similar_bug_ids "похожие баги, default '{}'"
         timestamptz created_at
         timestamptz updated_at
+    }
+    bug_links {
+        uuid bug_id PK,FK "CASCADE"
+        uuid similar_bug_id PK,FK "CASCADE"
+        timestamptz created_at
     }
 ```
 
@@ -61,10 +66,20 @@ CREATE TABLE public.bugs (
     screenshot_path text,                          -- '{bug_id}/{uuid}.{ext}'
     status          public.bug_status NOT NULL DEFAULT 'open',
     tags            text[]  NOT NULL DEFAULT '{}', -- «auth», «ui», …
-    similar_bug_ids uuid[]  NOT NULL DEFAULT '{}', -- AI-похожесть, без score
     created_at      timestamptz NOT NULL DEFAULT now(),
     updated_at      timestamptz NOT NULL DEFAULT now()
 );
+
+-- связи похожести: одна запись на связь (bug → similar), читается в обе стороны
+CREATE TABLE public.bug_links (
+    bug_id         uuid NOT NULL REFERENCES public.bugs (id) ON DELETE CASCADE,
+    similar_bug_id uuid NOT NULL REFERENCES public.bugs (id) ON DELETE CASCADE,
+    created_at     timestamptz NOT NULL DEFAULT now(),
+    PRIMARY KEY (bug_id, similar_bug_id),
+    CONSTRAINT bug_links_no_self CHECK (bug_id <> similar_bug_id)
+);
+CREATE INDEX bug_links_similar_idx ON public.bug_links (similar_bug_id);
+-- RLS: SELECT только staff; запись — через RPC apply_ai_results (definer)
 
 CREATE INDEX bugs_reporter_idx ON public.bugs (reporter_id);
 CREATE INDEX bugs_status_idx   ON public.bugs (status);
@@ -100,6 +115,11 @@ CREATE POLICY bugs_update ON public.bugs FOR UPDATE TO authenticated
 -- удалять — только admin
 CREATE POLICY bugs_delete ON public.bugs FOR DELETE TO authenticated
     USING ((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin');
+
+-- связи похожести: читать только staff; запись — через RPC apply_ai_results (definer)
+ALTER TABLE public.bug_links ENABLE ROW LEVEL SECURITY;
+CREATE POLICY bug_links_select ON public.bug_links FOR SELECT TO authenticated
+    USING ((auth.jwt() -> 'app_metadata' ->> 'role') IN ('moderator', 'admin'));
 ```
 
 Аноним — ничего (нет политики для anon). Роли в таблице БД нет → нет рекурсии политик →
@@ -162,9 +182,10 @@ SECURITY DEFINER, т.к. автор по RLS не может UPDATE):
    vision → `bugs.description`.
 2. **Теги** — OpenRouter с JSON-схемой `{"tags": string[]}` (≤ 5 строк, lowercase) → `bugs.tags`.
 3. **Похожие** — pg_trgm по `title + description` среди остальных багов (решённых и нет),
-   top-5 id → `bugs.similar_bug_ids` (без score). Связь хранится односторонне (на исходном
-   баге); при чтении `GET /api/bugs/{id}` она склеивается с обратными (один `contains`-запрос
-   по `similar_bug_ids`) — staff видит связи двусторонне, в БД запись одна.
+   top-5 id → таблица `bug_links` (без score, PK-пара защищает от дублей и самоссылок).
+   Связь хранится односторонне (на исходном баге); при чтении `GET /api/bugs/{id}` она
+   склеивается с обратными (запрос по индексу `bug_links.similar_bug_id`) — staff видит
+   связи двусторонне, в БД запись одна. Каскадное удаление бага чистит связи автоматически.
 
 Сбой шага не мешает следующим; при полном сбое баг просто остаётся без AI-полей.
 
@@ -195,5 +216,8 @@ SECURITY DEFINER, т.к. автор по RLS не может UPDATE):
 
 1. `0001_init.sql` — расширение pg_trgm, enum, таблица, индексы.
 2. `0002_rls.sql` — RLS-политики таблицы + bucket и его политики.
-3. `0003_seed.sql` (опционально) — тестовые пользователи (user/moderator/admin через admin API)
-   и баги во всех статусах.
+3. `0003_ai.sql` — RPC пайплайна: `find_similar_bugs`, `apply_ai_results`, `set_screenshot`.
+4. `0004_storage_staff_upload.sql` — upload скрина: автор ИЛИ staff.
+5. `0005_bug_links.sql` — связи похожести в отдельной таблице (FK CASCADE, PK-пара, индекс
+   обратного поиска), бэкфилл из массива, дроп `similar_bug_ids`.
+6. `0003_seed.sql` (опционально) — тестовые пользователи и баги для dev-окружения.

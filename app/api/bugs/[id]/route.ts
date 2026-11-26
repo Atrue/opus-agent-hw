@@ -13,8 +13,8 @@ async function fetchBug(client: ReturnType<typeof clientFromRequest>, id: string
 }
 
 // GET /api/bugs/{id} — баг по видимости (RLS); невидимый или кривой id → 404.
-// Связи похожести двусторонние при чтении: прямые (bug → other) из колонки
-// плюс обратные (other → bug) одним contains-запросом. В БД — одна запись на связь.
+// Связи похожести двусторонние при чтении: bug_links хранит одну запись на связь
+// (bug → similar), обратные находятся по индексу similar_bug_id. Staff видит merge.
 export async function GET(req: NextRequest, { params }: Ctx) {
   const { id } = await params;
   const role = roleFromRequest(req);
@@ -24,13 +24,20 @@ export async function GET(req: NextRequest, { params }: Ctx) {
 
   if (role === "user") return json(serializeBug(bug, role));
 
-  const { data: reverse } = await client
-    .from("bugs")
-    .select("id")
-    .contains("similar_bug_ids", [id]);
-  const merged = [...new Set([...(bug.similar_bug_ids ?? []), ...((reverse ?? []).map((r) => r.id))])]
-    .filter((x) => x !== id);
-  return json(serializeBug({ ...bug, similar_bug_ids: merged }, role));
+  const [direct, reverse] = await Promise.all([
+    client.from("bug_links").select("similar_bug_id").eq("bug_id", id),
+    client.from("bug_links").select("bug_id").eq("similar_bug_id", id),
+  ]);
+  if (direct.error || reverse.error) return fail(500, direct.error?.message ?? reverse.error?.message ?? "Ошибка чтения связей");
+
+  const merged = [
+    ...new Set([
+      ...(direct.data ?? []).map((r) => r.similar_bug_id as string),
+      ...(reverse.data ?? []).map((r) => r.bug_id as string),
+    ]),
+  ].filter((x) => x !== id);
+
+  return json(serializeBug(bug, role, merged));
 }
 
 // PATCH /api/bugs/{id} — правка контента и статуса. Только staff.

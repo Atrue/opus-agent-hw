@@ -13,13 +13,13 @@ export type BugRow = {
   screenshot_path: string | null;
   status: "open" | "resolved";
   tags: string[];
-  similar_bug_ids: string[];
   created_at: string;
   updated_at: string;
 };
 
 // similar_bug_ids видят только staff (architecture.md §7); остальным — null.
-export function serializeBug(bug: BugRow, role: Role) {
+// Список вычисляется в роуте: прямые связи из bug_links + обратные.
+export function serializeBug(bug: BugRow, role: Role, similarIds: string[] = []) {
   return {
     id: bug.id,
     reporter_id: bug.reporter_id,
@@ -28,7 +28,7 @@ export function serializeBug(bug: BugRow, role: Role) {
     screenshot_path: bug.screenshot_path,
     status: bug.status,
     tags: bug.tags ?? [],
-    similar_bug_ids: role === "user" ? null : (bug.similar_bug_ids ?? []),
+    similar_bug_ids: role === "user" ? null : similarIds,
     created_at: bug.created_at,
     updated_at: bug.updated_at,
   };

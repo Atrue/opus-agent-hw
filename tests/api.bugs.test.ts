@@ -233,11 +233,11 @@ describe("CRUD: чтение", () => {
     for (const item of mineAItems) expect(item.reporter_id).toBe(users.a.id);
   });
 
-  it("похожесть двусторонняя: одна запись в БД, видна в обе стороны (staff)", async () => {
+  it("похожесть двусторонняя: одна запись в БД (bug_links), видна в обе стороны (staff)", async () => {
     const b1 = await createBug(users.a, "[api] двусторонность источник");
     const b2 = await createBug(users.a, "[api] двусторонность цель");
 
-    // AI-пайплайн пишет ссылку только на исходном баге — эмулируем его RPC-ом
+    // AI-пайплайн пишет связь только на исходном баге — эмулируем его RPC-ом
     const { error } = await users.admin.client.rpc("apply_ai_results", {
       p_bug: b1.id,
       p_similar: [b2.id],
@@ -252,13 +252,22 @@ describe("CRUD: чтение", () => {
     expect(s1).toContain(b2.id);     // прямая связь
     expect(s2).toContain(b1.id);     // обратная — вычислена при чтении
 
-    // в БД запись одна: у цели similar_bug_ids пуст
-    const { data } = await users.admin.client
-      .from("bugs")
-      .select("similar_bug_ids")
-      .eq("id", b2.id)
-      .single();
-    expect((data as { similar_bug_ids: string[] }).similar_bug_ids).toEqual([]);
+    // в БД ровно одна запись связи, у цели — ни одной (обратная не хранится)
+    const { data: rows } = await users.admin.client
+      .from("bug_links")
+      .select("bug_id, similar_bug_id")
+      .or(`bug_id.eq.${b1.id},similar_bug_id.eq.${b1.id}`);
+    expect(rows).toHaveLength(1);
+    expect(rows?.[0]).toEqual({ bug_id: b1.id, similar_bug_id: b2.id });
+
+    // каскадное удаление цели убирает связь
+    const del = await bugRoute.DELETE(
+      makeReq(`/api/bugs/${b2.id}`, { method: "DELETE", token: users.admin.token }),
+      ctx(b2.id),
+    );
+    expect(del.status).toBe(204);
+    const d1After = await bugRoute.GET(makeReq(`/api/bugs/${b1.id}`, { token: users.m.token }), ctx(b1.id));
+    expect(((await d1After.json()) as { similar_bug_ids: string[] }).similar_bug_ids).not.toContain(b2.id);
   });
 });
 
